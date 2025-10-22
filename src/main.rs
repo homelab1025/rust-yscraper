@@ -1,10 +1,10 @@
+use config::{Config, File, FileFormat};
 use log::{error, info, warn};
 use rusqlite::{Connection, params};
 use scraper::{Html, Selector};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use std::path::Path;
 use std::time::Duration;
-use config::{Config, File, FileFormat};
 
 const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -148,44 +148,44 @@ fn main() {
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
     // Load configuration using the `config` crate. The properties file is optional.
-    let settings = match Config::builder()
+    let settings = Config::builder()
         .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
-        .build()
-    {
-        Ok(c) => c,
+        .build();
+
+    match settings {
+        Ok(settings) => {
+            let url = settings
+                .get_string("url")
+                .unwrap_or_else(|_| DEFAULT_URL.to_string());
+
+            info!("Fetching URL: {}", url);
+            let html = match fetch_html(&url) {
+                Ok(h) => h,
+                Err(e) => {
+                    error!("Failed to fetch '{}': {}", url, e);
+                    std::process::exit(1);
+                }
+            };
+
+            info!("Parsing root comments...");
+            let comments = parse_root_comments(&html);
+            info!("Parsed {} root comments", comments.len());
+
+            let db_path = "comments.db";
+            info!("Initializing database at {}", db_path);
+            match init_db(db_path) {
+                Ok(conn) => match insert_comments(&conn, &comments) {
+                    Ok(n) => info!("Inserted {} comments into the database", n),
+                    Err(e) => error!("Failed to insert comments: {}", e),
+                },
+                Err(e) => error!("Failed to initialize database: {}", e),
+            }
+        }
         Err(e) => {
-            warn!(
+            error!(
                 "Failed to load config file '{}': {}. Using defaults.",
                 CONFIG_PATH, e
             );
-            Config::builder().build().unwrap()
         }
-    };
-
-    let url = settings
-        .get_string("url")
-        .unwrap_or_else(|_| DEFAULT_URL.to_string());
-
-    info!("Fetching URL: {}", url);
-    let html = match fetch_html(&url) {
-        Ok(h) => h,
-        Err(e) => {
-            error!("Failed to fetch '{}': {}", url, e);
-            std::process::exit(1);
-        }
-    };
-
-    info!("Parsing root comments...");
-    let comments = parse_root_comments(&html);
-    info!("Parsed {} root comments", comments.len());
-
-    let db_path = "comments.db";
-    info!("Initializing database at {}", db_path);
-    match init_db(db_path) {
-        Ok(conn) => match insert_comments(&conn, &comments) {
-            Ok(n) => info!("Inserted {} comments into the database", n),
-            Err(e) => error!("Failed to insert comments: {}", e),
-        },
-        Err(e) => error!("Failed to initialize database: {}", e),
     }
 }
