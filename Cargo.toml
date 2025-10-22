@@ -9,3 +9,4 @@ scraper = "0.19"
 rusqlite = { version = "0.31", features = ["bundled"] }
 log = "0.4"
 simplelog = "0.12"
+config = { version = "0.14", default-features = false, features = ["ini"] }

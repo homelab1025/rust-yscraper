@@ -2,10 +2,9 @@ use log::{error, info, warn};
 use rusqlite::{Connection, params};
 use scraper::{Html, Selector};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
-use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::time::Duration;
+use config::{Config, File, FileFormat};
 
 const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -16,36 +15,6 @@ struct CommentRecord {
     author: String,
     date: String,
     text: String,
-}
-
-fn load_config(path: &str) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
-    match fs::read_to_string(path) {
-        Ok(content) => {
-            let mut map = HashMap::new();
-            for line in content.lines() {
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') || !line.contains('=') {
-                    continue;
-                }
-                let mut parts = line.splitn(2, '=');
-                let key = parts.next().unwrap().trim().to_string();
-                let val = parts.next().unwrap().trim().to_string();
-                if !key.is_empty() {
-                    map.insert(key, val);
-                }
-            }
-            Ok(map)
-        }
-        Err(e) => {
-            warn!(
-                "Could not read config file '{}': {}. Using defaults.",
-                path, e
-            );
-
-            Err(e.into())
-        }
-    }
-
 }
 
 fn fetch_html(url: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -67,7 +36,7 @@ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
     let ind_img_sel = Selector::parse("td.ind img").unwrap();
     let author_sel = Selector::parse("a.hnuser").unwrap();
     let age_sel = Selector::parse("span.age").unwrap();
-    let text_sel = Selector::parse("span.commtext").unwrap();
+    let text_sel = Selector::parse(".comment").unwrap();
     let reply_sel = Selector::parse("a[href^=\"reply?\"]").unwrap();
 
     let mut out = Vec::new();
@@ -178,16 +147,27 @@ fn insert_comments(conn: &Connection, comments: &[CommentRecord]) -> rusqlite::R
 fn main() {
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
-    let cfg = load_config(CONFIG_PATH);
-    if cfg.is_err() {
-        panic!("Failed to load config file '{}': {}", CONFIG_PATH, cfg.err().unwrap());
-    }
+    // Load configuration using the `config` crate. The properties file is optional.
+    let settings = match Config::builder()
+        .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            warn!(
+                "Failed to load config file '{}': {}. Using defaults.",
+                CONFIG_PATH, e
+            );
+            Config::builder().build().unwrap()
+        }
+    };
 
-    let cfg = cfg.unwrap();
-    let url = cfg.get("url").map(|s| s.as_str()).unwrap_or(DEFAULT_URL);
+    let url = settings
+        .get_string("url")
+        .unwrap_or_else(|_| DEFAULT_URL.to_string());
 
     info!("Fetching URL: {}", url);
-    let html = match fetch_html(url) {
+    let html = match fetch_html(&url) {
         Ok(h) => h,
         Err(e) => {
             error!("Failed to fetch '{}': {}", url, e);
