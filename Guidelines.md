@@ -15,3 +15,7 @@
 - Avoid logical dependency: methods shouldn't work correctly depending on state somewhere else in the code.
 - Avoid negative conditionals
 - Use the simplest solution that could possibly work
+### Way of working
+- Use git
+- generate git commits with meaningful messages
+- do a git commit after every meaningful change that adds value to the code

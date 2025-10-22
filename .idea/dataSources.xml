@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
     <data-source source="LOCAL" name="comments" uuid="8aa8edb6-a13f-452b-b524-26a20a783076">
-      <driver-ref>sqlite.xerial</driver-ref>
+      <driver-ref>67f781c1-7fe2-461b-b7a3-074bb96f2523</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/comments.db</jdbc-url>
