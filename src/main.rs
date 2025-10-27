@@ -45,8 +45,39 @@ fn insert_comments(conn: &Connection, comments: &[CommentRecord]) -> rusqlite::R
     Ok(inserted)
 }
 
+fn get_comment_count(conn: &Connection) -> rusqlite::Result<i64> {
+    conn.query_row("SELECT COUNT(*) FROM comments", [], |row| row.get(0))
+}
+
 fn main() {
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
+
+    let db_path = "comments.db";
+    info!("Initializing database at {}", db_path);
+    let conn = match init_db(db_path) {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Failed to initialize database: {}", e);
+            return;
+        }
+    };
+
+    match get_comment_count(&conn) {
+        Ok(count) if count > 0 => {
+            info!(
+                "Database already initialized with {} comments. Skipping scraping and inserts.",
+                count
+            );
+            return;
+        }
+        Ok(_) => {
+            info!("Database is empty. Proceeding to scrape and populate.");
+        }
+        Err(e) => {
+            error!("Failed to check comments count: {}", e);
+            return;
+        }
+    }
 
     // Load configuration using the `config` crate. The properties file is optional.
     let settings = Config::builder()
@@ -62,14 +93,9 @@ fn main() {
             let comments = get_comments(&url);
             info!("Parsed {} root comments", comments.len());
 
-            let db_path = "comments.db";
-            info!("Initializing database at {}", db_path);
-            match init_db(db_path) {
-                Ok(conn) => match insert_comments(&conn, &comments) {
-                    Ok(n) => info!("Inserted {} comments into the database", n),
-                    Err(e) => error!("Failed to insert comments: {}", e),
-                },
-                Err(e) => error!("Failed to initialize database: {}", e),
+            match insert_comments(&conn, &comments) {
+                Ok(n) => info!("Inserted {} comments into the database", n),
+                Err(e) => error!("Failed to insert comments: {}", e),
             }
         }
         Err(e) => {
