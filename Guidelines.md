@@ -9,7 +9,8 @@
 - Single Responsibility principle: functions should only do one thing and avoid side-effects on the parameters.
 - Use Dependency Inversion Principle
 - User Interface Segregation Principle
-- Make dependencies explicit
+- Make dependencies explicit.
+- Errors should be returned and handled in a rust-specific manner.
 ### Easy to understand code
 - Use explanatory naming.
 - Avoid logical dependency: methods shouldn't work correctly depending on state somewhere else in the code.
@@ -17,5 +18,5 @@
 - Use the simplest solution that could possibly work
 ### Way of working
 - Use git
-- generate git commits with meaningful messages
-- do a git commit after every meaningful change that adds value to the code
+- generate git commits with meaningful messages from a functionality perspective. If it's simply a technical change, explain why it's needed.
+- do the changes on the files and prepare a commit message for them. Present me with the commit message and I will review the changes and the messages. Ask me if it's ok to commit and only after i say yes you do the commit. 
