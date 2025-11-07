@@ -1,7 +1,7 @@
 # Plan
 
 ## Change flow
-- start the TUI first
+- start the application first and then check if the database is initialized. If not, initialize it.
 
 ## TUI interface
 Add a ratatui interface for listing the comments from the db. Show the text only for each comment. If the text is longer than the terminal line use soft-wrap so that i don't have to scroll lateraly to read the whole text. Also, the date and author should appear in a dialog if i press "i". For navigation, use j and k like in vi or the UP and DOWN keys. If i press ENTER the comment text should be displayed in a dialog. Upon ESC pressed any dialog will dissapear.
