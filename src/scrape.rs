@@ -39,8 +39,8 @@ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
     let ind_img_sel = Selector::parse("td.ind img").unwrap();
     let author_sel = Selector::parse("a.hnuser").unwrap();
     let age_sel = Selector::parse("span.age").unwrap();
+    let age_link_sel = Selector::parse("span.age a").unwrap();
     let text_sel = Selector::parse(".comment").unwrap();
-    let reply_sel = Selector::parse("a[href^=\"reply?\"]").unwrap();
 
     let mut out = Vec::new();
 
@@ -58,13 +58,13 @@ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
             continue;
         }
 
-        // Extract comment id from the reply link
+        // Extract comment id from the age link (e.g., <span class="age"><a href="item?id=<COMMENT_ID>">...</a>)
         let id_opt = tr
-            .select(&reply_sel)
+            .select(&age_link_sel)
             .next()
             .and_then(|a| a.value().attr("href"))
             .and_then(|href| {
-                // href format: reply?id=<COMMENT_ID>&...
+                // href format: item?id=<COMMENT_ID>
                 href.split('?').nth(1).and_then(|qs| {
                     let mut out_id: Option<i64> = None;
                     for p in qs.split('&') {
