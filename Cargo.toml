@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-reqwest = { version = "0.12", features = ["blocking", "rustls-tls", "gzip", "brotli", "deflate"] }
-scraper = "0.19"
-rusqlite = { version = "0.31", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["rustls-tls", "gzip", "brotli", "deflate"] }
+scraper = "0.24"
+sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
+tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
 log = "0.4"
 simplelog = "0.12"
-config = { version = "0.14", default-features = false, features = ["ini"] }
+config = { version = "0.15", default-features = false, features = ["ini"] }

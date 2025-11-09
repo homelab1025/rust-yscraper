@@ -3,9 +3,9 @@ use log::{error, info, warn};
 use scraper::{Html, Selector};
 use std::time::Duration;
 
-pub fn get_comments(url: &String) -> Vec<CommentRecord> {
+pub async fn get_comments(url: &String) -> Vec<CommentRecord> {
     info!("Fetching URL: {}", url);
-    let html = match fetch_html(&url) {
+    let html = match fetch_html(&url).await {
         Ok(h) => h,
         Err(e) => {
             error!("Failed to fetch '{}': {}", url, e);
@@ -18,16 +18,18 @@ pub fn get_comments(url: &String) -> Vec<CommentRecord> {
     comments
 }
 
-fn fetch_html(url: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let client = reqwest::blocking::Client::builder()
+async fn fetch_html(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
         .build()?;
-    let resp = client.get(url).send()?;
+
+    let resp = client.get(url).send().await?;
+    // let resp = client.get(url).send()?;
     if !resp.status().is_success() {
         return Err(format!("HTTP error: {}", resp.status()).into());
     }
-    let text = resp.text()?;
+    let text = resp.text().await?;
     Ok(text)
 }
 
