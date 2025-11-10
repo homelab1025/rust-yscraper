@@ -1,0 +1,9 @@
+## TODO
+1. add a web interface to this to list the comments
+2. thru the web interface user should be able to select which comments to keep and which to discard
+3. the discard and keep actions should be done thru keys (no mouse needed) for quick action
+4. show a confirmation of whether the action was keep or discard and allow the user to change it
+5. web interface should be able to list the kept comments
+6. move to postgres
+
+## DONE
