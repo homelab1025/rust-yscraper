@@ -110,7 +110,7 @@ fn main() {
         // Build router
         let app = Router::new()
             .route("/ping", get(crate::api::ping))
-            .route("/scrape", post(crate::api::scrape_handler))
+            .route("/scrape", post(crate::api::scrape_ynews))
             .with_state(app_state);
 
         // Bind and serve
