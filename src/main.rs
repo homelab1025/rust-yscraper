@@ -1,12 +1,18 @@
+mod api;
 mod scrape;
+mod utils;
 
-use crate::scrape::get_comments;
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use config::{Config, File, FileFormat};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
+use std::net::SocketAddr;
 
 const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -18,6 +24,12 @@ pub struct CommentRecord {
     pub date: String,
     pub text: String,
     pub tags: Vec<String>,
+}
+
+#[derive(Clone)]
+pub(crate) struct AppState {
+    pub(crate) db_pool: Pool<Sqlite>,
+    pub(crate) url: String,
 }
 
 async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
@@ -46,26 +58,6 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
     Ok(pool)
 }
 
-async fn insert_comments(
-    pool: &Pool<Sqlite>,
-    comments: &Vec<CommentRecord>,
-) -> Result<usize, sqlx::Error> {
-    let mut inserted = 0usize;
-    for c in comments {
-        let result = sqlx::query(
-            "INSERT OR IGNORE INTO comments (id, author, date, text) VALUES (?1, ?2, ?3, ?4)",
-        )
-        .bind(c.id)
-        .bind(&c.author)
-        .bind(&c.date)
-        .bind(&c.text)
-        .execute(pool)
-        .await?;
-        inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
-    }
-    Ok(inserted)
-}
-
 async fn get_comment_count(pool: &Pool<Sqlite>) -> Result<i64, sqlx::Error> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM comments")
         .fetch_one(pool)
@@ -73,113 +65,61 @@ async fn get_comment_count(pool: &Pool<Sqlite>) -> Result<i64, sqlx::Error> {
     Ok(count)
 }
 
-/// Split a slice of items into consecutive batches of size `batches_count`.
-/// If `batches_count` is 0, returns an empty vector.
-fn create_batches<T: Clone>(items: &[T], batches_count: usize) -> Vec<Vec<T>> {
-    if batches_count == 0 {
-        return Vec::new();
-    }
-    items
-        .chunks(batches_count)
-        .map(|chunk| chunk.to_vec())
-        .collect()
-}
-
-#[tokio::main]
-async fn main() {
+fn main() {
+    // init logging first
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
-
-    let db_path = "comments.db";
-    let pool = match init_db(db_path).await {
-        Ok(p) => p,
-        Err(e) => {
-            error!("Failed to initialize database: {}", e);
-            return;
-        }
-    };
-
-    match get_comment_count(&pool).await {
-        Ok(count) if count > 0 => {
-            info!(
-                "Database already initialized with {} comments. Skipping scraping and inserts.",
-                count
-            );
-            return;
-        }
-        Ok(_) => {
-            info!("Database is empty. Proceeding to scrape and populate.");
-        }
-        Err(e) => {
-            error!("Failed to check comments count: {}", e);
-            return;
-        }
-    }
 
     // Load configuration using the `config` crate. The properties file is optional.
     let settings = Config::builder()
         .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
         .build();
 
-    match settings {
-        Ok(settings) => {
-            let url = settings
-                .get_string("url")
-                .unwrap_or_else(|_| DEFAULT_URL.to_string());
-
-            let comments = get_comments(&url).await;
-            info!("Parsed {} root comments", comments.len());
-
-            let comments_batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
-
-            for batch in comments_batches.iter() {
-                match insert_comments(&pool, batch).await {
-                    Ok(n) => info!("Inserted {} comments into the database", n),
-                    Err(e) => error!("Failed to insert comments: {}", e),
-                }
-            }
-        }
+    let url = match settings {
+        Ok(settings) => settings
+            .get_string("url")
+            .unwrap_or_else(|_| DEFAULT_URL.to_string()),
         Err(e) => {
             error!(
                 "Failed to load config file '{}': {}. Using defaults.",
                 CONFIG_PATH, e
             );
+            DEFAULT_URL.to_string()
         }
-    }
-}
+    };
 
-#[cfg(test)]
-mod tests {
-    use super::create_batches;
+    // Build a Tokio runtime and block on the async server startup.
+    let tokio_rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_io()
+        .enable_time()
+        .build()
+        .expect("failed to build Tokio runtime");
 
-    #[test]
-    fn test_create_batches_zero_size_returns_empty() {
-        let items = vec![1, 2, 3, 4, 5];
-        let batches: Vec<Vec<i32>> = create_batches(&items, 0);
-        assert!(
-            batches.is_empty(),
-            "Expected empty vector when batch size is 0"
-        );
-    }
+    tokio_rt.block_on(async move {
+        // Initialize the database inside the async context
+        let db_path = "comments.db";
+        let db_pool = match init_db(db_path).await {
+            Ok(p) => p,
+            Err(e) => {
+                error!("Failed to initialize database: {}", e);
+                return;
+            }
+        };
 
-    #[test]
-    fn test_create_batches_last_batch_not_full() {
-        // 5 items with batch size 2 -> [[1,2],[3,4],[5]]
-        let items = vec![1, 2, 3, 4, 5];
-        let batches = create_batches(&items, 2);
-        assert_eq!(batches.len(), 3);
-        assert_eq!(batches[0], vec![1, 2]);
-        assert_eq!(batches[1], vec![3, 4]);
-        assert_eq!(batches[2], vec![5]);
-    }
+        let app_state = AppState { db_pool, url };
 
-    #[test]
-    fn test_create_batches_exact_multiples() {
-        // 6 items with batch size 2 -> [[1,2],[3,4],[5,6]]
-        let items = vec![1, 2, 3, 4, 5, 6];
-        let batches = create_batches(&items, 2);
-        assert_eq!(batches.len(), 3);
-        assert_eq!(batches[0], vec![1, 2]);
-        assert_eq!(batches[1], vec![3, 4]);
-        assert_eq!(batches[2], vec![5, 6]);
-    }
+        // Build router
+        let app = Router::new()
+            .route("/ping", get(crate::api::ping))
+            .route("/scrape", post(crate::api::scrape_handler))
+            .with_state(app_state);
+
+        // Bind and serve
+        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        info!("Starting HTTP server at http://{}", addr);
+        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+
+        if let Err(e) = axum::serve(listener, app).await {
+            error!("Server error: {}", e);
+        }
+    });
 }
