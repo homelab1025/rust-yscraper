@@ -4,7 +4,7 @@ pub(crate) fn create_batches<T: Clone>(items: &[T], batches_count: usize) -> Vec
     if batches_count == 0 {
         return Vec::new();
     }
-    
+
     items
         .chunks(batches_count)
         .map(|chunk| chunk.to_vec())

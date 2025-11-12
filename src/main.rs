@@ -3,8 +3,8 @@ mod scrape;
 mod utils;
 
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 use config::{Config, File, FileFormat};
 use log::{error, info};
@@ -109,8 +109,8 @@ fn main() {
 
         // Build router
         let app = Router::new()
-            .route("/ping", get(crate::api::ping))
-            .route("/scrape", post(crate::api::scrape_ynews))
+            .route("/ping", get(api::ping))
+            .route("/scrape", post(api::scrape_hackernews))
             .with_state(app_state);
 
         // Bind and serve

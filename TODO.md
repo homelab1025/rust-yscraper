@@ -7,7 +7,5 @@
 6. move to postgres
 
 ## Notes (To be ignored by AI)
-Switch the main function to being synch and start a tokio runtime and block on it. Inside of that start an axum http server that serves a ping GET resource (response is "pong"). The scraping is done upon calling the "/scrape" resource with a POST http method by a client.
-
-Add an axum server with a GET ping resource. This server is the first thing that starts and it's independent of the scraping. Minimal features for new crates being added. The response for the ping resource should be pong.
+generate tests for get_comments function. Consider failure scenarios along with a happy path.
 ## DONE

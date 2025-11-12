@@ -1,0 +1,212 @@
+diff --git a/TODO.md b/TODO.md
+index 8cd0335..8050036 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -7,7 +7,5 @@
+ 6. move to postgres
+
+ ## Notes (To be ignored by AI)
+-Switch the main function to being synch and start a tokio runtime and block on it. Inside of that start an axum http server that serves a ping GET resource (response is "pong"). The scraping is done upon calling the "/scrape" resource with a POST http method by a client.
+-
+-Add an axum server with a GET ping resource. This server is the first thing that starts and it's independent of the scraping. Minimal features for new crates being added. The response for the ping resource should be pong.
++generate tests for get_comments function. Consider failure scenarios along with a happy path.
+ ## DONE
+\ No newline at end of file
+diff --git a/manual_test.http b/manual_test.http
+index ec41a1b..2302422 100644
+--- a/manual_test.http
++++ b/manual_test.http
+@@ -1,5 +1,9 @@
+-### GET request to example server
+-GET https://examples.http-client.intellij.net/get
+-    ?generated-in=IntelliJ IDEA
++### POST request to example server
++POST http://localhost:3000/scrape
++Content-Type: application/json
++
++{
++"url" : "https://news.ycombinator.com/item?id=45788736"
++}
+
+ ###
+\ No newline at end of file
+diff --git a/src/api.rs b/src/api.rs
+index 2093c96..925f31e 100644
+--- a/src/api.rs
++++ b/src/api.rs
+@@ -11,7 +11,6 @@ use log::{error, info};
+ use serde::Deserialize;
+ use sqlx::{Pool, Sqlite};
+ use std::collections::HashMap;
+-use std::error::Error;
+ use std::time::{SystemTime, UNIX_EPOCH};
+
+ #[derive(Debug, Deserialize)]
+@@ -20,6 +19,7 @@ pub(crate) struct ScrapeRequest {
+ }
+
+ /// Health check handler: echoes back the provided `msg` with current Unix timestamp
++#[axum::debug_handler]
+ pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
+     match params.get("msg").filter(|m| !m.is_empty()) {
+         Some(msg) => {
+@@ -38,7 +38,8 @@ pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoRes
+ }
+
+ /// Triggers scraping and inserts results into the database.
+-pub async fn scrape_ynews(
++#[axum::debug_handler]
++pub async fn scrape_hackernews(
+     State(state): State<AppState>,
+     Json(payload): Json<ScrapeRequest>,
+ ) -> impl IntoResponse {
+@@ -51,25 +52,33 @@ pub async fn scrape_ynews(
+     }
+
+     info!("/scrape called; starting scraping for {}", target_url);
+-    let comments = get_comments(&target_url).await;
+-    info!("Parsed {} root comments", comments.len());
++    let comments_retrieval = get_comments(&target_url).await;
++    match comments_retrieval {
++        Ok(comments) => {
++            info!("Parsed {} root comments", comments.len());
+
+-    let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
+-    let mut total_inserted = 0usize;
+-    for batch in batches.iter() {
+-        match insert_comments(&state.db_pool, batch).await {
+-            Ok(n) => {
+-                total_inserted += n;
+-                info!("Inserted {} comments into the database", n);
++            let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
++            let mut total_inserted = 0usize;
++            for batch in batches.iter() {
++                match insert_comments(&state.db_pool, batch).await {
++                    Ok(n) => {
++                        total_inserted += n;
++                        info!("Inserted {} comments into the database", n);
++                    }
++                    Err(e) => error!("Failed to insert comments: {}", e),
++                }
+             }
+-            Err(e) => error!("Failed to insert comments: {}", e),
++
++            (
++                StatusCode::OK,
++                format!("ok: parsed={}, inserted={}", comments.len(), total_inserted),
++            )
+         }
++        Err(error) => (
++            StatusCode::INTERNAL_SERVER_ERROR,
++            format!("failed to scrape: {}", error),
++        ),
+     }
+-
+-    (
+-        StatusCode::OK,
+-        format!("ok: parsed={}, inserted={}", comments.len(), total_inserted),
+-    )
+ }
+
+ fn validate_url(target_url: &String) -> Result<(), String> {
+@@ -87,14 +96,14 @@ async fn insert_comments(
+     comments: &Vec<CommentRecord>,
+ ) -> Result<usize, sqlx::Error> {
+     let mut inserted = 0usize;
+-    for c in comments {
++    for comment in comments {
+         let result = sqlx::query(
+             "INSERT OR IGNORE INTO comments (id, author, date, text) VALUES (?1, ?2, ?3, ?4)",
+         )
+-        .bind(c.id)
+-        .bind(&c.author)
+-        .bind(&c.date)
+-        .bind(&c.text)
++        .bind(comment.id)
++        .bind(&comment.author)
++        .bind(&comment.date)
++        .bind(&comment.text)
+         .execute(pool)
+         .await?;
+         inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
+diff --git a/src/main.rs b/src/main.rs
+index c5e7e64..f7eabef 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -109,8 +109,8 @@ fn main() {
+
+         // Build router
+         let app = Router::new()
+-            .route("/ping", get(crate::api::ping))
+-            .route("/scrape", post(crate::api::scrape_ynews))
++            .route("/ping", get(api::ping))
++            .route("/scrape", post(api::scrape_hackernews))
+             .with_state(app_state);
+
+         // Bind and serve
+diff --git a/src/scrape.rs b/src/scrape.rs
+index 19d47cb..d898799 100644
+--- a/src/scrape.rs
++++ b/src/scrape.rs
+@@ -1,36 +1,49 @@
++use crate::scrape::ScrapeError::HtmlFetchError;
+ use crate::CommentRecord;
+-use log::{error, info, warn};
++use log::{info, warn};
+ use scraper::{Html, Selector};
++use std::error::Error;
++use std::fmt::Display;
+ use std::time::Duration;
+
+-pub async fn get_comments(url: &String) -> Vec<CommentRecord> {
++#[derive(Debug)]
++pub enum ScrapeError {
++    HtmlFetchError(reqwest::Error),
++}
++
++impl Error for ScrapeError {}
++impl Display for ScrapeError {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        match self {
++            HtmlFetchError(e) => write!(f, "failed to fetch HTML: {}", e),
++        }
++    }
++}
++
++pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
+     info!("Fetching URL: {}", url);
+     let html = match fetch_html(&url).await {
+         Ok(h) => h,
+         Err(e) => {
+-            error!("Failed to fetch '{}': {}", url, e);
+-            std::process::exit(1);
++            return Err(Box::new(HtmlFetchError(e)));
+         }
+     };
+
+     info!("Parsing root comments...");
+     let comments = parse_root_comments(&html);
+-    comments
++    Ok(comments)
+ }
+
+-async fn fetch_html(url: &str) -> Result<String, Box<dyn std::error::Error>> {
++async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
+     let client = reqwest::Client::builder()
+         .timeout(Duration::from_secs(20))
+         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
+         .build()?;
+
+     let resp = client.get(url).send().await?;
+-    // let resp = client.get(url).send()?;
+-    if !resp.status().is_success() {
+-        return Err(format!("HTTP error: {}", resp.status()).into());
+-    }
+-    let text = resp.text().await?;
+-    Ok(text)
++
++    let valid_response = resp.error_for_status()?;
++    Ok(valid_response.text().await?)
+ }
+
+ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {

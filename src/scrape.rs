@@ -1,36 +1,49 @@
 use crate::CommentRecord;
-use log::{error, info, warn};
+use crate::scrape::ScrapeError::HtmlFetchError;
+use log::{info, warn};
 use scraper::{Html, Selector};
+use std::error::Error;
+use std::fmt::Display;
 use std::time::Duration;
 
-pub async fn get_comments(url: &String) -> Vec<CommentRecord> {
+#[derive(Debug)]
+pub enum ScrapeError {
+    HtmlFetchError(reqwest::Error),
+}
+
+impl Error for ScrapeError {}
+impl Display for ScrapeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HtmlFetchError(e) => write!(f, "failed to fetch HTML: {}", e),
+        }
+    }
+}
+
+pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
     info!("Fetching URL: {}", url);
     let html = match fetch_html(&url).await {
         Ok(h) => h,
         Err(e) => {
-            error!("Failed to fetch '{}': {}", url, e);
-            std::process::exit(1);
+            return Err(Box::new(HtmlFetchError(e)));
         }
     };
 
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);
-    comments
+    Ok(comments)
 }
 
-async fn fetch_html(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
         .build()?;
 
     let resp = client.get(url).send().await?;
-    // let resp = client.get(url).send()?;
-    if !resp.status().is_success() {
-        return Err(format!("HTTP error: {}", resp.status()).into());
-    }
-    let text = resp.text().await?;
-    Ok(text)
+
+    let valid_response = resp.error_for_status()?;
+    Ok(valid_response.text().await?)
 }
 
 fn parse_root_comments(html: &str) -> Vec<CommentRecord> {

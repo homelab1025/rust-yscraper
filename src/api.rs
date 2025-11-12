@@ -11,7 +11,6 @@ use log::{error, info};
 use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
 use std::collections::HashMap;
-use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize)]
@@ -20,6 +19,7 @@ pub(crate) struct ScrapeRequest {
 }
 
 /// Health check handler: echoes back the provided `msg` with current Unix timestamp
+#[axum::debug_handler]
 pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
     match params.get("msg").filter(|m| !m.is_empty()) {
         Some(msg) => {
@@ -38,7 +38,8 @@ pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoRes
 }
 
 /// Triggers scraping and inserts results into the database.
-pub async fn scrape_ynews(
+#[axum::debug_handler]
+pub async fn scrape_hackernews(
     State(state): State<AppState>,
     Json(payload): Json<ScrapeRequest>,
 ) -> impl IntoResponse {
@@ -51,25 +52,33 @@ pub async fn scrape_ynews(
     }
 
     info!("/scrape called; starting scraping for {}", target_url);
-    let comments = get_comments(&target_url).await;
-    info!("Parsed {} root comments", comments.len());
+    let comments_retrieval = get_comments(&target_url).await;
+    match comments_retrieval {
+        Ok(comments) => {
+            info!("Parsed {} root comments", comments.len());
 
-    let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
-    let mut total_inserted = 0usize;
-    for batch in batches.iter() {
-        match insert_comments(&state.db_pool, batch).await {
-            Ok(n) => {
-                total_inserted += n;
-                info!("Inserted {} comments into the database", n);
+            let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
+            let mut total_inserted = 0usize;
+            for batch in batches.iter() {
+                match insert_comments(&state.db_pool, batch).await {
+                    Ok(n) => {
+                        total_inserted += n;
+                        info!("Inserted {} comments into the database", n);
+                    }
+                    Err(e) => error!("Failed to insert comments: {}", e),
+                }
             }
-            Err(e) => error!("Failed to insert comments: {}", e),
-        }
-    }
 
-    (
-        StatusCode::OK,
-        format!("ok: parsed={}, inserted={}", comments.len(), total_inserted),
-    )
+            (
+                StatusCode::OK,
+                format!("ok: parsed={}, inserted={}", comments.len(), total_inserted),
+            )
+        }
+        Err(error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("failed to scrape: {}", error),
+        ),
+    }
 }
 
 fn validate_url(target_url: &String) -> Result<(), String> {
@@ -87,14 +96,14 @@ async fn insert_comments(
     comments: &Vec<CommentRecord>,
 ) -> Result<usize, sqlx::Error> {
     let mut inserted = 0usize;
-    for c in comments {
+    for comment in comments {
         let result = sqlx::query(
             "INSERT OR IGNORE INTO comments (id, author, date, text) VALUES (?1, ?2, ?3, ?4)",
         )
-        .bind(c.id)
-        .bind(&c.author)
-        .bind(&c.date)
-        .bind(&c.text)
+        .bind(comment.id)
+        .bind(&comment.author)
+        .bind(&comment.date)
+        .bind(&comment.text)
         .execute(pool)
         .await?;
         inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
