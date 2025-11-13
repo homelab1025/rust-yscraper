@@ -1,0 +1,30 @@
+<html>
+  <body>
+    <table>
+      <!-- First root comment: invalid/missing id in age link (should be skipped) -->
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="0" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <a class="hnuser">charlie</a>
+            <!-- Note: href lacks id=... so parser won't find a numeric id -->
+            <span class="age"><a href="item?noid=111">2 hours ago</a></span>
+          </div>
+          <div class="comment">This one should be ignored due to missing id</div>
+        </td>
+      </tr>
+
+      <!-- Second root comment: valid and should be kept -->
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="0" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <a class="hnuser">dana</a>
+            <span class="age" title="2025-02-02T08:30:00"><a href="item?id=54321">just now</a></span>
+          </div>
+          <div class="comment">Second valid root comment</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

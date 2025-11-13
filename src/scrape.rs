@@ -1,6 +1,7 @@
+use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError};
 use crate::CommentRecord;
-use crate::scrape::ScrapeError::HtmlFetchError;
 use log::{info, warn};
+use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
 use std::error::Error;
 use std::fmt::Display;
@@ -9,6 +10,7 @@ use std::time::Duration;
 #[derive(Debug)]
 pub enum ScrapeError {
     HtmlFetchError(reqwest::Error),
+    ElementSelectorError(),
 }
 
 impl Error for ScrapeError {}
@@ -16,6 +18,7 @@ impl Display for ScrapeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             HtmlFetchError(e) => write!(f, "failed to fetch HTML: {}", e),
+            ElementSelectorError() => write!(f, "failed to create HTML selector"),
         }
     }
 }
@@ -31,7 +34,10 @@ pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Er
 
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);
-    Ok(comments)
+    match comments {
+        Ok(c) => Ok(c),
+        Err(e) => Err(Box::new(ElementSelectorError())),
+    }
 }
 
 async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
@@ -46,16 +52,16 @@ async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
     Ok(valid_response.text().await?)
 }
 
-fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
+fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> {
     let document = Html::parse_document(html);
-    let tr_sel = Selector::parse("tr.athing.comtr").unwrap();
-    let ind_img_sel = Selector::parse("td.ind img").unwrap();
-    let author_sel = Selector::parse("a.hnuser").unwrap();
-    let age_sel = Selector::parse("span.age").unwrap();
-    let age_link_sel = Selector::parse("span.age a").unwrap();
-    let text_sel = Selector::parse(".comment").unwrap();
+    let tr_sel = Selector::parse("tr.athing.comtr")?;
+    let ind_img_sel = Selector::parse("td.ind img")?;
+    let author_sel = Selector::parse("a.hnuser")?;
+    let age_sel = Selector::parse("span.age")?;
+    let age_link_sel = Selector::parse("span.age a")?;
+    let text_sel = Selector::parse(".comment")?;
 
-    let mut out = Vec::new();
+    let mut parsed_comments = Vec::new();
 
     for tr in document.select(&tr_sel) {
         // Determine indent: root comments have width=0 on the indent img
@@ -123,7 +129,7 @@ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
             continue;
         }
 
-        out.push(CommentRecord {
+        parsed_comments.push(CommentRecord {
             id,
             author,
             date,
@@ -132,5 +138,143 @@ fn parse_root_comments(html: &str) -> Vec<CommentRecord> {
         });
     }
 
-    out
+    Ok(parsed_comments)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::get_comments;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // Use current_thread for faster, deterministic tests
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_happy_path_parses_one_root_comment() {
+        // Arrange: start mock server and stub HTML resembling HN structure
+        let server = MockServer::start().await;
+        let html = include_str!("../tests/fixtures/hn_happy_root_and_child.html");
+
+        Mock::given(method("GET"))
+            .and(path("/hn"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(html))
+            .mount(&server)
+            .await;
+
+        // Act
+        let url = format!("{}/hn", &server.uri());
+        let result = get_comments(&url).await;
+
+        // Assert
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let comments = result.unwrap();
+        assert_eq!(comments.len(), 1, "should only include root comments");
+        let c = &comments[0];
+        assert_eq!(c.id, 12345);
+        assert_eq!(c.author, "alice");
+        assert_eq!(c.date, "2025-01-01T12:00:00");
+        assert!(c.text.contains("Hello world!"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_returns_err_on_http_500() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/boom"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+
+        let url = format!("{}/boom", &server.uri());
+        let result = get_comments(&url).await;
+        assert!(result.is_err(), "expected Err on non-200 status");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_returns_err_on_connect_error() {
+        // Choose an address likely closed. Port 1 is typically privileged/closed.
+        let url = String::from("http://127.0.0.1:1/unreachable");
+        let result = get_comments(&url).await;
+        assert!(result.is_err(), "expected Err on connect error");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_skips_first_with_invalid_id_keeps_second() {
+        // Arrange
+        let server = MockServer::start().await;
+        let html = include_str!("../tests/fixtures/hn_first_invalid_second_ok.html");
+        Mock::given(method("GET"))
+            .and(path("/mix1"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(html))
+            .mount(&server)
+            .await;
+
+        // Act
+        let url = format!("{}/mix1", &server.uri());
+        let result = get_comments(&url).await;
+
+        // Assert
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let comments = result.unwrap();
+        assert_eq!(
+            comments.len(),
+            1,
+            "only the second valid root comment should remain"
+        );
+        let c = &comments[0];
+        assert_eq!(c.id, 54321);
+        assert_eq!(c.author, "dana");
+        assert_eq!(c.date, "2025-02-02T08:30:00");
+        assert!(c.text.contains("Second valid root comment"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_skips_first_with_empty_author_and_text() {
+        // Arrange
+        let server = MockServer::start().await;
+        let html = include_str!("../tests/fixtures/hn_first_empty_text_second_with_text.html");
+        Mock::given(method("GET"))
+            .and(path("/mix2"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(html))
+            .mount(&server)
+            .await;
+
+        // Act
+        let url = format!("{}/mix2", &server.uri());
+        let result = get_comments(&url).await;
+
+        // Assert
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let comments = result.unwrap();
+        assert_eq!(
+            comments.len(),
+            1,
+            "only the second comment with text should remain"
+        );
+        let c = &comments[0];
+        assert_eq!(c.id, 22222);
+        assert_eq!(c.author, "eve");
+        assert_eq!(c.date, "2025-03-03T10:00:00");
+        assert!(c.text.contains("Only this one counts"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_returns_empty_when_page_structure_unparsable_even_with_comment_like_section() {
+        // Arrange: HTML has a .comment-like div but lacks required selectors (no tr.athing.comtr)
+        let server = MockServer::start().await;
+        let html = include_str!("../tests/fixtures/hn_unparsable_with_comment_section.html");
+        Mock::given(method("GET"))
+            .and(path("/unparsable"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(html))
+            .mount(&server)
+            .await;
+
+        // Act
+        let url = format!("{}/unparsable", &server.uri());
+        let result = get_comments(&url).await;
+
+        // Assert: parse succeeds (no selector creation error), but no root comments are found
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let comments = result.unwrap();
+        assert!(comments.is_empty(), "expected empty vector, got {:?}", comments);
+    }
 }

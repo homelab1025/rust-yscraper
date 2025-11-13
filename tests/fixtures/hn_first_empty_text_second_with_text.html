@@ -1,0 +1,29 @@
+<html>
+  <body>
+    <table>
+      <!-- First root comment: has an id but missing author and empty text (should be skipped) -->
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="0" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <!-- No a.hnuser here -->
+            <span class="age" title="2025-03-03T09:00:00"><a href="item?id=11111">some time</a></span>
+          </div>
+          <div class="comment"></div>
+        </td>
+      </tr>
+
+      <!-- Second root comment: valid and should be kept -->
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="0" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <a class="hnuser">eve</a>
+            <span class="age" title="2025-03-03T10:00:00"><a href="item?id=22222">just now</a></span>
+          </div>
+          <div class="comment">Only this one counts</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -13,3 +13,6 @@ log = "0.4"
 simplelog = "0.12"
 config = { version = "0.15", default-features = false, features = ["ini"] }
 serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+wiremock = "0.6"

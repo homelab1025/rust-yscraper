@@ -1,0 +1,16 @@
+<html>
+  <body>
+    <!-- This page contains a comment-like section but does NOT use the HN table/row structure
+         that our parser expects (no tr.athing.comtr, no span.age a with item?id=...). -->
+    <div class="content">
+      <article>
+        <header>
+          <span class="user">frank</span>
+          <time datetime="2025-04-04T11:11:11">just now</time>
+        </header>
+        <!-- A valid-looking comment block, but outside the expected selectors -->
+        <div class="comment">This looks like a comment but should not be parsed.</div>
+      </article>
+    </div>
+  </body>
+</html>

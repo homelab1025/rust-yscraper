@@ -1,0 +1,27 @@
+<html>
+  <body>
+    <table>
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="0" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <a class="hnuser">alice</a>
+            <span class="age" title="2025-01-01T12:00:00"><a href="item?id=12345">1 hour ago</a></span>
+          </div>
+          <div class="comment">Hello world!</div>
+        </td>
+      </tr>
+      <!-- A child comment that should be ignored (width > 0) -->
+      <tr class="athing comtr">
+        <td class="ind"><img src="s.gif" width="40" height="1"></td>
+        <td class="default">
+          <div class="comhead">
+            <a class="hnuser">bob</a>
+            <span class="age"><a href="item?id=999">just now</a></span>
+          </div>
+          <div class="comment">Nested comment</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

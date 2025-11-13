@@ -14,7 +14,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
 
-const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
+// const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
 
 #[derive(Debug, Default, Clone)]
@@ -29,7 +29,6 @@ pub struct CommentRecord {
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) db_pool: Pool<Sqlite>,
-    pub(crate) url: String,
 }
 
 async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
@@ -58,34 +57,14 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
     Ok(pool)
 }
 
-async fn get_comment_count(pool: &Pool<Sqlite>) -> Result<i64, sqlx::Error> {
-    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM comments")
-        .fetch_one(pool)
-        .await?;
-    Ok(count)
-}
-
 fn main() {
     // init logging first
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
     // Load configuration using the `config` crate. The properties file is optional.
-    let settings = Config::builder()
-        .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
-        .build();
-
-    let url = match settings {
-        Ok(settings) => settings
-            .get_string("url")
-            .unwrap_or_else(|_| DEFAULT_URL.to_string()),
-        Err(e) => {
-            error!(
-                "Failed to load config file '{}': {}. Using defaults.",
-                CONFIG_PATH, e
-            );
-            DEFAULT_URL.to_string()
-        }
-    };
+    // let settings = Config::builder()
+    //     .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
+    //     .build();
 
     // Build a Tokio runtime and block on the async server startup.
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
@@ -105,7 +84,7 @@ fn main() {
             }
         };
 
-        let app_state = AppState { db_pool, url };
+        let app_state = AppState { db_pool };
 
         // Build router
         let app = Router::new()
