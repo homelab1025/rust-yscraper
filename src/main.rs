@@ -1,12 +1,13 @@
 mod api;
+mod config;
 mod scrape;
 mod utils;
 
+use crate::config::AppConfig;
 use axum::{
-    Router,
     routing::{get, post},
+    Router,
 };
-use config::{Config, File, FileFormat};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
@@ -32,10 +33,20 @@ pub(crate) struct AppState {
 }
 
 async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
-    let db_url = format!("sqlite://{}", db_path);
-    if !Sqlite::database_exists(&db_path).await.unwrap_or(false) {
+    // Support both plain paths ("comments.db") and full SQLite URLs (e.g., "sqlite::memory:" or "sqlite:///file.db")
+    let (db_url, should_manage_file): (String, bool) = if db_path.starts_with("sqlite:") {
+        (db_path.to_string(), false)
+    } else {
+        (format!("sqlite://{}", db_path), true)
+    };
+
+    if should_manage_file
+        && !Sqlite::database_exists(db_url.as_str())
+            .await
+            .unwrap_or(false)
+    {
         info!("Initializing database at {}", db_path);
-        Sqlite::create_database(&db_path).await?;
+        Sqlite::create_database(db_url.as_str()).await?;
     }
 
     let pool = SqlitePoolOptions::new()
@@ -43,16 +54,41 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
         .connect(&db_url)
         .await?;
 
+    // Ensure foreign keys are enforced
+    sqlx::query("PRAGMA foreign_keys = ON;")
+        .execute(&pool)
+        .await?;
+
+    // URLs table: stores HN item id, full URL, and date added (UTC)
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS urls (
+            id INTEGER PRIMARY KEY,
+            url TEXT NOT NULL UNIQUE,
+            date_added TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+    )
+    .execute(&pool)
+    .await?;
+
+    // Comments table for fresh databases: includes the url_id foreign key
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             author TEXT NOT NULL,
             date TEXT NOT NULL,
-            text TEXT NOT NULL
+            text TEXT NOT NULL,
+            url_id INTEGER NOT NULL,
+            FOREIGN KEY (url_id) REFERENCES urls(id)
         )",
     )
     .execute(&pool)
     .await?;
+
+    // Best-effort migration for existing DBs that may lack the url_id column
+    // This will fail harmlessly if the column already exists
+    let _ = sqlx::query("ALTER TABLE comments ADD COLUMN url_id INTEGER;")
+        .execute(&pool)
+        .await;
 
     Ok(pool)
 }
@@ -61,10 +97,7 @@ fn main() {
     // init logging first
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
-    // Load configuration using the `config` crate. The properties file is optional.
-    // let settings = Config::builder()
-    //     .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
-    //     .build();
+    let cfg = AppConfig::load_from_file(CONFIG_PATH);
 
     // Build a Tokio runtime and block on the async server startup.
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
@@ -74,9 +107,11 @@ fn main() {
         .expect("failed to build Tokio runtime");
 
     tokio_rt.block_on(async move {
+        // Load configuration
+
+
         // Initialize the database inside the async context
-        let db_path = "comments.db";
-        let db_pool = match init_db(db_path).await {
+        let db_pool = match init_db(&cfg.db_path).await {
             Ok(p) => p,
             Err(e) => {
                 error!("Failed to initialize database: {}", e);
@@ -93,7 +128,7 @@ fn main() {
             .with_state(app_state);
 
         // Bind and serve
-        let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+        let addr: SocketAddr = format!("127.0.0.1:{}", cfg.server_port).parse().unwrap();
         info!("Starting HTTP server at http://{}", addr);
         let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 

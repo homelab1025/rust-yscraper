@@ -1,7 +1,7 @@
 // Access items defined in the crate root (main.rs)
 use super::{AppState, CommentRecord};
 use crate::scrape::get_comments;
-use crate::utils::create_batches;
+use crate::utils::{create_batches, extract_item_id_from_url};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
@@ -51,6 +51,27 @@ pub async fn scrape_hackernews(
         return (StatusCode::BAD_REQUEST, e);
     }
 
+    // Extract the HN item id from the URL
+    let url_id = match extract_item_id_from_url(&target_url) {
+        Some(id) => id,
+        None => {
+            error!("Unable to extract id= from url: {}", &target_url);
+            return (
+                StatusCode::BAD_REQUEST,
+                "invalid Hacker News item url; missing id query parameter".to_string(),
+            );
+        }
+    };
+
+    // Ensure the URL is recorded in the urls table and get (or confirm) its id
+    if let Err(e) = upsert_url(&state.db_pool, url_id, &target_url).await {
+        error!("Failed to upsert url: {}", e);
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to record url".to_string(),
+        );
+    }
+
     info!("/scrape called; starting scraping for {}", target_url);
     let comments_retrieval = get_comments(&target_url).await;
     match comments_retrieval {
@@ -60,7 +81,7 @@ pub async fn scrape_hackernews(
             let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
             let mut total_inserted = 0usize;
             for batch in batches.iter() {
-                match insert_comments(&state.db_pool, batch).await {
+                match insert_comments(&state.db_pool, batch, url_id).await {
                     Ok(n) => {
                         total_inserted += n;
                         info!("Inserted {} comments into the database", n);
@@ -91,19 +112,31 @@ fn validate_url(target_url: &String) -> Result<(), String> {
     Ok(())
 }
 
+async fn upsert_url(pool: &Pool<Sqlite>, id: i64, url: &str) -> Result<(), sqlx::Error> {
+    // Insert if missing; if present, ignore
+    sqlx::query("INSERT OR IGNORE INTO urls (id, url) VALUES (?1, ?2)")
+        .bind(id)
+        .bind(url)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 async fn insert_comments(
     pool: &Pool<Sqlite>,
     comments: &Vec<CommentRecord>,
+    url_id: i64,
 ) -> Result<usize, sqlx::Error> {
     let mut inserted = 0usize;
     for comment in comments {
         let result = sqlx::query(
-            "INSERT OR IGNORE INTO comments (id, author, date, text) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT OR IGNORE INTO comments (id, author, date, text, url_id) VALUES (?1, ?2, ?3, ?4, ?5)",
         )
         .bind(comment.id)
         .bind(&comment.author)
         .bind(&comment.date)
         .bind(&comment.text)
+        .bind(url_id)
         .execute(pool)
         .await?;
         inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict

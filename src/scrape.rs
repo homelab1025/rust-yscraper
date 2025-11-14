@@ -1,4 +1,5 @@
-use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError};
+use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
+use crate::utils::extract_item_id_from_url;
 use crate::CommentRecord;
 use log::{info, warn};
 use scraper::error::SelectorErrorKind;
@@ -11,6 +12,7 @@ use std::time::Duration;
 pub enum ScrapeError {
     HtmlFetchError(reqwest::Error),
     ElementSelectorError(),
+    InvalidThreadTitle(),
 }
 
 impl Error for ScrapeError {}
@@ -19,6 +21,10 @@ impl Display for ScrapeError {
         match self {
             HtmlFetchError(e) => write!(f, "failed to fetch HTML: {}", e),
             ElementSelectorError() => write!(f, "failed to create HTML selector"),
+            InvalidThreadTitle() => write!(
+                f,
+                "invalid thread title: expected prefix 'Ask HN: What Are You Working On'"
+            ),
         }
     }
 }
@@ -32,11 +38,18 @@ pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Er
         }
     };
 
+    // Validate thread title for real HN item pages only
+    if url.starts_with("https://news.ycombinator.com/item") {
+        if let Err(e) = validate_thread_title(&html) {
+            return Err(Box::new(e));
+        }
+    }
+
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);
     match comments {
         Ok(c) => Ok(c),
-        Err(e) => Err(Box::new(ElementSelectorError())),
+        Err(_e) => Err(Box::new(ElementSelectorError())),
     }
 }
 
@@ -50,6 +63,25 @@ async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
 
     let valid_response = resp.error_for_status()?;
     Ok(valid_response.text().await?)
+}
+
+const THREAD_PREFIX: &'static str = "Ask HN: What Are You Working On";
+
+fn validate_thread_title(html: &str) -> Result<(), ScrapeError> {
+    let document = Html::parse_document(html);
+    let tl_sel = Selector::parse("span.titleline").map_err(|_| ElementSelectorError())?;
+    if let Some(span) = document.select(&tl_sel).next() {
+        let title_text = span.text().collect::<String>();
+        if title_text
+            .to_lowercase()
+            .starts_with(THREAD_PREFIX.to_lowercase().as_str())
+        {
+            return Ok(());
+        } else {
+            warn!("Invalid thread title: {}", title_text);
+        }
+    }
+    Err(InvalidThreadTitle())
 }
 
 fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> {
@@ -82,21 +114,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
             .select(&age_link_sel)
             .next()
             .and_then(|a| a.value().attr("href"))
-            .and_then(|href| {
-                // href format: item?id=<COMMENT_ID>
-                href.split('?').nth(1).and_then(|qs| {
-                    let mut out_id: Option<i64> = None;
-                    for p in qs.split('&') {
-                        if let Some(v) = p.strip_prefix("id=") {
-                            if let Ok(n) = v.parse::<i64>() {
-                                out_id = Some(n);
-                                break;
-                            }
-                        }
-                    }
-                    out_id
-                })
-            });
+            .and_then(|href| extract_item_id_from_url(&href));
 
         let id = match id_opt {
             Some(v) => v,
@@ -258,7 +276,8 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn get_comments_returns_empty_when_page_structure_unparsable_even_with_comment_like_section() {
+    async fn get_comments_returns_empty_when_page_structure_unparsable_even_with_comment_like_section()
+     {
         // Arrange: HTML has a .comment-like div but lacks required selectors (no tr.athing.comtr)
         let server = MockServer::start().await;
         let html = include_str!("../tests/fixtures/hn_unparsable_with_comment_section.html");
@@ -275,6 +294,10 @@ mod tests {
         // Assert: parse succeeds (no selector creation error), but no root comments are found
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
         let comments = result.unwrap();
-        assert!(comments.is_empty(), "expected empty vector, got {:?}", comments);
+        assert!(
+            comments.is_empty(),
+            "expected empty vector, got {:?}",
+            comments
+        );
     }
 }
