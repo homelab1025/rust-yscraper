@@ -7,5 +7,5 @@
 6. move to postgres
 
 ## Notes (To be ignored by AI)
-do injection using function references instead of OOP dep injection. This should help with testing functions without having to run the whole app.
+In the comments table add the month(extracted from the thread title) as a separate column. If the url is scraped again, do an update on the new column like you do with the text and url reference.
 ## DONE

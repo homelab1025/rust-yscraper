@@ -8,6 +8,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use tower_http::cors::{Any, CorsLayer};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
@@ -129,7 +130,9 @@ fn main() {
         let app = Router::new()
             .route("/ping", get(api::ping))
             .route("/scrape", post(api::scrape_hackernews))
-            .with_state(app_state);
+            .route("/comments", get(api::list_comments))
+            .with_state(app_state)
+            .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any));
 
         // Bind and serve
         let addr: SocketAddr = format!("127.0.0.1:{}", cfg.server_port).parse().unwrap();

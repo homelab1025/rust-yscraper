@@ -1,14 +1,14 @@
 // Access items defined in the crate root (main.rs)
 use super::{AppState, CommentRecord};
-use crate::scrape::get_comments;
+use crate::scrape::get_comments as scrape_get_comments;
 use crate::utils::{create_batches, extract_item_id_from_url};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 use log::{error, info};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -35,6 +35,78 @@ pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoRes
             "missing required query parameter: msg".to_string(),
         ),
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CommentsQuery {
+    pub offset: Option<i64>,
+    pub count: Option<i64>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct CommentDto {
+    pub id: i64,
+    pub text: String,
+    pub user: String,
+    pub url_id: i64,
+    pub date: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CommentsPage {
+    pub total: i64,
+    pub items: Vec<CommentDto>,
+}
+
+/// GET /comments — returns comments ordered by date desc with pagination
+#[axum::debug_handler]
+pub async fn list_comments(
+    State(state): State<AppState>,
+    Query(q): Query<CommentsQuery>,
+) -> impl IntoResponse {
+    let offset = q.offset.unwrap_or(0).max(0);
+    let count = q.count.unwrap_or(10).clamp(1, 100);
+
+    // total count
+    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
+        .fetch_one(&state.db_pool)
+        .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Failed to count comments: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "failed to fetch total").into_response();
+        }
+    };
+
+    // page items ordered by date desc; fallback id desc for ties
+    let rows: Result<Vec<CommentDto>, sqlx::Error> = sqlx::query_as(
+        r#"
+        SELECT id, author AS user, date, text, url_id
+        FROM comments
+        ORDER BY date DESC, id DESC
+        LIMIT ? OFFSET ?
+        "#,
+    )
+    .bind(count)
+    .bind(offset)
+    .fetch_all(&state.db_pool)
+    .await;
+
+    let items = match rows {
+        Ok(r) => r,
+        Err(e) => {
+            error!("Failed to fetch comments page: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to fetch comments",
+            )
+                .into_response();
+        }
+    };
+
+    let body = CommentsPage { total, items };
+    Json(body).into_response()
 }
 
 /// Triggers scraping and inserts results into the database.
@@ -73,7 +145,7 @@ pub async fn scrape_hackernews(
     }
 
     info!("/scrape called; starting scraping for {}", target_url);
-    let comments_retrieval = get_comments(&target_url).await;
+    let comments_retrieval = scrape_get_comments(&target_url).await;
     match comments_retrieval {
         Ok(comments) => {
             info!("Parsed {} root comments", comments.len());
