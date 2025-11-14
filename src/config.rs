@@ -1,8 +1,6 @@
-use config::{Config, File, FileFormat};
+use config::Config;
 use serde::Deserialize;
 
-/// Application configuration loaded from `config.properties` (INI format).
-///
 /// Supported keys (flat or namespaced):
 /// - `port` or `server.port` (u16) — HTTP server port; default: 3000
 /// - `db_path` or `db.path` (string) — SQLite database file path; default: "comments.db"
@@ -22,19 +20,6 @@ impl Default for AppConfig {
 }
 
 impl AppConfig {
-    /// Load configuration from the optional `config.properties` file at `path`.
-    /// If the file is missing or invalid, sane defaults are used with best-effort overrides.
-    pub fn load_from_file(path: &str) -> Self {
-        let cfg = Config::builder()
-            .add_source(File::new(path, FileFormat::Ini).required(false))
-            .build();
-
-        match cfg {
-            Ok(c) => Self::from_config(&c),
-            Err(_) => Self::default(),
-        }
-    }
-
     /// Build `AppConfig` from an existing `config::Config`. Useful for tests
     /// where the source can be in-memory; no disk access required.
     pub fn from_config(cfg: &Config) -> Self {
@@ -49,5 +34,56 @@ impl AppConfig {
             .unwrap_or_default();
 
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_has_values_present() {
+        let cfg = AppConfig::default();
+        // Only check that defaults exist, not their concrete values
+        assert_ne!(cfg.server_port, 0, "default server_port should be non-zero");
+        assert!(!cfg.db_path.is_empty(), "default db_path should be non-empty");
+    }
+
+    #[test]
+    fn from_config_reads_flat_keys() {
+        let cfg = config::Config::builder()
+            .set_override("port", 4321).unwrap()
+            .set_override("db_path", "flat.db").unwrap()
+            .build().unwrap();
+
+        let app = AppConfig::from_config(&cfg);
+        assert_eq!(app.server_port, 4321);
+        assert_eq!(app.db_path, "flat.db");
+    }
+
+    #[test]
+    fn from_config_reads_namespaced_keys() {
+        let cfg = config::Config::builder()
+            .set_override("server.port", 5555).unwrap()
+            .set_override("db.path", "ns.db").unwrap()
+            .build().unwrap();
+
+        let app = AppConfig::from_config(&cfg);
+        assert_eq!(app.server_port, 5555);
+        assert_eq!(app.db_path, "ns.db");
+    }
+
+    #[test]
+    fn flat_keys_take_precedence_over_namespaced() {
+        let cfg = config::Config::builder()
+            .set_override("server.port", 1111).unwrap()
+            .set_override("db.path", "ns.db").unwrap()
+            .set_override("port", 2222).unwrap()
+            .set_override("db_path", "flat.db").unwrap()
+            .build().unwrap();
+
+        let app = AppConfig::from_config(&cfg);
+        assert_eq!(app.server_port, 2222);
+        assert_eq!(app.db_path, "flat.db");
     }
 }

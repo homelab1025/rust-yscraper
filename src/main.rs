@@ -14,6 +14,7 @@ use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
+use ::config::{Config, File, FileFormat};
 
 // const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -97,7 +98,10 @@ fn main() {
     // init logging first
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
-    let cfg = AppConfig::load_from_file(CONFIG_PATH);
+    let cfg =AppConfig::from_config(
+        &Config::builder()
+            .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
+            .build().expect("Failed to load config file"));
 
     // Build a Tokio runtime and block on the async server startup.
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()

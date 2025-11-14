@@ -127,18 +127,21 @@ async fn insert_comments(
     comments: &Vec<CommentRecord>,
     url_id: i64,
 ) -> Result<usize, sqlx::Error> {
+    let sql_insert = "INSERT INTO comments (id, author, date, text, url_id) \
+    VALUES (?1, ?2, ?3, ?4, ?5) \
+    ON CONFLICT (id) DO UPDATE \
+    SET text=?4, url_id=?5";
+
     let mut inserted = 0usize;
     for comment in comments {
-        let result = sqlx::query(
-            "INSERT OR IGNORE INTO comments (id, author, date, text, url_id) VALUES (?1, ?2, ?3, ?4, ?5)",
-        )
-        .bind(comment.id)
-        .bind(&comment.author)
-        .bind(&comment.date)
-        .bind(&comment.text)
-        .bind(url_id)
-        .execute(pool)
-        .await?;
+        let result = sqlx::query(sql_insert)
+            .bind(comment.id)
+            .bind(&comment.author)
+            .bind(&comment.date)
+            .bind(&comment.text)
+            .bind(url_id)
+            .execute(pool)
+            .await?;
         inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
     }
     Ok(inserted)

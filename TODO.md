@@ -7,5 +7,5 @@
 6. move to postgres
 
 ## Notes (To be ignored by AI)
-generate tests for get_comments function. Consider failure scenarios along with a happy path.
+do injection using function references instead of OOP dep injection. This should help with testing functions without having to run the whole app.
 ## DONE
