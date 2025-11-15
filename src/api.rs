@@ -5,11 +5,10 @@ use crate::utils::{create_batches, extract_item_id_from_url};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
 };
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Sqlite};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -43,7 +42,7 @@ pub struct CommentsQuery {
     pub count: Option<i64>,
 }
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize)]
 pub struct CommentDto {
     pub id: i64,
     pub text: String,
@@ -68,10 +67,7 @@ pub async fn list_comments(
     let count = q.count.unwrap_or(10).clamp(1, 100);
 
     // total count
-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
-        .fetch_one(&state.db_pool)
-        .await
-    {
+    let total = match state.repo.count_comments().await {
         Ok(c) => c,
         Err(e) => {
             error!("Failed to count comments: {}", e);
@@ -80,20 +76,7 @@ pub async fn list_comments(
     };
 
     // page items ordered by date desc; fallback id desc for ties
-    let rows: Result<Vec<CommentDto>, sqlx::Error> = sqlx::query_as(
-        r#"
-        SELECT id, author AS user, date, text, url_id
-        FROM comments
-        ORDER BY date DESC, id DESC
-        LIMIT ? OFFSET ?
-        "#,
-    )
-    .bind(count)
-    .bind(offset)
-    .fetch_all(&state.db_pool)
-    .await;
-
-    let items = match rows {
+    let rows = match state.repo.page_comments(offset, count).await {
         Ok(r) => r,
         Err(e) => {
             error!("Failed to fetch comments page: {}", e);
@@ -104,6 +87,17 @@ pub async fn list_comments(
                 .into_response();
         }
     };
+
+    let items: Vec<CommentDto> = rows
+        .into_iter()
+        .map(|row| CommentDto {
+            id: row.id,
+            user: row.author,
+            date: row.date,
+            text: row.text,
+            url_id: row.url_id,
+        })
+        .collect();
 
     let body = CommentsPage { total, items };
     Json(body).into_response()
@@ -136,7 +130,7 @@ pub async fn scrape_hackernews(
     };
 
     // Ensure the URL is recorded in the urls table and get (or confirm) its id
-    if let Err(e) = upsert_url(&state.db_pool, url_id, &target_url).await {
+    if let Err(e) = state.repo.upsert_url(url_id, &target_url).await {
         error!("Failed to upsert url: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -153,7 +147,7 @@ pub async fn scrape_hackernews(
             let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
             let mut total_inserted = 0usize;
             for batch in batches.iter() {
-                match insert_comments(&state.db_pool, batch, url_id).await {
+                match state.repo.upsert_comments(batch, url_id).await {
                     Ok(n) => {
                         total_inserted += n;
                         info!("Inserted {} comments into the database", n);
@@ -182,39 +176,4 @@ fn validate_url(target_url: &String) -> Result<(), String> {
     }
 
     Ok(())
-}
-
-async fn upsert_url(pool: &Pool<Sqlite>, id: i64, url: &str) -> Result<(), sqlx::Error> {
-    // Insert if missing; if present, ignore
-    sqlx::query("INSERT OR IGNORE INTO urls (id, url) VALUES (?1, ?2)")
-        .bind(id)
-        .bind(url)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
-async fn insert_comments(
-    pool: &Pool<Sqlite>,
-    comments: &Vec<CommentRecord>,
-    url_id: i64,
-) -> Result<usize, sqlx::Error> {
-    let sql_insert = "INSERT INTO comments (id, author, date, text, url_id) \
-    VALUES (?1, ?2, ?3, ?4, ?5) \
-    ON CONFLICT (id) DO UPDATE \
-    SET text=?4, url_id=?5";
-
-    let mut inserted = 0usize;
-    for comment in comments {
-        let result = sqlx::query(sql_insert)
-            .bind(comment.id)
-            .bind(&comment.author)
-            .bind(&comment.date)
-            .bind(&comment.text)
-            .bind(url_id)
-            .execute(pool)
-            .await?;
-        inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
-    }
-    Ok(inserted)
 }

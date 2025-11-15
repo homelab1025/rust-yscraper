@@ -1,6 +1,6 @@
+use crate::CommentRecord;
 use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
 use crate::utils::extract_item_id_from_url;
-use crate::CommentRecord;
 use log::{info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
@@ -29,9 +29,9 @@ impl Display for ScrapeError {
     }
 }
 
-pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
+pub async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
     info!("Fetching URL: {}", url);
-    let html = match fetch_html(&url).await {
+    let html = match fetch_html(url).await {
         Ok(h) => h,
         Err(e) => {
             return Err(Box::new(HtmlFetchError(e)));
@@ -39,10 +39,10 @@ pub async fn get_comments(url: &String) -> Result<Vec<CommentRecord>, Box<dyn Er
     };
 
     // Validate thread title for real HN item pages only
-    if url.starts_with("https://news.ycombinator.com/item") {
-        if let Err(e) = validate_thread_title(&html) {
-            return Err(Box::new(e));
-        }
+    if url.starts_with("https://news.ycombinator.com/item")
+        && let Err(e) = validate_thread_title(&html)
+    {
+        return Err(Box::new(e));
     }
 
     info!("Parsing root comments...");
@@ -62,10 +62,10 @@ async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
     let resp = client.get(url).send().await?;
 
     let valid_response = resp.error_for_status()?;
-    Ok(valid_response.text().await?)
+    valid_response.text().await
 }
 
-const THREAD_PREFIX: &'static str = "Ask HN: What Are You Working On";
+const THREAD_PREFIX: &str = "Ask HN: What Are You Working On";
 
 fn validate_thread_title(html: &str) -> Result<(), ScrapeError> {
     let document = Html::parse_document(html);
@@ -114,7 +114,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
             .select(&age_link_sel)
             .next()
             .and_then(|a| a.value().attr("href"))
-            .and_then(|href| extract_item_id_from_url(&href));
+            .and_then(extract_item_id_from_url);
 
         let id = match id_opt {
             Some(v) => v,
@@ -127,7 +127,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
         let author = tr
             .select(&author_sel)
             .next()
-            .and_then(|a| Some(a.text().collect::<String>()))
+            .map(|a| a.text().collect::<String>())
             .unwrap_or_else(|| "".to_string());
 
         let date = tr

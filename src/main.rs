@@ -1,21 +1,24 @@
 mod api;
 mod config;
+mod db;
 mod scrape;
 mod utils;
 
 use crate::config::AppConfig;
+use crate::db::{CommentsRepository, SQLiteCommentsRepository};
+use ::config::{Config, File, FileFormat};
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
-use tower_http::cors::{Any, CorsLayer};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
-use ::config::{Config, File, FileFormat};
+use std::sync::Arc;
+use tower_http::cors::{Any, CorsLayer};
 
 // const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -31,7 +34,7 @@ pub struct CommentRecord {
 
 #[derive(Clone)]
 pub(crate) struct AppState {
-    pub(crate) db_pool: Pool<Sqlite>,
+    pub(crate) repo: Arc<dyn CommentsRepository>,
 }
 
 async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
@@ -99,10 +102,12 @@ fn main() {
     // init logging first
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
 
-    let cfg =AppConfig::from_config(
+    let cfg = AppConfig::from_config(
         &Config::builder()
             .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
-            .build().expect("Failed to load config file"));
+            .build()
+            .expect("Failed to load config file"),
+    );
 
     // Build a Tokio runtime and block on the async server startup.
     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
@@ -114,7 +119,6 @@ fn main() {
     tokio_rt.block_on(async move {
         // Load configuration
 
-
         // Initialize the database inside the async context
         let db_pool = match init_db(&cfg.db_path).await {
             Ok(p) => p,
@@ -124,7 +128,10 @@ fn main() {
             }
         };
 
-        let app_state = AppState { db_pool };
+        let comments_repo = Arc::new(SQLiteCommentsRepository::new(db_pool));
+        let app_state = AppState {
+            repo: comments_repo,
+        };
 
         // Build router
         let app = Router::new()
@@ -132,7 +139,12 @@ fn main() {
             .route("/scrape", post(api::scrape_hackernews))
             .route("/comments", get(api::list_comments))
             .with_state(app_state)
-            .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any));
+            .layer(
+                CorsLayer::new()
+                    .allow_origin(Any)
+                    .allow_methods(Any)
+                    .allow_headers(Any),
+            );
 
         // Bind and serve
         let addr: SocketAddr = format!("127.0.0.1:{}", cfg.server_port).parse().unwrap();

@@ -1,0 +1,112 @@
+use crate::CommentRecord;
+use sqlx::{Pool, Sqlite};
+use async_trait::async_trait;
+
+/// Database abstraction for comments and related URL records.
+///
+/// Handlers depend on this trait to decouple from a specific database.
+#[async_trait]
+pub(crate) trait CommentsRepository: Send + Sync {
+    /// Total number of comments in the store.
+    async fn count_comments(&self) -> Result<i64, sqlx::Error>;
+
+    /// Returns a page of comments ordered by date desc, id desc.
+    async fn page_comments(
+        &self,
+        offset: i64,
+        count: i64,
+    ) -> Result<Vec<DbCommentRow>, sqlx::Error>;
+
+    /// Insert the URL if missing; no-op if present.
+    async fn upsert_url(&self, id: i64, url: &str) -> Result<(), sqlx::Error>;
+
+    /// Insert or update a batch of comments for a given url_id.
+    async fn upsert_comments(
+        &self,
+        comments: &[CommentRecord],
+        url_id: i64,
+    ) -> Result<usize, sqlx::Error>;
+}
+
+/// Row type returned by repository for comment listings.
+#[derive(Debug, sqlx::FromRow, Clone)]
+pub(crate) struct DbCommentRow {
+    pub id: i64,
+    pub author: String,
+    pub date: String,
+    pub text: String,
+    pub url_id: i64,
+}
+
+/// SQLite implementation of `CommentsRepository`.
+pub(crate) struct SQLiteCommentsRepository {
+    pool: Pool<Sqlite>,
+}
+
+impl SQLiteCommentsRepository {
+    pub(crate) fn new(pool: Pool<Sqlite>) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl CommentsRepository for SQLiteCommentsRepository {
+    async fn count_comments(&self) -> Result<i64, sqlx::Error> {
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
+            .fetch_one(&self.pool)
+            .await
+    }
+
+    async fn page_comments(
+        &self,
+        offset: i64,
+        count: i64,
+    ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+        sqlx::query_as::<_, DbCommentRow>(
+            r#"
+            SELECT id, author, date, text, url_id
+            FROM comments
+            ORDER BY date DESC, id DESC
+            LIMIT ? OFFSET ?
+            "#,
+        )
+        .bind(count)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    async fn upsert_url(&self, id: i64, url: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("INSERT OR IGNORE INTO urls (id, url) VALUES (?1, ?2)")
+            .bind(id)
+            .bind(url)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    async fn upsert_comments(
+        &self,
+        comments: &[CommentRecord],
+        url_id: i64,
+    ) -> Result<usize, sqlx::Error> {
+        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id) \
+        VALUES (?1, ?2, ?3, ?4, ?5) \
+        ON CONFLICT (id) DO UPDATE \
+        SET text=?4, url_id=?5";
+
+        let mut inserted = 0usize;
+        for comment in comments {
+            let result = sqlx::query(sql_insert)
+                .bind(comment.id)
+                .bind(&comment.author)
+                .bind(&comment.date)
+                .bind(&comment.text)
+                .bind(url_id)
+                .execute(&self.pool)
+                .await?;
+            inserted += result.rows_affected() as usize;
+        }
+        Ok(inserted)
+    }
+}

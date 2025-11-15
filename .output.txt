@@ -1,0 +1,352 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 0d2c2b8..17b9213 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -1934,7 +1934,6 @@ dependencies = [
+  "reqwest",
+  "scraper",
+  "serde",
+- "serde_json",
+  "simplelog",
+  "sqlx",
+  "tokio",
+diff --git a/Cargo.toml b/Cargo.toml
+index eb8bd34..9048136 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -9,7 +9,6 @@ scraper = "0.24"
+ sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
+ tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
+ axum = { version = "0.8", features = ["macros"] }
+-serde_json = "1.0.145"
+ log = "0.4"
+ simplelog = "0.12"
+ config = { version = "0.15", default-features = false, features = ["ini"] }
+diff --git a/TODO.md b/TODO.md
+index b71c286..ce1a978 100644
+--- a/TODO.md
++++ b/TODO.md
+@@ -8,4 +8,12 @@
+
+ ## Notes (To be ignored by AI)
+ In the comments table add the month(extracted from the thread title) as a separate column. If the url is scraped again, do an update on the new column like you do with the text and url reference.
++/// Discard a comment (idea)
++async fn discard_comment(&self, id: i64) -> Result<(), sqlx::Error>;
++
++    /// Approve a comment (keep the idea)
++    async fn approve_comment(&self, id: i64) -> Result<(), sqlx::Error>;
++
++    /// Cleanup the database by removing discarded comments.
++    async fn cleanup(&self) -> Result<(), sqlx::Error>;
+ ## DONE
+\ No newline at end of file
+diff --git a/src/api.rs b/src/api.rs
+index 58cbc45..8655fc8 100644
+--- a/src/api.rs
++++ b/src/api.rs
+@@ -1,15 +1,15 @@
+ // Access items defined in the crate root (main.rs)
+ use super::{AppState, CommentRecord};
++use crate::db::CommentsRepository;
+ use crate::scrape::get_comments as scrape_get_comments;
+ use crate::utils::{create_batches, extract_item_id_from_url};
+ use axum::{
+     extract::{Json, Query, State},
+     http::StatusCode,
+-    response::{IntoResponse, Response},
++    response::IntoResponse,
+ };
+ use log::{error, info};
+ use serde::{Deserialize, Serialize};
+-use sqlx::{Pool, Sqlite};
+ use std::collections::HashMap;
+ use std::time::{SystemTime, UNIX_EPOCH};
+
+@@ -43,7 +43,7 @@ pub struct CommentsQuery {
+     pub count: Option<i64>,
+ }
+
+-#[derive(Debug, Serialize, sqlx::FromRow)]
++#[derive(Debug, Serialize)]
+ pub struct CommentDto {
+     pub id: i64,
+     pub text: String,
+@@ -68,10 +68,7 @@ pub async fn list_comments(
+     let count = q.count.unwrap_or(10).clamp(1, 100);
+
+     // total count
+-    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
+-        .fetch_one(&state.db_pool)
+-        .await
+-    {
++    let total = match state.repo.count_comments().await {
+         Ok(c) => c,
+         Err(e) => {
+             error!("Failed to count comments: {}", e);
+@@ -80,20 +77,7 @@ pub async fn list_comments(
+     };
+
+     // page items ordered by date desc; fallback id desc for ties
+-    let rows: Result<Vec<CommentDto>, sqlx::Error> = sqlx::query_as(
+-        r#"
+-        SELECT id, author AS user, date, text, url_id
+-        FROM comments
+-        ORDER BY date DESC, id DESC
+-        LIMIT ? OFFSET ?
+-        "#,
+-    )
+-    .bind(count)
+-    .bind(offset)
+-    .fetch_all(&state.db_pool)
+-    .await;
+-
+-    let items = match rows {
++    let rows = match state.repo.page_comments(offset, count).await {
+         Ok(r) => r,
+         Err(e) => {
+             error!("Failed to fetch comments page: {}", e);
+@@ -105,6 +89,17 @@ pub async fn list_comments(
+         }
+     };
+
++    let items: Vec<CommentDto> = rows
++        .into_iter()
++        .map(|row| CommentDto {
++            id: row.id,
++            user: row.author,
++            date: row.date,
++            text: row.text,
++            url_id: row.url_id,
++        })
++        .collect();
++
+     let body = CommentsPage { total, items };
+     Json(body).into_response()
+ }
+@@ -136,7 +131,7 @@ pub async fn scrape_hackernews(
+     };
+
+     // Ensure the URL is recorded in the urls table and get (or confirm) its id
+-    if let Err(e) = upsert_url(&state.db_pool, url_id, &target_url).await {
++    if let Err(e) = state.repo.upsert_url(url_id, &target_url).await {
+         error!("Failed to upsert url: {}", e);
+         return (
+             StatusCode::INTERNAL_SERVER_ERROR,
+@@ -153,7 +148,7 @@ pub async fn scrape_hackernews(
+             let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
+             let mut total_inserted = 0usize;
+             for batch in batches.iter() {
+-                match insert_comments(&state.db_pool, batch, url_id).await {
++                match state.repo.upsert_comments(batch, url_id).await {
+                     Ok(n) => {
+                         total_inserted += n;
+                         info!("Inserted {} comments into the database", n);
+@@ -183,38 +178,3 @@ fn validate_url(target_url: &String) -> Result<(), String> {
+
+     Ok(())
+ }
+-
+-async fn upsert_url(pool: &Pool<Sqlite>, id: i64, url: &str) -> Result<(), sqlx::Error> {
+-    // Insert if missing; if present, ignore
+-    sqlx::query("INSERT OR IGNORE INTO urls (id, url) VALUES (?1, ?2)")
+-        .bind(id)
+-        .bind(url)
+-        .execute(pool)
+-        .await?;
+-    Ok(())
+-}
+-
+-async fn insert_comments(
+-    pool: &Pool<Sqlite>,
+-    comments: &Vec<CommentRecord>,
+-    url_id: i64,
+-) -> Result<usize, sqlx::Error> {
+-    let sql_insert = "INSERT INTO comments (id, author, date, text, url_id) \
+-    VALUES (?1, ?2, ?3, ?4, ?5) \
+-    ON CONFLICT (id) DO UPDATE \
+-    SET text=?4, url_id=?5";
+-
+-    let mut inserted = 0usize;
+-    for comment in comments {
+-        let result = sqlx::query(sql_insert)
+-            .bind(comment.id)
+-            .bind(&comment.author)
+-            .bind(&comment.date)
+-            .bind(&comment.text)
+-            .bind(url_id)
+-            .execute(pool)
+-            .await?;
+-        inserted += result.rows_affected() as usize; // OR IGNORE returns 0 when skipped due to PK conflict
+-    }
+-    Ok(inserted)
+-}
+diff --git a/src/config.rs b/src/config.rs
+index 7f54fd2..7d7764b 100644
+--- a/src/config.rs
++++ b/src/config.rs
+@@ -46,15 +46,21 @@ mod tests {
+         let cfg = AppConfig::default();
+         // Only check that defaults exist, not their concrete values
+         assert_ne!(cfg.server_port, 0, "default server_port should be non-zero");
+-        assert!(!cfg.db_path.is_empty(), "default db_path should be non-empty");
++        assert!(
++            !cfg.db_path.is_empty(),
++            "default db_path should be non-empty"
++        );
+     }
+
+     #[test]
+     fn from_config_reads_flat_keys() {
+         let cfg = config::Config::builder()
+-            .set_override("port", 4321).unwrap()
+-            .set_override("db_path", "flat.db").unwrap()
+-            .build().unwrap();
++            .set_override("port", 4321)
++            .unwrap()
++            .set_override("db_path", "flat.db")
++            .unwrap()
++            .build()
++            .unwrap();
+
+         let app = AppConfig::from_config(&cfg);
+         assert_eq!(app.server_port, 4321);
+@@ -64,9 +70,12 @@ mod tests {
+     #[test]
+     fn from_config_reads_namespaced_keys() {
+         let cfg = config::Config::builder()
+-            .set_override("server.port", 5555).unwrap()
+-            .set_override("db.path", "ns.db").unwrap()
+-            .build().unwrap();
++            .set_override("server.port", 5555)
++            .unwrap()
++            .set_override("db.path", "ns.db")
++            .unwrap()
++            .build()
++            .unwrap();
+
+         let app = AppConfig::from_config(&cfg);
+         assert_eq!(app.server_port, 5555);
+@@ -76,11 +85,16 @@ mod tests {
+     #[test]
+     fn flat_keys_take_precedence_over_namespaced() {
+         let cfg = config::Config::builder()
+-            .set_override("server.port", 1111).unwrap()
+-            .set_override("db.path", "ns.db").unwrap()
+-            .set_override("port", 2222).unwrap()
+-            .set_override("db_path", "flat.db").unwrap()
+-            .build().unwrap();
++            .set_override("server.port", 1111)
++            .unwrap()
++            .set_override("db.path", "ns.db")
++            .unwrap()
++            .set_override("port", 2222)
++            .unwrap()
++            .set_override("db_path", "flat.db")
++            .unwrap()
++            .build()
++            .unwrap();
+
+         let app = AppConfig::from_config(&cfg);
+         assert_eq!(app.server_port, 2222);
+diff --git a/src/main.rs b/src/main.rs
+index 0e8c28d..3cff94f 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,21 +1,24 @@
+ mod api;
+ mod config;
++mod db;
+ mod scrape;
+ mod utils;
+
+ use crate::config::AppConfig;
++use crate::db::{CommentsRepository, SQLiteCommentsRepository};
++use ::config::{Config, File, FileFormat};
+ use axum::{
+-    routing::{get, post},
+     Router,
++    routing::{get, post},
+ };
+-use tower_http::cors::{Any, CorsLayer};
+ use log::{error, info};
+ use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
+ use sqlx::migrate::MigrateDatabase;
+ use sqlx::sqlite::SqlitePoolOptions;
+ use sqlx::{Pool, Sqlite};
+ use std::net::SocketAddr;
+-use ::config::{Config, File, FileFormat};
++use std::sync::Arc;
++use tower_http::cors::{Any, CorsLayer};
+
+ // const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
+ const CONFIG_PATH: &str = "config.properties";
+@@ -31,7 +34,7 @@ pub struct CommentRecord {
+
+ #[derive(Clone)]
+ pub(crate) struct AppState {
+-    pub(crate) db_pool: Pool<Sqlite>,
++    pub(crate) repo: Arc<dyn CommentsRepository>,
+ }
+
+ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
+@@ -99,10 +102,12 @@ fn main() {
+     // init logging first
+     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
+
+-    let cfg =AppConfig::from_config(
++    let cfg = AppConfig::from_config(
+         &Config::builder()
+             .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
+-            .build().expect("Failed to load config file"));
++            .build()
++            .expect("Failed to load config file"),
++    );
+
+     // Build a Tokio runtime and block on the async server startup.
+     let tokio_rt = tokio::runtime::Builder::new_multi_thread()
+@@ -114,7 +119,6 @@ fn main() {
+     tokio_rt.block_on(async move {
+         // Load configuration
+
+-
+         // Initialize the database inside the async context
+         let db_pool = match init_db(&cfg.db_path).await {
+             Ok(p) => p,
+@@ -124,7 +128,10 @@ fn main() {
+             }
+         };
+
+-        let app_state = AppState { db_pool };
++        let comments_repo = Arc::new(SQLiteCommentsRepository::new(db_pool));
++        let app_state = AppState {
++            repo: comments_repo,
++        };
+
+         // Build router
+         let app = Router::new()
+@@ -132,7 +139,12 @@ fn main() {
+             .route("/scrape", post(api::scrape_hackernews))
+             .route("/comments", get(api::list_comments))
+             .with_state(app_state)
+-            .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any));
++            .layer(
++                CorsLayer::new()
++                    .allow_origin(Any)
++                    .allow_methods(Any)
++                    .allow_headers(Any),
++            );
+
+         // Bind and serve
+         let addr: SocketAddr = format!("127.0.0.1:{}", cfg.server_port).parse().unwrap();
+diff --git a/src/scrape.rs b/src/scrape.rs
+index d932cbb..e956ac0 100644
+--- a/src/scrape.rs
++++ b/src/scrape.rs
+@@ -1,6 +1,6 @@
++use crate::CommentRecord;
+ use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
+ use crate::utils::extract_item_id_from_url;
+-use crate::CommentRecord;
+ use log::{info, warn};
+ use scraper::error::SelectorErrorKind;
+ use scraper::{Html, Selector};
