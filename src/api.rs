@@ -1,7 +1,7 @@
 // Access items defined in the crate root (main.rs)
-use super::{AppState, CommentRecord};
 use crate::scrape::get_comments as scrape_get_comments;
 use crate::utils::{create_batches, extract_item_id_from_url};
+use crate::{AppState, CommentRecord};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
@@ -13,13 +13,20 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize)]
-pub(crate) struct ScrapeRequest {
+pub struct ScrapeRequest {
     pub url: String,
 }
 
-/// Health check handler: echoes back the provided `msg` with current Unix timestamp
+#[derive(Debug, Serialize)]
+pub struct PingResponse {
+    pub msg: String,
+}
+
+/// Health check handler: echoes back the provided `msg` with the current Unix timestamp
 #[axum::debug_handler]
-pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
+pub async fn ping(
+    Query(params): Query<HashMap<String, String>>,
+) -> Result<Json<PingResponse>, (StatusCode, String)> {
     match params.get("msg").filter(|m| !m.is_empty()) {
         Some(msg) => {
             let ts = SystemTime::now()
@@ -27,12 +34,12 @@ pub async fn ping(Query(params): Query<HashMap<String, String>>) -> impl IntoRes
                 .map(|d| d.as_secs())
                 .unwrap_or(0);
             let body = format!("{} {}", msg, ts);
-            (StatusCode::OK, body)
+            Ok(Json(PingResponse { msg: body }))
         }
-        None => (
+        None => Err((
             StatusCode::BAD_REQUEST,
             "missing required query parameter: msg".to_string(),
-        ),
+        )),
     }
 }
 
@@ -61,10 +68,10 @@ pub struct CommentsPage {
 #[axum::debug_handler]
 pub async fn list_comments(
     State(state): State<AppState>,
-    Query(q): Query<CommentsQuery>,
+    Query(filter): Query<CommentsQuery>,
 ) -> impl IntoResponse {
-    let offset = q.offset.unwrap_or(0).max(0);
-    let count = q.count.unwrap_or(10).clamp(1, 100);
+    let offset = filter.offset.unwrap_or(0).max(0);
+    let count = filter.count.unwrap_or(10).clamp(1, 100);
 
     // total count
     let total = match state.repo.count_comments().await {

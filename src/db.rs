@@ -1,12 +1,12 @@
 use crate::CommentRecord;
-use sqlx::{Pool, Sqlite};
 use async_trait::async_trait;
+use sqlx::{Pool, Sqlite};
 
 /// Database abstraction for comments and related URL records.
 ///
 /// Handlers depend on this trait to decouple from a specific database.
 #[async_trait]
-pub(crate) trait CommentsRepository: Send + Sync {
+pub trait CommentsRepository: Send + Sync {
     /// Total number of comments in the store.
     async fn count_comments(&self) -> Result<i64, sqlx::Error>;
 
@@ -30,7 +30,7 @@ pub(crate) trait CommentsRepository: Send + Sync {
 
 /// Row type returned by repository for comment listings.
 #[derive(Debug, sqlx::FromRow, Clone)]
-pub(crate) struct DbCommentRow {
+pub struct DbCommentRow {
     pub id: i64,
     pub author: String,
     pub date: String,
@@ -39,12 +39,12 @@ pub(crate) struct DbCommentRow {
 }
 
 /// SQLite implementation of `CommentsRepository`.
-pub(crate) struct SQLiteCommentsRepository {
+pub struct SQLiteCommentsRepository {
     pool: Pool<Sqlite>,
 }
 
 impl SQLiteCommentsRepository {
-    pub(crate) fn new(pool: Pool<Sqlite>) -> Self {
+    pub fn new(pool: Pool<Sqlite>) -> Self {
         Self { pool }
     }
 }

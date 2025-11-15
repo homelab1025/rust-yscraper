@@ -168,7 +168,7 @@ mod tests {
     // Use current_thread for faster, deterministic tests
     #[tokio::test(flavor = "current_thread")]
     async fn get_comments_happy_path_parses_one_root_comment() {
-        // Arrange: start mock server and stub HTML resembling HN structure
+        // Arrange: start mock server and stub HTML-resembling HN structure
         let server = MockServer::start().await;
         let html = include_str!("../tests/fixtures/hn_happy_root_and_child.html");
 

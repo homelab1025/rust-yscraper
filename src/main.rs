@@ -1,17 +1,12 @@
-mod api;
-mod config;
-mod db;
-mod scrape;
-mod utils;
-
-use crate::config::AppConfig;
-use crate::db::{CommentsRepository, SQLiteCommentsRepository};
 use ::config::{Config, File, FileFormat};
 use axum::{
     Router,
     routing::{get, post},
 };
 use log::{error, info};
+use rust_yscraper::config::AppConfig;
+use rust_yscraper::db::SQLiteCommentsRepository;
+use rust_yscraper::{AppState, api};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -22,20 +17,6 @@ use tower_http::cors::{Any, CorsLayer};
 
 // const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
-
-#[derive(Debug, Default, Clone)]
-pub struct CommentRecord {
-    pub id: i64,
-    pub author: String,
-    pub date: String,
-    pub text: String,
-    pub tags: Vec<String>,
-}
-
-#[derive(Clone)]
-pub(crate) struct AppState {
-    pub(crate) repo: Arc<dyn CommentsRepository>,
-}
 
 async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
     // Support both plain paths ("comments.db") and full SQLite URLs (e.g., "sqlite::memory:" or "sqlite:///file.db")
