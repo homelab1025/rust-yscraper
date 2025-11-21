@@ -1,7 +1,7 @@
 // Access items defined in the crate root (main.rs)
 use crate::scrape::get_comments as scrape_get_comments;
 use crate::utils::{create_batches, extract_item_id_from_url};
-use crate::{AppState, CommentRecord, CommentsAppState, PingAppState};
+use crate::{ApiError, ApiErrorCode, CommentRecord, CommentsAppState, PingAppState};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
@@ -10,7 +10,6 @@ use axum::{
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::ops::Deref;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize)]
@@ -61,7 +60,7 @@ pub struct CommentsQuery {
     pub count: Option<i64>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommentDto {
     pub id: i64,
     pub text: String,
@@ -70,7 +69,7 @@ pub struct CommentDto {
     pub date: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommentsPage {
     pub total: i64,
     pub items: Vec<CommentDto>,
@@ -81,7 +80,7 @@ pub struct CommentsPage {
 pub async fn list_comments(
     State(state): State<CommentsAppState>,
     Query(filter): Query<CommentsQuery>,
-) -> impl IntoResponse {
+) -> Result<Json<CommentsPage>, (StatusCode, Json<ApiError>)> {
     let offset = filter.offset.unwrap_or(0).max(0);
     let count = filter.count.unwrap_or(10).clamp(1, 100);
 
@@ -90,8 +89,14 @@ pub async fn list_comments(
         Ok(c) => c,
         Err(e) => {
             error!("Failed to count comments: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "failed to fetch total").into_response();
-        }
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::DatabaseError,
+                    msg: "failed to count comments".to_string(),
+                }),
+            ))
+        }?,
     };
 
     // page items ordered by date desc; fallback id desc for ties
@@ -99,12 +104,14 @@ pub async fn list_comments(
         Ok(r) => r,
         Err(e) => {
             error!("Failed to fetch comments page: {}", e);
-            return (
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "failed to fetch comments",
-            )
-                .into_response();
-        }
+                Json(ApiError {
+                    code: ApiErrorCode::DatabaseError,
+                    msg: "failed to count comments".to_string(),
+                }),
+            ))
+        }?,
     };
 
     let items: Vec<CommentDto> = rows
@@ -119,7 +126,7 @@ pub async fn list_comments(
         .collect();
 
     let body = CommentsPage { total, items };
-    Json(body).into_response()
+    return Ok(Json(body));
 }
 
 /// Triggers scraping and inserts results into the database.

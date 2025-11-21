@@ -1,5 +1,6 @@
 use axum::extract::FromRef;
 use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 
 pub mod api;
 pub mod config;
@@ -14,6 +15,17 @@ pub struct CommentRecord {
     pub date: String,
     pub text: String,
     pub tags: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApiError {
+    pub code: ApiErrorCode,
+    pub msg: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum ApiErrorCode {
+    DatabaseError,
 }
 
 #[derive(Clone)]

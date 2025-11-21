@@ -1,4 +1,5 @@
 use axum::extract::{Query, State};
+use axum::http::StatusCode;
 use rust_yscraper::PingAppState;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -42,4 +43,24 @@ impl rust_yscraper::api::TimeProvider for MockTimeProvider {
     fn now(&self) -> Result<Duration, SystemTimeError> {
         Ok(self.now_duration)
     }
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn ping_error_when_msg_missing() {
+    // Arrange: no "msg" parameter provided
+    let params = HashMap::new();
+    let app_state = PingAppState {
+        time_provider: Arc::new(MockTimeProvider {
+            now_duration: Duration::from_secs(123),
+        }),
+    };
+
+    // Act
+    let response = rust_yscraper::api::ping(State(app_state), Query(params)).await;
+
+    // Assert: should be 400 with the expected error message
+    assert!(response.is_err());
+    let (status, body) = response.unwrap_err();
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(body, "missing required query parameter: msg");
 }
