@@ -1,7 +1,7 @@
 // Access items defined in the crate root (main.rs)
 use crate::scrape::get_comments as scrape_get_comments;
 use crate::utils::{create_batches, extract_item_id_from_url};
-use crate::{AppState, CommentRecord};
+use crate::{AppState, CommentRecord, CommentsAppState, PingAppState};
 use axum::{
     extract::{Json, Query, State},
     http::StatusCode,
@@ -10,7 +10,8 @@ use axum::{
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::ops::Deref;
+use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize)]
 pub struct ScrapeRequest {
@@ -22,17 +23,28 @@ pub struct PingResponse {
     pub msg: String,
 }
 
+pub trait TimeProvider: Send + Sync {
+    fn now(&self) -> Result<Duration, SystemTimeError>;
+}
+
+pub struct RealSystemTime {}
+
+impl TimeProvider for RealSystemTime {
+    fn now(&self) -> Result<Duration, SystemTimeError> {
+        SystemTime::now().duration_since(UNIX_EPOCH)
+    }
+}
+
 /// Health check handler: echoes back the provided `msg` with the current Unix timestamp
 #[axum::debug_handler]
 pub async fn ping(
+    State(state): State<PingAppState>,
     Query(params): Query<HashMap<String, String>>,
 ) -> Result<Json<PingResponse>, (StatusCode, String)> {
+    let time_provider = state.time_provider;
     match params.get("msg").filter(|m| !m.is_empty()) {
         Some(msg) => {
-            let ts = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0);
+            let ts = time_provider.now().map(|d| d.as_secs()).unwrap_or(0);
             let body = format!("{} {}", msg, ts);
             Ok(Json(PingResponse { msg: body }))
         }
@@ -67,7 +79,7 @@ pub struct CommentsPage {
 /// GET /comments — returns comments ordered by date desc with pagination
 #[axum::debug_handler]
 pub async fn list_comments(
-    State(state): State<AppState>,
+    State(state): State<CommentsAppState>,
     Query(filter): Query<CommentsQuery>,
 ) -> impl IntoResponse {
     let offset = filter.offset.unwrap_or(0).max(0);
@@ -113,7 +125,7 @@ pub async fn list_comments(
 /// Triggers scraping and inserts results into the database.
 #[axum::debug_handler]
 pub async fn scrape_hackernews(
-    State(state): State<AppState>,
+    State(state): State<CommentsAppState>,
     Json(payload): Json<ScrapeRequest>,
 ) -> impl IntoResponse {
     let target_url = payload.url.trim().to_string();

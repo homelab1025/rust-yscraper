@@ -1,12 +1,12 @@
-use ::config::{Config, File, FileFormat};
 use axum::{
-    Router,
     routing::{get, post},
+    Router,
 };
+use ::config::{Config, File, FileFormat};
 use log::{error, info};
 use rust_yscraper::config::AppConfig;
 use rust_yscraper::db::SQLiteCommentsRepository;
-use rust_yscraper::{AppState, api};
+use rust_yscraper::{api, AppState};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -14,6 +14,7 @@ use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
+use rust_yscraper::api::RealSystemTime;
 
 // const DEFAULT_URL: &str = "https://news.ycombinator.com/item?id=45561428";
 const CONFIG_PATH: &str = "config.properties";
@@ -28,8 +29,8 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
 
     if should_manage_file
         && !Sqlite::database_exists(db_url.as_str())
-            .await
-            .unwrap_or(false)
+        .await
+        .unwrap_or(false)
     {
         info!("Initializing database at {}", db_path);
         Sqlite::create_database(db_url.as_str()).await?;
@@ -53,8 +54,8 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
             date_added TEXT NOT NULL DEFAULT (datetime('now'))
         )",
     )
-    .execute(&pool)
-    .await?;
+        .execute(&pool)
+        .await?;
 
     // Comments table for fresh databases: includes the url_id foreign key
     sqlx::query(
@@ -67,8 +68,8 @@ async fn init_db(db_path: &str) -> Result<Pool<Sqlite>, sqlx::Error> {
             FOREIGN KEY (url_id) REFERENCES urls(id)
         )",
     )
-    .execute(&pool)
-    .await?;
+        .execute(&pool)
+        .await?;
 
     // Best-effort migration for existing DBs that may lack the url_id column
     // This will fail harmlessly if the column already exists
@@ -110,8 +111,10 @@ fn main() {
         };
 
         let comments_repo = Arc::new(SQLiteCommentsRepository::new(db_pool));
+        let real_time_provider = Arc::new(RealSystemTime {});
         let app_state = AppState {
             repo: comments_repo,
+            time_provider: real_time_provider,
         };
 
         // Build router

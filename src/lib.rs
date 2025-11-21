@@ -1,3 +1,6 @@
+use axum::extract::FromRef;
+use std::sync::Arc;
+
 pub mod api;
 pub mod config;
 pub mod db;
@@ -15,5 +18,32 @@ pub struct CommentRecord {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub repo: std::sync::Arc<dyn db::CommentsRepository>,
+    pub repo: Arc<dyn db::CommentsRepository>,
+    pub time_provider: Arc<dyn api::TimeProvider>,
+}
+
+#[derive(Clone)]
+pub struct PingAppState {
+    pub time_provider: Arc<dyn api::TimeProvider>,
+}
+
+#[derive(Clone)]
+pub struct CommentsAppState {
+    pub repo: Arc<dyn db::CommentsRepository>,
+}
+
+impl FromRef<AppState> for PingAppState {
+    fn from_ref(input: &AppState) -> Self {
+        PingAppState {
+            time_provider: input.time_provider.clone(),
+        }
+    }
+}
+
+impl FromRef<AppState> for CommentsAppState {
+    fn from_ref(input: &AppState) -> Self {
+        CommentsAppState {
+            repo: input.repo.clone(),
+        }
+    }
 }

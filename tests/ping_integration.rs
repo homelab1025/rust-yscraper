@@ -1,6 +1,8 @@
-use axum::extract::Query;
+use axum::extract::{Query, State};
+use rust_yscraper::PingAppState;
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::Arc;
+use std::time::{Duration, SystemTimeError};
 
 #[tokio::test(flavor = "current_thread")]
 async fn ping_happy_path_returns_ok_and_timestamp() {
@@ -8,8 +10,15 @@ async fn ping_happy_path_returns_ok_and_timestamp() {
     let mut params = HashMap::new();
     params.insert("msg".to_string(), "hello".to_string());
 
+    let current_time = 10;
+    let app_state = PingAppState {
+        time_provider: Arc::new(MockTimeProvider {
+            now_duration: Duration::from_secs(current_time),
+        }),
+    };
+
     // Act: call the handler directly (no HTTP server)
-    let response = rust_yscraper::api::ping(Query(params)).await;
+    let response = rust_yscraper::api::ping(State(app_state), Query(params)).await;
 
     // Assert status
     assert!(response.is_ok());
@@ -17,20 +26,20 @@ async fn ping_happy_path_returns_ok_and_timestamp() {
     let pong = response.expect("Should be OK.");
     let body = &pong.msg;
 
-    // Assert body starts with "hello " and contains a valid recent unix timestamp
+    // Assert body starts with "hello" and contains a valid recent unix timestamp
     let prefix = "hello ";
     assert!(body.starts_with(prefix), "unexpected body: {body}");
     let ts_str = &body[prefix.len()..];
     let ts: u64 = ts_str.parse().expect("timestamp should be a u64");
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+    assert_eq!(ts, current_time, "unexpected timestamp: {ts}");
+}
 
-    let diff = now.abs_diff(ts);
-    assert!(
-        diff <= 30,
-        "timestamp too far from now: diff={diff}s, body={body}"
-    );
+struct MockTimeProvider {
+    now_duration: Duration,
+}
+impl rust_yscraper::api::TimeProvider for MockTimeProvider {
+    fn now(&self) -> Result<Duration, SystemTimeError> {
+        Ok(self.now_duration)
+    }
 }
