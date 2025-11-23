@@ -5,6 +5,16 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTimeError};
 
+struct MockTimeProvider {
+    now_duration: Duration,
+}
+
+impl rust_yscraper::api::ping::TimeProvider for MockTimeProvider {
+    fn now(&self) -> Result<Duration, SystemTimeError> {
+        Ok(self.now_duration)
+    }
+}
+
 #[tokio::test(flavor = "current_thread")]
 async fn ping_happy_path_returns_ok_and_timestamp() {
     // Arrange: build the query parameters as axum's Query extractor expects
@@ -19,7 +29,7 @@ async fn ping_happy_path_returns_ok_and_timestamp() {
     };
 
     // Act: call the handler directly (no HTTP server)
-    let response = rust_yscraper::api::ping(State(app_state), Query(params)).await;
+    let response = rust_yscraper::api::ping::ping(State(app_state), Query(params)).await;
 
     // Assert status
     assert!(response.is_ok());
@@ -36,15 +46,6 @@ async fn ping_happy_path_returns_ok_and_timestamp() {
     assert_eq!(ts, current_time, "unexpected timestamp: {ts}");
 }
 
-struct MockTimeProvider {
-    now_duration: Duration,
-}
-impl rust_yscraper::api::TimeProvider for MockTimeProvider {
-    fn now(&self) -> Result<Duration, SystemTimeError> {
-        Ok(self.now_duration)
-    }
-}
-
 #[tokio::test(flavor = "current_thread")]
 async fn ping_error_when_msg_missing() {
     // Arrange: no "msg" parameter provided
@@ -56,7 +57,7 @@ async fn ping_error_when_msg_missing() {
     };
 
     // Act
-    let response = rust_yscraper::api::ping(State(app_state), Query(params)).await;
+    let response = rust_yscraper::api::ping::ping(State(app_state), Query(params)).await;
 
     // Assert: should be 400 with the expected error message
     assert!(response.is_err());

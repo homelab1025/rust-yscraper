@@ -1,6 +1,6 @@
 use axum::extract::FromRef;
+use reqwest::Client;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 
 pub mod api;
 pub mod config;
@@ -17,26 +17,16 @@ pub struct CommentRecord {
     pub tags: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiError {
-    pub code: ApiErrorCode,
-    pub msg: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub enum ApiErrorCode {
-    DatabaseError,
-}
-
 #[derive(Clone)]
 pub struct AppState {
     pub repo: Arc<dyn db::CommentsRepository>,
-    pub time_provider: Arc<dyn api::TimeProvider>,
+    pub time_provider: Arc<dyn api::ping::TimeProvider>,
+    pub http_client: Arc<Client>,
 }
 
 #[derive(Clone)]
 pub struct PingAppState {
-    pub time_provider: Arc<dyn api::TimeProvider>,
+    pub time_provider: Arc<dyn api::ping::TimeProvider>,
 }
 
 #[derive(Clone)]

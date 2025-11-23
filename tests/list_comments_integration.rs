@@ -3,11 +3,12 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use rust_yscraper::api::{list_comments, CommentsQuery};
 use rust_yscraper::db::{CommentsRepository, DbCommentRow};
-use rust_yscraper::{ApiErrorCode, CommentsAppState};
+use rust_yscraper::api::common::ApiErrorCode;
+use rust_yscraper::CommentsAppState;
 use sqlx::Error as SqlxError;
 use tokio::sync::Mutex;
+use rust_yscraper::api::comments::{list_comments, CommentsQuery};
 
 #[derive(Debug)]
 struct MockRepo {
