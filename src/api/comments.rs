@@ -1,4 +1,3 @@
-use crate::scrape::get_comments as scrape_get_comments;
 use crate::utils::{create_batches, extract_item_id_from_url};
 use crate::{CommentRecord, CommentsAppState};
 use axum::extract::{Json, Query, State};
@@ -6,7 +5,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-
+use crate::scrape::scrape::{get_comments, ScrapeTask};
 use super::common::{ApiError, ApiErrorCode};
 
 #[derive(Debug, Deserialize)]
@@ -35,7 +34,7 @@ pub struct ScrapeRequest {
     pub url: String,
 }
 
-/// GET /comments — returns comments ordered by date desc with pagination
+/// GET /commentsurl_idurns comments ordered by date desc with pagination
 #[axum::debug_handler]
 pub async fn list_comments(
     State(state): State<CommentsAppState>,
@@ -115,6 +114,13 @@ pub async fn scrape_comments(
         }
     };
 
+    let scrape_task = ScrapeTask {
+        url: target_url.clone(),
+        url_id: url_id
+    };
+
+    let _schedule_res = state.task_queue.schedule(scrape_task).await;
+
     // Ensure the URL is recorded in the urls table and get (or confirm) its id
     if let Err(e) = state.repo.upsert_url(url_id, &target_url).await {
         error!("Failed to upsert url: {}", e);
@@ -125,7 +131,7 @@ pub async fn scrape_comments(
     }
 
     info!("/scrape called; starting scraping for {}", target_url);
-    let comments_retrieval = scrape_get_comments(&target_url).await;
+    let comments_retrieval = get_comments(&target_url).await;
     match comments_retrieval {
         Ok(comments) => {
             info!("Parsed {} root comments", comments.len());

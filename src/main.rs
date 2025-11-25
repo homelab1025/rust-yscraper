@@ -7,6 +7,7 @@ use log::{error, info};
 use rust_yscraper::api::ping::RealSystemTime;
 use rust_yscraper::config::AppConfig;
 use rust_yscraper::db::SQLiteCommentsRepository;
+use rust_yscraper::task_queue::ScrapeTaskDedupProcessor;
 use rust_yscraper::{AppState, api};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
@@ -98,9 +99,8 @@ fn main() {
         .build()
         .expect("failed to build Tokio runtime");
 
-    tokio_rt.block_on(async move {
-        // Load configuration
 
+    tokio_rt.block_on(async move {
         // Initialize the database inside the async context
         let db_pool = match init_db(&cfg.db_path).await {
             Ok(p) => p,
@@ -110,7 +110,9 @@ fn main() {
             }
         };
 
-        let app_state = build_app_state(db_pool);
+        let queue = Arc::new(ScrapeTaskDedupProcessor::new(4));
+
+        let app_state = build_app_state(db_pool, queue);
 
         // Build router
         let app = Router::new()
@@ -136,11 +138,12 @@ fn main() {
     });
 }
 
-fn build_app_state(db_pool: Pool<Sqlite>) -> AppState {
+fn build_app_state(db_pool: Pool<Sqlite>, queue: Arc<ScrapeTaskDedupProcessor>) -> AppState {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let http_client = Arc::new(client);
     let comments_repo = Arc::new(SQLiteCommentsRepository::new(db_pool));
@@ -150,6 +153,7 @@ fn build_app_state(db_pool: Pool<Sqlite>) -> AppState {
         repo: comments_repo,
         time_provider: real_time_provider,
         http_client,
+        task_queue: queue.clone(),
     };
     app_state
 }

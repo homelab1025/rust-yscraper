@@ -1,12 +1,26 @@
-use crate::CommentRecord;
-use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
+use crate::scrape::scrape::ScrapeError::{
+    ElementSelectorError, HtmlFetchError, InvalidThreadTitle,
+};
 use crate::utils::extract_item_id_from_url;
+use crate::CommentRecord;
 use log::{info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
 use std::error::Error;
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 use std::time::Duration;
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub struct ScrapeTask {
+    pub(crate) url: String,
+    pub(crate) url_id: i64,
+}
+
+impl Display for ScrapeTask {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(formatter, "\nurl id: {}\nurl: {}", self.url_id, self.url)
+    }
+}
 
 #[derive(Debug)]
 pub enum ScrapeError {
@@ -29,7 +43,7 @@ impl Display for ScrapeError {
     }
 }
 
-pub async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
+pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
     info!("Fetching URL: {}", url);
     let html = match fetch_html(url).await {
         Ok(h) => h,
@@ -170,7 +184,7 @@ mod tests {
     async fn get_comments_happy_path_parses_one_root_comment() {
         // Arrange: start mock server and stub HTML-resembling HN structure
         let server = MockServer::start().await;
-        let html = include_str!("../tests/fixtures/hn_happy_root_and_child.html");
+        let html = include_str!("../../tests/fixtures/hn_happy_root_and_child.html");
 
         Mock::given(method("GET"))
             .and(path("/hn"))
@@ -219,7 +233,7 @@ mod tests {
     async fn get_comments_skips_first_with_invalid_id_keeps_second() {
         // Arrange
         let server = MockServer::start().await;
-        let html = include_str!("../tests/fixtures/hn_first_invalid_second_ok.html");
+        let html = include_str!("../../tests/fixtures/hn_first_invalid_second_ok.html");
         Mock::given(method("GET"))
             .and(path("/mix1"))
             .respond_with(ResponseTemplate::new(200).set_body_string(html))
@@ -249,7 +263,7 @@ mod tests {
     async fn get_comments_skips_first_with_empty_author_and_text() {
         // Arrange
         let server = MockServer::start().await;
-        let html = include_str!("../tests/fixtures/hn_first_empty_text_second_with_text.html");
+        let html = include_str!("../../tests/fixtures/hn_first_empty_text_second_with_text.html");
         Mock::given(method("GET"))
             .and(path("/mix2"))
             .respond_with(ResponseTemplate::new(200).set_body_string(html))
@@ -280,7 +294,7 @@ mod tests {
      {
         // Arrange: HTML has a .comment-like div but lacks required selectors (no tr.athing.comtr)
         let server = MockServer::start().await;
-        let html = include_str!("../tests/fixtures/hn_unparsable_with_comment_section.html");
+        let html = include_str!("../../tests/fixtures/hn_unparsable_with_comment_section.html");
         Mock::given(method("GET"))
             .and(path("/unparsable"))
             .respond_with(ResponseTemplate::new(200).set_body_string(html))

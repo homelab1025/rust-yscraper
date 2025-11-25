@@ -1,3 +1,4 @@
+use task_queue::ScrapeTaskDedupProcessor;
 use axum::extract::FromRef;
 use reqwest::Client;
 use std::sync::Arc;
@@ -7,6 +8,7 @@ pub mod config;
 pub mod db;
 pub mod scrape;
 pub mod utils;
+pub mod task_queue;
 
 #[derive(Debug, Default, Clone)]
 pub struct CommentRecord {
@@ -22,6 +24,7 @@ pub struct AppState {
     pub repo: Arc<dyn db::CommentsRepository>,
     pub time_provider: Arc<dyn api::ping::TimeProvider>,
     pub http_client: Arc<Client>,
+    pub task_queue: Arc<ScrapeTaskDedupProcessor>,
 }
 
 #[derive(Clone)]
@@ -34,6 +37,7 @@ pub struct CommentsAppState {
     pub repo: Arc<dyn db::CommentsRepository>,
     // TODO: actually use this in the scraper
     pub http_client: Arc<Client>,
+    pub task_queue: Arc<ScrapeTaskDedupProcessor>,
 }
 
 impl FromRef<AppState> for PingAppState {
@@ -49,6 +53,7 @@ impl FromRef<AppState> for CommentsAppState {
         CommentsAppState {
             repo: input.repo.clone(),
             http_client: input.http_client.clone(),
+            task_queue: input.task_queue.clone(),
         }
     }
 }

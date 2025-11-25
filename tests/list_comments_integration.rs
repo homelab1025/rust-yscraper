@@ -3,12 +3,13 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use rust_yscraper::db::{CommentsRepository, DbCommentRow};
-use rust_yscraper::api::common::ApiErrorCode;
 use rust_yscraper::CommentsAppState;
+use rust_yscraper::api::comments::{CommentsQuery, list_comments};
+use rust_yscraper::api::common::ApiErrorCode;
+use rust_yscraper::db::{CommentsRepository, DbCommentRow};
 use sqlx::Error as SqlxError;
 use tokio::sync::Mutex;
-use rust_yscraper::api::comments::{list_comments, CommentsQuery};
+use rust_yscraper::task_queue::ScrapeTaskDedupProcessor;
 
 #[derive(Debug)]
 struct MockRepo {
@@ -88,7 +89,11 @@ fn make_row(id: i64, author: &str, date: &str, text: &str, url_id: i64) -> DbCom
 async fn clamps_count_below_min_to_1_indirectly() {
     let rows: Vec<DbCommentRow> = vec![make_row(1, "a", "2024-01-01", "t", 9)];
     let repo = Arc::new(MockRepo::with_ok(5, rows));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: Some(0),
         count: Some(0),
@@ -106,7 +111,11 @@ async fn clamps_count_above_max_to_100_indirectly() {
         .map(|i| make_row(i as i64, "u", "2024-04-01", "t", 2))
         .collect();
     let repo = Arc::new(MockRepo::with_ok(150, rows));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: Some(0),
         count: Some(1000),
@@ -121,7 +130,11 @@ async fn clamps_count_above_max_to_100_indirectly() {
 #[tokio::test(flavor = "current_thread")]
 async fn returns_empty_list_when_store_empty() {
     let repo = Arc::new(MockRepo::with_ok(0, vec![]));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: None,
         count: None,
@@ -142,7 +155,11 @@ async fn preserves_desc_order_and_id_tie_break() {
         make_row(1, "c", "2024-01-01", "t1", 1),
     ];
     let repo = Arc::new(MockRepo::with_ok(3, rows));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: None,
         count: None,
@@ -158,7 +175,11 @@ async fn preserves_desc_order_and_id_tie_break() {
 async fn maps_fields_correctly_from_dbrow_to_dto() {
     let row = make_row(42, "zoe", "2024-05-05", "hello", 77);
     let repo = Arc::new(MockRepo::with_ok(1, vec![row]));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: None,
         count: None,
@@ -178,7 +199,11 @@ async fn maps_fields_correctly_from_dbrow_to_dto() {
 #[tokio::test(flavor = "current_thread")]
 async fn returns_500_when_count_fails() {
     let repo = Arc::new(MockRepo::with_count_err());
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: None,
         count: None,
@@ -194,7 +219,11 @@ async fn returns_500_when_count_fails() {
 #[tokio::test(flavor = "current_thread")]
 async fn returns_500_when_page_query_fails() {
     let repo = Arc::new(MockRepo::with_page_err(10));
-    let state = State(CommentsAppState { repo });
+    let state = State(CommentsAppState {
+        repo,
+        http_client: Arc::new(Default::default()),
+        task_queue: Arc::new(ScrapeTaskDedupProcessor::new(3)),
+    });
     let query = Query(CommentsQuery {
         offset: Some(0),
         count: Some(10),
