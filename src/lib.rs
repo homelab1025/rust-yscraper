@@ -32,6 +32,8 @@ pub struct PingAppState {
 #[derive(Clone)]
 pub struct CommentsAppState {
     pub repo: Arc<dyn db::CommentsRepository>,
+    // TODO: actually use this in the scraper
+    pub http_client: Arc<Client>,
 }
 
 impl FromRef<AppState> for PingAppState {
@@ -46,6 +48,7 @@ impl FromRef<AppState> for CommentsAppState {
     fn from_ref(input: &AppState) -> Self {
         CommentsAppState {
             repo: input.repo.clone(),
+            http_client: input.http_client.clone(),
         }
     }
 }
