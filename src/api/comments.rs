@@ -116,7 +116,7 @@ pub async fn scrape_comments(
 
     let scrape_task = ScrapeTask {
         url: target_url.clone(),
-        url_id: url_id
+        url_id: url_id,
     };
 
     let _schedule_res = state.task_queue.schedule(scrape_task).await;

@@ -1,8 +1,10 @@
+use crate::CommentRecord;
 use crate::scrape::scrape::ScrapeError::{
     ElementSelectorError, HtmlFetchError, InvalidThreadTitle,
 };
+use crate::task_queue::TaskQueueProcessor;
 use crate::utils::extract_item_id_from_url;
-use crate::CommentRecord;
+use async_trait::async_trait;
 use log::{info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
@@ -19,6 +21,15 @@ pub struct ScrapeTask {
 impl Display for ScrapeTask {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(formatter, "\nurl id: {}\nurl: {}", self.url_id, self.url)
+    }
+}
+
+#[async_trait]
+impl TaskQueueProcessor for ScrapeTask {
+    async fn execute(&self) -> Result<(), Box<dyn Error>> {
+        info!("Executing Scrape TASK.");
+
+        Ok(())
     }
 }
 

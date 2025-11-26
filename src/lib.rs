@@ -1,7 +1,8 @@
-use task_queue::ScrapeTaskDedupProcessor;
+use task_queue::TaskDedupQueueProcessor;
 use axum::extract::FromRef;
 use reqwest::Client;
 use std::sync::Arc;
+use crate::scrape::scrape::ScrapeTask;
 
 pub mod api;
 pub mod config;
@@ -24,7 +25,7 @@ pub struct AppState {
     pub repo: Arc<dyn db::CommentsRepository>,
     pub time_provider: Arc<dyn api::ping::TimeProvider>,
     pub http_client: Arc<Client>,
-    pub task_queue: Arc<ScrapeTaskDedupProcessor>,
+    pub task_queue: Arc<TaskDedupQueueProcessor<ScrapeTask>>,
 }
 
 #[derive(Clone)]
@@ -37,7 +38,7 @@ pub struct CommentsAppState {
     pub repo: Arc<dyn db::CommentsRepository>,
     // TODO: actually use this in the scraper
     pub http_client: Arc<Client>,
-    pub task_queue: Arc<ScrapeTaskDedupProcessor>,
+    pub task_queue: Arc<TaskDedupQueueProcessor<ScrapeTask>>,
 }
 
 impl FromRef<AppState> for PingAppState {
