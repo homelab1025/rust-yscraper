@@ -1,6 +1,6 @@
 use crate::CommentRecord;
 use async_trait::async_trait;
-use sqlx::{Pool, Sqlite};
+use sqlx::{Pool, Postgres};
 
 /// Database abstraction for comments and related URL records.
 ///
@@ -38,19 +38,19 @@ pub struct DbCommentRow {
     pub url_id: i64,
 }
 
-/// SQLite implementation of `CommentsRepository`.
-pub struct SQLiteCommentsRepository {
-    pool: Pool<Sqlite>,
+/// PostgreSQL implementation of `CommentsRepository`.
+pub struct PgCommentsRepository {
+    pool: Pool<Postgres>,
 }
 
-impl SQLiteCommentsRepository {
-    pub fn new(pool: Pool<Sqlite>) -> Self {
+impl PgCommentsRepository {
+    pub fn new(pool: Pool<Postgres>) -> Self {
         Self { pool }
     }
 }
 
 #[async_trait]
-impl CommentsRepository for SQLiteCommentsRepository {
+impl CommentsRepository for PgCommentsRepository {
     async fn count_comments(&self) -> Result<i64, sqlx::Error> {
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
             .fetch_one(&self.pool)
@@ -67,7 +67,7 @@ impl CommentsRepository for SQLiteCommentsRepository {
             SELECT id, author, date, text, url_id
             FROM comments
             ORDER BY date DESC, id DESC
-            LIMIT ? OFFSET ?
+            LIMIT $1 OFFSET $2
             "#,
         )
         .bind(count)
@@ -77,7 +77,7 @@ impl CommentsRepository for SQLiteCommentsRepository {
     }
 
     async fn upsert_url(&self, id: i64, url: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("INSERT OR IGNORE INTO urls (id, url) VALUES (?1, ?2)")
+        sqlx::query("INSERT INTO urls (id, url) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING")
             .bind(id)
             .bind(url)
             .execute(&self.pool)
@@ -90,10 +90,9 @@ impl CommentsRepository for SQLiteCommentsRepository {
         comments: &[CommentRecord],
         url_id: i64,
     ) -> Result<usize, sqlx::Error> {
-        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id) \
-        VALUES (?1, ?2, ?3, ?4, ?5) \
-        ON CONFLICT (id) DO UPDATE \
-        SET text=?4, url_id=?5";
+        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text, url_id=EXCLUDED.url_id";
 
         let mut inserted = 0usize;
         for comment in comments {

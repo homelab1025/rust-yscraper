@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-initial-schema
+      author: rust-yscraper
+      changes:
+        - sqlFile:
+            path: 001_init.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            endDelimiter: ";"

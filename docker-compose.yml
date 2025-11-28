@@ -1,0 +1,66 @@
+# Docker Compose for dependencies only (PostgreSQL + Liquibase + optional Adminer)
+# Usage:
+# 1) Start Postgres in background:
+#    docker compose up -d postgres
+# 2) Apply migrations (one-shot):
+#    docker compose up --no-deps liquibase
+#    # or: docker compose run --rm liquibase
+# 3) (Optional) Open Adminer at http://localhost:8080 to inspect the DB:
+#    docker compose up -d adminer
+#
+# App connection string (matches defaults in src/config.rs):
+#   postgres://postgres:postgres@localhost:5432/yscraper
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: yscraper-postgres
+    environment:
+      POSTGRES_DB: yscraper
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  liquibase:
+    image: liquibase/liquibase:4.23
+    container_name: yscraper-liquibase
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /liquibase
+    volumes:
+      - ./db/changelog:/liquibase/db/changelog:ro
+    # Run migrations once and exit
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        liquibase \
+          --defaultsFile=/dev/null \
+          --classpath=/liquibase \
+          --changeLogFile=db/changelog/db.changelog-master.yaml \
+          --url=jdbc:postgresql://postgres:5432/yscraper \
+          --username=postgres \
+          --password=postgres \
+          --driver=org.postgresql.Driver \
+          update
+    restart: "no"
+
+  adminer:
+    image: adminer:latest
+    container_name: yscraper-adminer
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
