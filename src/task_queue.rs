@@ -12,15 +12,16 @@ use tokio::sync::Mutex;
 
 #[async_trait]
 pub trait TaskQueueProcessor {
-    async fn execute(&self) -> Result<(), Box<dyn Error>>;
+    type ProcessorError: Error + Send + Sync + 'static;
+    async fn execute(&self) -> Result<(), Self::ProcessorError>;
 }
 
-pub struct TaskDedupQueueProcessor<T: TaskQueueProcessor> {
+pub struct TaskDedupQueue<T> {
     queue: Arc<Mutex<HashSet<Arc<T>>>>,
     tx: Sender<T>,
 }
 
-impl<T> TaskDedupQueueProcessor<T>
+impl<T> TaskDedupQueue<T>
 where
     T: TaskQueueProcessor + Display + Hash + Clone + Eq + Send + Sync + 'static,
 {
@@ -41,7 +42,7 @@ where
             }
         });
 
-        TaskDedupQueueProcessor {
+        TaskDedupQueue {
             queue: task_set.clone(),
             tx,
         }
@@ -71,7 +72,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::task_queue::Error;
     use std::fmt;
+    use std::fmt::Formatter;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
     use tokio::sync::Notify;
@@ -87,7 +90,7 @@ mod tests {
 
     impl Clone for TestTask {
         fn clone(&self) -> Self {
-            // For clone, we intentionally drop notifiers to keep clones side-effect free
+            // For clone, we intentionally drop notifiers to keep clones side effect free
             Self {
                 id: self.id,
                 delay: self.delay,
@@ -111,15 +114,26 @@ mod tests {
         }
     }
 
-    impl fmt::Display for TestTask {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    impl Display for TestTask {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             write!(f, "TestTask({})", self.id)
+        }
+    }
+
+    #[derive(Debug)]
+    struct DummyError {}
+    impl Error for DummyError {}
+    impl Display for DummyError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            write!(f, "DummyError")
         }
     }
 
     #[async_trait]
     impl TaskQueueProcessor for TestTask {
-        async fn execute(&self) -> Result<(), Box<dyn Error>> {
+        type ProcessorError = DummyError;
+
+        async fn execute(&self) -> Result<(), DummyError> {
             self.executed.fetch_add(1, Ordering::SeqCst);
             if let Some(started) = &self.start_notify {
                 started.notify_one();
@@ -156,7 +170,7 @@ mod tests {
     async fn different_tasks_are_enqueued_and_both_execute() {
         time::pause();
 
-        let processor: TaskDedupQueueProcessor<TestTask> = TaskDedupQueueProcessor::new(8);
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
 
@@ -182,7 +196,7 @@ mod tests {
     async fn duplicate_while_first_running_second_is_rejected_and_not_executed() {
         time::pause();
 
-        let processor: TaskDedupQueueProcessor<TestTask> = TaskDedupQueueProcessor::new(8);
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
 
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let (t1, t1_start, _t1_done) = make_task(42, Duration::from_secs(10), &t1_executed);
@@ -209,21 +223,21 @@ mod tests {
     async fn identical_task_runs_again_after_first_finished_and_removed() {
         time::pause();
 
-        let processor: TaskDedupQueueProcessor<TestTask> = TaskDedupQueueProcessor::new(8);
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
         let t1_executed = Arc::new(AtomicUsize::new(0));
 
         let (t1, _t1_start, t1_done) = make_task(7, Duration::from_millis(5), &t1_executed);
         let r1 = processor.schedule(t1).await.expect("send ok");
         assert!(r1);
 
-        // allow execute to complete
+        // allow executing to complete
         time::advance(Duration::from_millis(10)).await;
         let _ = t1_done.notified().await;
 
-        // internal worker waits extra 1s before removal; advance exactly that
+        // an internal worker waits extra 1 s before removal; advance exactly that
         // time::advance(Duration::from_secs(1)).await;
 
-        // now schedule identical task again; should be accepted and executed
+        // now schedule an identical task again; should be accepted and executed
         let t2_executed = Arc::new(AtomicUsize::new(0));
         let (t2, t2_start, _t2_done) = make_task(7, Duration::from_millis(5), &t2_executed);
         let r2 = processor.schedule(t2).await.expect("send ok");
@@ -244,20 +258,20 @@ mod tests {
         time::pause();
 
         // In this test we do not pause time; we use real short delays to observe backpressure.
-        let processor: TaskDedupQueueProcessor<TestTask> = TaskDedupQueueProcessor::new(1);
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(1);
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
         let t3_executed = Arc::new(AtomicUsize::new(0));
 
         let (t1, t1_start, _t1_done) = make_task(100, Duration::from_millis(200), &t1_executed);
-        let (t2, t2_start, _t2_done) = make_task(101, Duration::from_millis(200), &t2_executed);
+        let (t2, _t2_start, _t2_done) = make_task(101, Duration::from_millis(200), &t2_executed);
         let (t3, _t3_start, _t3_done) = make_task(102, Duration::from_millis(10), &t3_executed);
 
-        // schedule first two tasks; with buffer=1, t1 will be received immediately, t2 will fill the channel buffer
+        // schedule the first two tasks; with buffer=1, t1 will be received immediately, t2 will fill the channel buffer
         assert!(processor.schedule(t1).await.expect("send ok"));
         time::advance(Duration::from_millis(1)).await;
         assert!(processor.schedule(t2).await.expect("send ok"));
-        // 3rd schedule should return error immediately.
+        // 3rd schedule should return the error immediately.
         let schedule_third = processor.schedule(t3);
 
         let _ = t1_start.notified().await;

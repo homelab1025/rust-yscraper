@@ -1,14 +1,15 @@
-use ::config::{Config, File, FileFormat};
 use axum::{
-    Router,
     routing::{get, post},
+    Router,
 };
+use ::config::{Config, File, FileFormat};
 use log::{error, info};
-use rust_yscraper::api::ping::RealSystemTime;
+use rust_yscraper::api::app_state::AppState;
+use rust_yscraper::api::comments::{list_comments, scrape_comments};
+use rust_yscraper::api::ping::{ping, RealSystemTime};
 use rust_yscraper::config::AppConfig;
 use rust_yscraper::db::SQLiteCommentsRepository;
-use rust_yscraper::task_queue::TaskDedupQueueProcessor;
-use rust_yscraper::{AppState, api};
+use rust_yscraper::task_queue::TaskDedupQueue;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -113,9 +114,9 @@ fn main() {
 
         // Build router
         let app = Router::new()
-            .route("/ping", get(api::ping::ping))
-            .route("/scrape", post(api::comments::scrape_comments))
-            .route("/comments", get(api::comments::list_comments))
+            .route("/ping", get(ping))
+            .route("/scrape", post(scrape_comments))
+            .route("/comments", get(list_comments))
             .with_state(app_state)
             .layer(
                 CorsLayer::new()
@@ -136,7 +137,7 @@ fn main() {
 }
 
 fn build_app_state(db_pool: Pool<Sqlite>) -> AppState {
-    let queue = Arc::new(TaskDedupQueueProcessor::new(4));
+    let queue = Arc::new(TaskDedupQueue::new(4));
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))

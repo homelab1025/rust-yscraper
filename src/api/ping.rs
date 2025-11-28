@@ -1,9 +1,11 @@
-use axum::{extract::{Query, State}, Json};
+use crate::api::app_state::PingAppState;
+use axum::{
+    Json,
+    extract::{Query, State},
+};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
-
-use crate::PingAppState;
 
 /// Abstraction around system time for easy testing.
 pub trait TimeProvider: Send + Sync {

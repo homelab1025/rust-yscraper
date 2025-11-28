@@ -1,15 +1,13 @@
-use std::error::Error;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
+use rust_yscraper::api::app_state::CommentsAppState;
 use rust_yscraper::api::comments::{list_comments, CommentsQuery};
 use rust_yscraper::api::common::ApiErrorCode;
 use rust_yscraper::db::{CommentsRepository, DbCommentRow};
-use rust_yscraper::scrape::scrape::ScrapeTask;
-use rust_yscraper::task_queue::TaskDedupQueueProcessor;
-use rust_yscraper::CommentsAppState;
+use rust_yscraper::task_queue::TaskDedupQueue;
 use sqlx::Error as SqlxError;
 use tokio::sync::Mutex;
 
@@ -40,10 +38,6 @@ impl MockRepo {
             page_ok: Mutex::new(None),
         }
     }
-}
-
-fn mock_processor(_task: ScrapeTask) -> Result<(), Box<dyn Error>> {
-    Ok(())
 }
 
 #[async_trait]
@@ -98,7 +92,7 @@ async fn clamps_count_below_min_to_1_indirectly() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: Some(0),
@@ -120,7 +114,7 @@ async fn clamps_count_above_max_to_100_indirectly() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: Some(0),
@@ -139,7 +133,7 @@ async fn returns_empty_list_when_store_empty() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: None,
@@ -164,7 +158,7 @@ async fn preserves_desc_order_and_id_tie_break() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: None,
@@ -184,7 +178,7 @@ async fn maps_fields_correctly_from_dbrow_to_dto() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: None,
@@ -208,7 +202,7 @@ async fn returns_500_when_count_fails() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: None,
@@ -228,7 +222,7 @@ async fn returns_500_when_page_query_fails() {
     let state = State(CommentsAppState {
         repo,
         http_client: Arc::new(Default::default()),
-        task_queue: Arc::new(TaskDedupQueueProcessor::new(3)),
+        task_queue: Arc::new(TaskDedupQueue::new(3)),
     });
     let query = Query(CommentsQuery {
         offset: Some(0),

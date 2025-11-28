@@ -2,36 +2,13 @@ use crate::CommentRecord;
 use crate::scrape::scrape::ScrapeError::{
     ElementSelectorError, HtmlFetchError, InvalidThreadTitle,
 };
-use crate::task_queue::TaskQueueProcessor;
 use crate::utils::extract_item_id_from_url;
-use async_trait::async_trait;
 use log::{info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
 use std::error::Error;
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
 use std::time::Duration;
-
-#[derive(Debug, Eq, PartialEq, Clone, Hash)]
-pub struct ScrapeTask {
-    pub(crate) url: String,
-    pub(crate) url_id: i64,
-}
-
-impl Display for ScrapeTask {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(formatter, "\nurl id: {}\nurl: {}", self.url_id, self.url)
-    }
-}
-
-#[async_trait]
-impl TaskQueueProcessor for ScrapeTask {
-    async fn execute(&self) -> Result<(), Box<dyn Error>> {
-        info!("Executing Scrape TASK.");
-
-        Ok(())
-    }
-}
 
 #[derive(Debug)]
 pub enum ScrapeError {
@@ -54,27 +31,25 @@ impl Display for ScrapeError {
     }
 }
 
-pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Box<dyn Error + Send>> {
+pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, ScrapeError> {
     info!("Fetching URL: {}", url);
     let html = match fetch_html(url).await {
         Ok(h) => h,
         Err(e) => {
-            return Err(Box::new(HtmlFetchError(e)));
+            return Err(HtmlFetchError(e));
         }
     };
 
     // Validate thread title for real HN item pages only
-    if url.starts_with("https://news.ycombinator.com/item")
-        && let Err(e) = validate_thread_title(&html)
-    {
-        return Err(Box::new(e));
+    if let Err(e) = validate_thread_title(&html) {
+        return Err(e);
     }
 
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);
     match comments {
         Ok(c) => Ok(c),
-        Err(_e) => Err(Box::new(ElementSelectorError())),
+        Err(_e) => Err(ElementSelectorError()),
     }
 }
 

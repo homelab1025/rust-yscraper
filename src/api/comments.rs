@@ -1,12 +1,12 @@
-use crate::utils::{create_batches, extract_item_id_from_url};
-use crate::{CommentRecord, CommentsAppState};
+use super::common::{ApiError, ApiErrorCode};
+use crate::api::app_state::CommentsAppState;
+use crate::api::scrape_task::ScrapeTask;
+use crate::utils::extract_item_id_from_url;
 use axum::extract::{Json, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use log::{error, info};
+use log::error;
 use serde::{Deserialize, Serialize};
-use crate::scrape::scrape::{get_comments, ScrapeTask};
-use super::common::{ApiError, ApiErrorCode};
 
 #[derive(Debug, Deserialize)]
 pub struct CommentsQuery {
@@ -114,50 +114,12 @@ pub async fn scrape_comments(
         }
     };
 
-    let scrape_task = ScrapeTask {
-        url: target_url.clone(),
-        url_id: url_id,
-    };
+    let scrape_task = ScrapeTask::new(target_url, url_id, state.repo.clone());
 
     let _schedule_res = state.task_queue.schedule(scrape_task).await;
 
-    // Ensure the URL is recorded in the urls table and get (or confirm) its id
-    if let Err(e) = state.repo.upsert_url(url_id, &target_url).await {
-        error!("Failed to upsert url: {}", e);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "failed to record url".to_string(),
-        );
-    }
-
-    info!("/scrape called; starting scraping for {}", target_url);
-    let comments_retrieval = get_comments(&target_url).await;
-    match comments_retrieval {
-        Ok(comments) => {
-            info!("Parsed {} root comments", comments.len());
-
-            let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
-            let mut total_inserted = 0usize;
-            for batch in batches.iter() {
-                match state.repo.upsert_comments(batch, url_id).await {
-                    Ok(n) => {
-                        total_inserted += n;
-                        info!("Inserted {} comments into the database", n);
-                    }
-                    Err(e) => error!("Failed to insert comments: {}", e),
-                }
-            }
-
-            (
-                StatusCode::OK,
-                format!("ok: parsed={}, inserted={}", comments.len(), total_inserted),
-            )
-        }
-        Err(error) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("failed to scrape: {}", error),
-        ),
-    }
+    // TODO: return a 202 Accepted response and refactor this to Json structure
+    (StatusCode::ACCEPTED, "ok".to_string())
 }
 
 fn validate_url(target_url: &String) -> Result<(), String> {
