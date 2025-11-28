@@ -1,14 +1,14 @@
 use async_trait::async_trait;
-use log::info;
+use log::{error, info};
 use std::collections::HashSet;
 use std::error::Error;
 use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::DerefMut;
 use std::sync::Arc;
-use tokio::sync::mpsc::error::TrySendError;
-use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::error::TrySendError;
 
 #[async_trait]
 pub trait TaskQueueProcessor {
@@ -36,7 +36,10 @@ where
             while let Some(task) = rx.recv().await {
                 info!("Scrape task received: {}", task);
 
-                let _ = task.execute().await;
+                let res = task.execute().await;
+                if let Err(e) = res {
+                    error!("Scrape task failed: {}", e);
+                }
 
                 tasks.lock().await.remove(&task);
             }
@@ -75,8 +78,8 @@ mod tests {
     use crate::task_queue::Error;
     use std::fmt;
     use std::fmt::Formatter;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::Notify;
     use tokio::time::{self, Duration};
 
