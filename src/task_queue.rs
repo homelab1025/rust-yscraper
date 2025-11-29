@@ -6,14 +6,22 @@ use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::DerefMut;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::sync::mpsc::Sender;
 use tokio::sync::mpsc::error::TrySendError;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 
 #[async_trait]
-pub trait TaskQueueProcessor {
+pub trait TaskQueueProcessor: Display + Hash + Clone + Eq + Send + Sync + 'static {
     type ProcessorError: Error + Send + Sync + 'static;
     async fn execute(&self) -> Result<(), Self::ProcessorError>;
+}
+
+#[async_trait]
+pub trait TaskScheduler<T>: Send + Sync
+where
+    T: TaskQueueProcessor,
+{
+    async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>>;
 }
 
 pub struct TaskDedupQueue<T> {
@@ -23,7 +31,7 @@ pub struct TaskDedupQueue<T> {
 
 impl<T> TaskDedupQueue<T>
 where
-    T: TaskQueueProcessor + Display + Hash + Clone + Eq + Send + Sync + 'static,
+    T: TaskQueueProcessor,
 {
     pub fn new(buffer_size: usize) -> Self {
         let task_set = Arc::new(Mutex::new(HashSet::new()));
@@ -50,18 +58,24 @@ where
             tx,
         }
     }
+}
 
-    pub(crate) async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>> {
+#[async_trait]
+impl<T> TaskScheduler<T> for TaskDedupQueue<T>
+where
+    T: TaskQueueProcessor + Display + Hash + Clone + Eq + Send + Sync + 'static,
+{
+    async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>> {
         info!("Scraping task: {}", task);
         let mut guard = self.queue.lock().await;
         let task_set = guard.deref_mut();
 
-        let task_arc = Arc::new(task.clone());
-        if task_set.contains(&task_arc) {
+        let task_ref = Arc::new(task.clone());
+        if task_set.contains(&task_ref) {
             drop(guard);
             return Ok(false);
         } else {
-            task_set.insert(task_arc.clone());
+            task_set.insert(task_ref.clone());
             // self.tx.send(task).await?;
             let _sent = self.tx.try_send(task)?;
         }
@@ -78,8 +92,8 @@ mod tests {
     use crate::task_queue::Error;
     use std::fmt;
     use std::fmt::Formatter;
-    use std::sync::Arc;
     use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
     use tokio::sync::Notify;
     use tokio::time::{self, Duration};
 

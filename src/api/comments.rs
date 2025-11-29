@@ -1,12 +1,11 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::CommentsAppState;
 use crate::api::scrape_task::ScrapeTask;
-use crate::utils::extract_item_id_from_url;
 use axum::extract::{Json, Query, State};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use log::error;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Deserialize)]
 pub struct CommentsQuery {
@@ -31,7 +30,17 @@ pub struct CommentsPage {
 
 #[derive(Debug, Deserialize)]
 pub struct ScrapeRequest {
-    pub url: String,
+    pub item_id: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ScrapeState {
+    Scheduled,
+    AlreadyScheduled,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScrapeResponse {
+    pub state: ScrapeState,
 }
 
 /// GET /commentsurl_idurns comments ordered by date desc with pagination
@@ -93,41 +102,36 @@ pub async fn list_comments(
 pub async fn scrape_comments(
     State(state): State<CommentsAppState>,
     Json(payload): Json<ScrapeRequest>,
-) -> impl IntoResponse {
-    let target_url = payload.url.trim().to_string();
+) -> Result<Json<ScrapeResponse>, (StatusCode, Json<ApiError>)> {
 
-    // Validate URL form: must start with the HN item base URL
-    let res = validate_url(&target_url);
-    if let Err(e) = res {
-        return (StatusCode::BAD_REQUEST, e);
-    }
+    let item_id = payload.item_id;
+    let target_url = format!("https://news.ycombinator.com/item?id={}", item_id);
 
-    // Extract the HN item id from the URL
-    let url_id = match extract_item_id_from_url(&target_url) {
-        Some(id) => id,
-        None => {
-            error!("Unable to extract id= from url: {}", &target_url);
-            return (
-                StatusCode::BAD_REQUEST,
-                "invalid Hacker News item url; missing id query parameter".to_string(),
-            );
+    let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone());
+    let schedule_res = state.task_queue.schedule(scrape_task).await;
+
+    match schedule_res {
+        Ok(true) => {
+            info!("Scraping task scheduled successfully.");
+            Ok(Json(ScrapeResponse {
+                state: ScrapeState::Scheduled,
+            }))
         }
-    };
-
-    let scrape_task = ScrapeTask::new(target_url, url_id, state.repo.clone());
-
-    let _schedule_res = state.task_queue.schedule(scrape_task).await;
-
-    // TODO: return a 202 Accepted response and refactor this to Json structure
-    (StatusCode::ACCEPTED, "ok".to_string())
-}
-
-fn validate_url(target_url: &String) -> Result<(), String> {
-    let required_prefix = "https://news.ycombinator.com/item";
-    if !target_url.starts_with(required_prefix) {
-        error!("/scrape invalid url provided: {}", target_url);
-        return Err(format!("/scrape invalid url provided: {}", target_url));
+        Ok(false) => {
+            info!("Scraping task already scheduled.");
+            Ok(Json(ScrapeResponse {
+                state: ScrapeState::AlreadyScheduled,
+            }))
+        }
+        Err(e) => {
+            error!("Failed to schedule scrape task: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::SchedulingError,
+                    msg: String::from("could not schedule scrape task"),
+                }),
+            ))
+        }
     }
-
-    Ok(())
 }

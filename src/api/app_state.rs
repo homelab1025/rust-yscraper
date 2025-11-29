@@ -1,7 +1,7 @@
 use crate::api::ping::TimeProvider;
 use crate::api::scrape_task::ScrapeTask;
 use crate::db;
-use crate::task_queue::TaskDedupQueue;
+use crate::task_queue::{TaskDedupQueue, TaskScheduler};
 use axum::extract::FromRef;
 use reqwest::Client;
 use std::sync::Arc;
@@ -24,7 +24,7 @@ pub struct CommentsAppState {
     pub repo: Arc<dyn db::CommentsRepository>,
     // TODO: actually use this in the scraper
     pub http_client: Arc<Client>,
-    pub task_queue: Arc<TaskDedupQueue<ScrapeTask>>,
+    pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
 }
 
 impl FromRef<AppState> for PingAppState {
