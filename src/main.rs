@@ -83,12 +83,12 @@ fn main() {
 fn build_app_state(db_pool: Pool<Postgres>) -> AppState {
     let queue = Arc::new(TaskDedupQueue::new(4));
 
-    let client = reqwest::Client::builder()
+    let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
         .build()
         .unwrap();
-    let http_client = Arc::new(client);
+    let http_client = Arc::new(http_client);
 
     let comments_repo = Arc::new(PgCommentsRepository::new(db_pool));
     let real_time_provider = Arc::new(RealSystemTime {});
