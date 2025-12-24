@@ -1,23 +1,20 @@
-[package]
-name = "rust-yscraper"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = [
+    "web_server",
+]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]
 reqwest = { version = "0.12", features = ["rustls-tls", "gzip", "brotli", "deflate"] }
-scraper = "0.24"
+scraper = { version = "0.25" }
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "tls-rustls"] }
 tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros", "test-util"] }
 axum = { version = "0.8", features = ["macros"] }
-log = "0.4"
-simplelog = "0.12"
+log = { version = "0.4" }
+simplelog = { version = "0.12" }
 config = { version = "0.15", default-features = false, features = ["ini"] }
 serde = { version = "1", features = ["derive"] }
 tower-http = { version = "0.6", features = ["cors"] }
-async-trait = "0.1"
+async-trait = { version = "0.1" }
 utoipa = { version = "5.4" }
 utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
-
-[dev-dependencies]
-wiremock = "0.6"
-serde_json = "1"

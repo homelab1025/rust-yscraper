@@ -1,0 +1,22 @@
+[package]
+name = "web_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { workspace = true }
+scraper = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+axum = { workspace = true }
+log = { workspace = true }
+simplelog = { workspace = true }
+config = { workspace = true }
+serde = { workspace = true }
+tower-http = { workspace = true }
+async-trait = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
+[dev-dependencies]
+wiremock = "0.6"

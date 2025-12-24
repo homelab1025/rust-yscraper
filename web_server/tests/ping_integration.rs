@@ -1,7 +1,7 @@
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use rust_yscraper::api::app_state::PingAppState;
-use rust_yscraper::api::ping::{PingParams, TimeProvider, ping};
+use web_server::api::app_state::PingAppState;
+use web_server::api::ping::{PingParams, TimeProvider, ping};
 use std::sync::Arc;
 use std::time::{Duration, SystemTimeError};
 

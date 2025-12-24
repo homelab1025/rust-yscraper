@@ -4,39 +4,39 @@ use axum::{
     routing::{get, post},
 };
 use log::{error, info};
-use rust_yscraper::api::app_state::AppState;
-use rust_yscraper::api::comments::{list_comments, scrape_comments};
-use rust_yscraper::api::ping::{PingResponse, RealSystemTime, ping};
+use web_server::api::app_state::AppState;
+use web_server::api::comments::{list_comments, scrape_comments};
+use web_server::api::ping::{PingResponse, RealSystemTime, ping};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        rust_yscraper::api::ping::ping,
-        rust_yscraper::api::comments::list_comments,
-        rust_yscraper::api::comments::scrape_comments,
+        web_server::api::ping::ping,
+        web_server::api::comments::list_comments,
+        web_server::api::comments::scrape_comments,
     ),
     components(
         schemas(
             PingResponse,
-            rust_yscraper::api::comments::CommentDto,
-            rust_yscraper::api::comments::CommentsPage,
-            rust_yscraper::api::comments::ScrapeRequest,
-            rust_yscraper::api::comments::ScrapeResponse,
-            rust_yscraper::api::comments::ScrapeState,
-            rust_yscraper::api::common::ApiError,
-            rust_yscraper::api::common::ApiErrorCode,
+            web_server::api::comments::CommentDto,
+            web_server::api::comments::CommentsPage,
+            web_server::api::comments::ScrapeRequest,
+            web_server::api::comments::ScrapeResponse,
+            web_server::api::comments::ScrapeState,
+            web_server::api::common::ApiError,
+            web_server::api::common::ApiErrorCode,
         )
     ),
     tags(
-        (name = "rust-yscraper", description = "Hacker News Scraper API")
+        (name = "web-server", description = "Hacker News Scraper API")
     )
 )]
 struct ApiDoc;
-use rust_yscraper::config::AppConfig;
-use rust_yscraper::db::PgCommentsRepository;
-use rust_yscraper::task_queue::TaskDedupQueue;
+use web_server::config::AppConfig;
+use web_server::db::PgCommentsRepository;
+use web_server::task_queue::TaskDedupQueue;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
@@ -113,7 +113,7 @@ fn build_app_state(db_pool: Pool<Postgres>) -> AppState {
 
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
-        .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
+        .user_agent("web-server/0.1 (+https://news.ycombinator.com)")
         .build()
         .unwrap();
     let http_client = Arc::new(http_client);
