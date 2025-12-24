@@ -5,14 +5,15 @@ use axum::extract::{Json, Query, State};
 use axum::http::StatusCode;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct CommentsQuery {
     pub offset: Option<i64>,
     pub count: Option<i64>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct CommentDto {
     pub id: i64,
     pub text: String,
@@ -21,28 +22,37 @@ pub struct CommentDto {
     pub date: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct CommentsPage {
     pub total: i64,
     pub items: Vec<CommentDto>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ScrapeRequest {
     pub item_id: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub enum ScrapeState {
     Scheduled,
     AlreadyScheduled,
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ScrapeResponse {
     pub state: ScrapeState,
 }
 
-/// GET /commentsurl_idurns comments ordered by date desc with pagination
+/// List comments with pagination
+#[utoipa::path(
+    get,
+    path = "/api/comments",
+    params(CommentsQuery),
+    responses(
+        (status = 200, description = "List of comments", body = CommentsPage),
+        (status = 500, description = "Database error", body = ApiError)
+    )
+)]
 #[axum::debug_handler]
 pub async fn list_comments(
     State(state): State<CommentsAppState>,
@@ -97,6 +107,16 @@ pub async fn list_comments(
 }
 
 /// Triggers scraping and inserts results into the database.
+/// Trigger a scrape task for a specific Hacker News item
+#[utoipa::path(
+    post,
+    path = "/api/comments/scrape",
+    request_body = ScrapeRequest,
+    responses(
+        (status = 200, description = "Scrape task scheduled or already scheduled", body = ScrapeResponse),
+        (status = 500, description = "Internal server error", body = ApiError)
+    )
+)]
 #[axum::debug_handler]
 pub async fn scrape_comments(
     State(state): State<CommentsAppState>,

@@ -13,8 +13,10 @@ log = "0.4"
 simplelog = "0.12"
 config = { version = "0.15", default-features = false, features = ["ini"] }
 serde = { version = "1", features = ["derive"] }
-tower-http = { version = "0.5", features = ["cors"] }
+tower-http = { version = "0.6", features = ["cors"] }
 async-trait = "0.1"
+utoipa = { version = "5.4" }
+utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
 
 [dev-dependencies]
 wiremock = "0.6"

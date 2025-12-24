@@ -1,8 +1,7 @@
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use rust_yscraper::api::app_state::PingAppState;
-use rust_yscraper::api::ping::{ping, TimeProvider};
-use std::collections::HashMap;
+use rust_yscraper::api::ping::{PingParams, TimeProvider, ping};
 use std::sync::Arc;
 use std::time::{Duration, SystemTimeError};
 
@@ -19,8 +18,9 @@ impl TimeProvider for MockTimeProvider {
 #[tokio::test(flavor = "current_thread")]
 async fn ping_happy_path_returns_ok_and_timestamp() {
     // Arrange: build the query parameters as axum's Query extractor expects
-    let mut params = HashMap::new();
-    params.insert("msg".to_string(), "hello".to_string());
+    let params = PingParams {
+        msg: Some("hello".to_string()),
+    };
 
     let current_time = 10;
     let app_state = PingAppState {
@@ -50,7 +50,7 @@ async fn ping_happy_path_returns_ok_and_timestamp() {
 #[tokio::test(flavor = "current_thread")]
 async fn ping_error_when_msg_missing() {
     // Arrange: no "msg" parameter provided
-    let params = HashMap::new();
+    let params = PingParams { msg: None };
     let app_state = PingAppState {
         time_provider: Arc::new(MockTimeProvider {
             now_duration: Duration::from_secs(123),

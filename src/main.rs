@@ -1,12 +1,39 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
 use ::config::{Config, File, FileFormat};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use log::{error, info};
 use rust_yscraper::api::app_state::AppState;
 use rust_yscraper::api::comments::{list_comments, scrape_comments};
-use rust_yscraper::api::ping::{ping, RealSystemTime};
+use rust_yscraper::api::ping::{PingResponse, RealSystemTime, ping};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        rust_yscraper::api::ping::ping,
+        rust_yscraper::api::comments::list_comments,
+        rust_yscraper::api::comments::scrape_comments,
+    ),
+    components(
+        schemas(
+            PingResponse,
+            rust_yscraper::api::comments::CommentDto,
+            rust_yscraper::api::comments::CommentsPage,
+            rust_yscraper::api::comments::ScrapeRequest,
+            rust_yscraper::api::comments::ScrapeResponse,
+            rust_yscraper::api::comments::ScrapeState,
+            rust_yscraper::api::common::ApiError,
+            rust_yscraper::api::common::ApiErrorCode,
+        )
+    ),
+    tags(
+        (name = "rust-yscraper", description = "Hacker News Scraper API")
+    )
+)]
+struct ApiDoc;
 use rust_yscraper::config::AppConfig;
 use rust_yscraper::db::PgCommentsRepository;
 use rust_yscraper::task_queue::TaskDedupQueue;
@@ -58,6 +85,7 @@ fn main() {
 
         // Build router
         let app = Router::new()
+            .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
             .route("/ping", get(ping))
             .route("/scrape", post(scrape_comments))
             .route("/comments", get(list_comments))
