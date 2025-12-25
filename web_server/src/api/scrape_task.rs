@@ -1,7 +1,7 @@
-use crate::scrape::scrape::{get_comments, ScrapeError};
+use crate::scrape::scrape::{ScrapeError, get_comments};
 use crate::task_queue::TaskQueueProcessor;
 use crate::utils::create_batches;
-use crate::{db, CommentRecord};
+use crate::{CommentRecord, db};
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;

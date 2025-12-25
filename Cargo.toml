@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "web_server",
+    "api_gen",
 ]
 resolver = "2"
 
@@ -16,5 +17,5 @@ config = { version = "0.15", default-features = false, features = ["ini"] }
 serde = { version = "1", features = ["derive"] }
 tower-http = { version = "0.6", features = ["cors"] }
 async-trait = { version = "0.1" }
-utoipa = { version = "5.4" }
+utoipa = { version = "5.4", features = ["yaml"] }
 utoipa-swagger-ui = { version = "9.0", features = ["axum"] }

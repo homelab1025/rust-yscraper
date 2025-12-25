@@ -1,0 +1,8 @@
+[package]
+name = "api_gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+utoipa = { workspace = true }
+web_server = { path = "../web_server" }

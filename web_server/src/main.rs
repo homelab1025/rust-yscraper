@@ -1,42 +1,9 @@
-use ::config::{Config, File, FileFormat};
 use axum::{
-    Router,
     routing::{get, post},
+    Router,
 };
+use ::config::{Config, File, FileFormat};
 use log::{error, info};
-use web_server::api::app_state::AppState;
-use web_server::api::comments::{list_comments, scrape_comments};
-use web_server::api::ping::{PingResponse, RealSystemTime, ping};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        web_server::api::ping::ping,
-        web_server::api::comments::list_comments,
-        web_server::api::comments::scrape_comments,
-    ),
-    components(
-        schemas(
-            PingResponse,
-            web_server::api::comments::CommentDto,
-            web_server::api::comments::CommentsPage,
-            web_server::api::comments::ScrapeRequest,
-            web_server::api::comments::ScrapeResponse,
-            web_server::api::comments::ScrapeState,
-            web_server::api::common::ApiError,
-            web_server::api::common::ApiErrorCode,
-        )
-    ),
-    tags(
-        (name = "web-server", description = "Hacker News Scraper API")
-    )
-)]
-struct ApiDoc;
-use web_server::config::AppConfig;
-use web_server::db::PgCommentsRepository;
-use web_server::task_queue::TaskDedupQueue;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
@@ -44,6 +11,15 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+use web_server::api::app_state::AppState;
+use web_server::api::comments::{list_comments, scrape_comments};
+use web_server::api::ping::{ping, RealSystemTime};
+use web_server::api::ApiDoc;
+use web_server::config::AppConfig;
+use web_server::db::PgCommentsRepository;
+use web_server::task_queue::TaskDedupQueue;
 
 const CONFIG_PATH: &str = "config.properties";
 
@@ -121,11 +97,10 @@ fn build_app_state(db_pool: Pool<Postgres>) -> AppState {
     let comments_repo = Arc::new(PgCommentsRepository::new(db_pool));
     let real_time_provider = Arc::new(RealSystemTime {});
 
-    let app_state = AppState {
+    AppState {
         repo: comments_repo,
         time_provider: real_time_provider,
         http_client,
         task_queue: queue,
-    };
-    app_state
+    }
 }
