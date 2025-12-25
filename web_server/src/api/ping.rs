@@ -1,11 +1,26 @@
-use crate::api::app_state::PingAppState;
+use crate::api::app_state::AppState;
+use axum::extract::FromRef;
 use axum::{
-    Json,
     extract::{Query, State},
+    Json,
 };
 use serde::Serialize;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 use utoipa::{IntoParams, ToSchema};
+
+#[derive(Clone)]
+pub struct PingAppState {
+    pub time_provider: Arc<dyn TimeProvider>,
+}
+
+impl FromRef<AppState> for PingAppState {
+    fn from_ref(input: &AppState) -> Self {
+        PingAppState {
+            time_provider: input.time_provider.clone(),
+        }
+    }
+}
 
 /// Abstraction around system time for easy testing.
 pub trait TimeProvider: Send + Sync {

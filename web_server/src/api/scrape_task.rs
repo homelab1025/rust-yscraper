@@ -145,6 +145,10 @@ mod tests_task_hashing {
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
         }
+
+        async fn list_links(&self) -> Result<Vec<crate::db::DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
     }
 
     fn new_task(url: &str, url_id: i64) -> ScrapeTask {

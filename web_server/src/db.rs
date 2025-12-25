@@ -26,6 +26,17 @@ pub trait CommentsRepository: Send + Sync {
         comments: &[CommentRecord],
         url_id: i64,
     ) -> Result<usize, sqlx::Error>;
+
+    /// Returns all links (urls) with their IDs and added date.
+    async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error>;
+}
+
+/// Row type returned by repository for link listings.
+#[derive(Debug, sqlx::FromRow, Clone)]
+pub struct DbUrlRow {
+    pub id: i64,
+    pub url: String,
+    pub date_added: chrono::DateTime<chrono::Utc>,
 }
 
 /// Row type returned by repository for comment listings.
@@ -107,5 +118,11 @@ impl CommentsRepository for PgCommentsRepository {
             inserted += result.rows_affected() as usize;
         }
         Ok(inserted)
+    }
+
+    async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+        sqlx::query_as::<_, DbUrlRow>("SELECT id, url, date_added FROM urls ORDER BY date_added DESC")
+            .fetch_all(&self.pool)
+            .await
     }
 }

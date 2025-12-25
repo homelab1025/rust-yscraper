@@ -15,6 +15,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use web_server::api::app_state::AppState;
 use web_server::api::comments::{list_comments, scrape_comments};
+use web_server::api::links::list_links;
 use web_server::api::ping::{ping, RealSystemTime};
 use web_server::api::ApiDoc;
 use web_server::config::AppConfig;
@@ -65,6 +66,7 @@ fn main() {
             .route("/ping", get(ping))
             .route("/scrape", post(scrape_comments))
             .route("/comments", get(list_comments))
+            .route("/links", get(list_links))
             .with_state(app_state)
             .layer(
                 CorsLayer::new()

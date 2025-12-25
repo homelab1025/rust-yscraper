@@ -1,11 +1,33 @@
 use super::common::{ApiError, ApiErrorCode};
-use crate::api::app_state::CommentsAppState;
+use crate::api::app_state::AppState;
 use crate::api::scrape_task::ScrapeTask;
-use axum::extract::{Json, Query, State};
+use crate::db;
+use crate::task_queue::TaskScheduler;
+use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
 use log::{error, info};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
+
+#[derive(Clone)]
+pub struct CommentsAppState {
+    pub repo: Arc<dyn db::CommentsRepository>,
+    // TODO: actually use this in the scraper
+    pub http_client: Arc<Client>,
+    pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+}
+
+impl FromRef<AppState> for CommentsAppState {
+    fn from_ref(input: &AppState) -> Self {
+        CommentsAppState {
+            repo: input.repo.clone(),
+            http_client: input.http_client.clone(),
+            task_queue: input.task_queue.clone(),
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct CommentsQuery {
@@ -157,7 +179,6 @@ pub async fn scrape_comments(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::app_state::CommentsAppState;
     use crate::api::scrape_task::ScrapeTask;
     use crate::db::{CommentsRepository, DbCommentRow};
     use async_trait::async_trait;
@@ -230,6 +251,10 @@ mod tests {
         ) -> Result<usize, sqlx::Error> {
             // Default to success for tests that don't exercise DB
             Ok(0)
+        }
+
+        async fn list_links(&self) -> Result<Vec<crate::db::DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
         }
     }
 
@@ -335,7 +360,13 @@ mod tests {
         assert_eq!(err.msg, "could not schedule scrape task");
     }
 
-    fn make_comment_row(id: i64, author: &str, date: &str, text: &str, url_id: i64) -> DbCommentRow {
+    fn make_comment_row(
+        id: i64,
+        author: &str,
+        date: &str,
+        text: &str,
+        url_id: i64,
+    ) -> DbCommentRow {
         DbCommentRow {
             id,
             author: author.to_string(),

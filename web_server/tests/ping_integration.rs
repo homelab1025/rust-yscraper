@@ -1,7 +1,6 @@
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use web_server::api::app_state::PingAppState;
-use web_server::api::ping::{PingParams, TimeProvider, ping};
+use web_server::api::ping::{PingParams, TimeProvider, ping, PingAppState};
 use std::sync::Arc;
 use std::time::{Duration, SystemTimeError};
 

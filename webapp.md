@@ -2,7 +2,13 @@
 
 The YScraper web application is a dashboard designed to manage and filter comments scraped from various sources (like Hacker News).
 
-### Current Functionality
+### Functionality
+
+There are 2 main functionalities of the web application: viewing the links that have been scraped and keeping or discarding comments. These are the primary features that are located in different sections of the dashboard.
+
+#### Link Management
+- **Link Listing**: display the list of links that have been scraped. For each link displays the title, the URL, and the date it was last scraped. It also displays the status of the link (scraped, failed, or pending).
+- **Add**: Allows users to add new links to the database and they will be automatically scheduled for scraping.
 
 #### Comment Management
 - **Comment Listing**: Displays a paginated list of comments in a structured table. Each entry includes the comment text, the author, the associated URL ID, and the date it was posted.

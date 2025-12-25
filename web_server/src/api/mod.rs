@@ -1,11 +1,13 @@
 pub mod app_state;
 pub mod comments;
 pub mod common;
+pub mod links;
 pub mod ping;
 pub mod scrape_task;
 
 use crate::api::comments::{CommentDto, CommentsPage, ScrapeRequest, ScrapeResponse, ScrapeState};
 use crate::api::common::{ApiError, ApiErrorCode};
+use crate::api::links::LinkDto;
 use crate::api::ping::PingResponse;
 use utoipa::OpenApi;
 
@@ -15,6 +17,7 @@ use utoipa::OpenApi;
         crate::api::ping::ping,
         crate::api::comments::list_comments,
         crate::api::comments::scrape_comments,
+        crate::api::links::list_links,
     ),
     components(
         schemas(
@@ -26,6 +29,7 @@ use utoipa::OpenApi;
             ScrapeState,
             ApiError,
             ApiErrorCode,
+            LinkDto,
         )
     ),
     tags(

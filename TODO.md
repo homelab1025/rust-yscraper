@@ -1,4 +1,5 @@
 ## TODO
+- separate the links repository trait from the comments repository trait
 - add webpage for URLs
 - refresh the comments (scrape again) over time with a limit of X days
 - deploy to k8s - docker imgs & kustomize
