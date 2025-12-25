@@ -1,5 +1,4 @@
 ## TODO
-- separate the links repository trait from the comments repository trait
 - add webpage for URLs
 - refresh the comments (scrape again) over time with a limit of X days
 - deploy to k8s - docker imgs & kustomize
@@ -19,6 +18,7 @@ async fn discard_comment(&self, id: i64) -> Result<(), sqlx::Error>;
     /// Cleanup the database by removing discarded comments.
     async fn cleanup(&self) -> Result<(), sqlx::Error>;
 ## DONE
+- separate the links repository trait from the comments repository trait
 - move to postgres
 - add tests for the handlers
 - switch to postgresql

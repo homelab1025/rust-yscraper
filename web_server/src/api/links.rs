@@ -21,7 +21,7 @@ impl FromRef<AppState> for LinksAppState {
     }
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, PartialEq)]
 pub struct LinkDto {
     pub id: i64,
     pub url: String,
@@ -60,4 +60,95 @@ pub async fn list_links(
         .collect();
 
     Ok(Json(dtos))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::links_repository::DbUrlRow;
+    use async_trait::async_trait;
+    use chrono::Utc;
+
+    struct MockLinksRepository {
+        links: Result<Vec<DbUrlRow>, String>,
+    }
+
+    #[async_trait]
+    impl LinksRepository for MockLinksRepository {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            self.links.clone().map_err(sqlx::Error::Protocol)
+        }
+    }
+
+    #[tokio::test]
+    async fn test_list_links_success() {
+        let time_url1 = Utc::now();
+        let time_url2 = Utc::now();
+        let rows = vec![
+            DbUrlRow {
+                id: 1,
+                url: "https://example.com/1".to_string(),
+                date_added: time_url1,
+            },
+            DbUrlRow {
+                id: 2,
+                url: "https://example.com/2".to_string(),
+                date_added: time_url2,
+            },
+        ];
+
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository {
+                links: Ok(rows.clone()),
+            }),
+        };
+
+        let result = list_links(State(state)).await;
+        assert!(result.is_ok());
+
+        let Json(links) = result.unwrap();
+        assert_eq!(links.len(), 2);
+
+        assert!(links.contains(&LinkDto {
+            id: 1,
+            url: "https://example.com/1".to_string(),
+            date_added: time_url1.to_rfc3339(),
+        }));
+
+        assert!(links.contains(&LinkDto {
+            id: 2,
+            url: "https://example.com/2".to_string(),
+            date_added: time_url2.to_rfc3339(),
+        }));
+    }
+
+    #[tokio::test]
+    async fn test_list_links_empty() {
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository { links: Ok(vec![]) }),
+        };
+
+        let result = list_links(State(state)).await;
+        assert!(result.is_ok());
+
+        let Json(links) = result.unwrap();
+        assert_eq!(links.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_list_links_db_error() {
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository {
+                links: Err("DB error".to_string()),
+            }),
+        };
+
+        let result = list_links(State(state)).await;
+        assert!(result.is_err());
+
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.code, ApiErrorCode::DatabaseError);
+        assert!(err.msg.contains("DB error"));
+    }
 }

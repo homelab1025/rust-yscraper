@@ -185,8 +185,8 @@ mod tests {
     use reqwest::Client;
     use std::fmt::Debug;
     use std::sync::{Arc, Mutex};
-    use tokio::sync::mpsc::error::TrySendError;
     use tokio::sync::Mutex as AsyncMutex;
+    use tokio::sync::mpsc::error::TrySendError;
 
     #[derive(Debug, Default)]
     struct MockedRepo {
@@ -280,7 +280,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl crate::task_queue::TaskScheduler<ScrapeTask> for StubScheduler {
+    impl TaskScheduler<ScrapeTask> for StubScheduler {
         async fn schedule(&self, task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
             self.last_task.lock().unwrap().replace(task.clone());
             match self.outcome {
