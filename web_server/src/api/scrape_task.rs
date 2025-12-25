@@ -1,7 +1,8 @@
-use crate::scrape::scrape::{ScrapeError, get_comments};
+use crate::db::comments_repository::CommentsRepository;
+use crate::scrape::scrape::{get_comments, ScrapeError};
 use crate::task_queue::TaskQueueProcessor;
 use crate::utils::create_batches;
-use crate::{CommentRecord, db};
+use crate::CommentRecord;
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
@@ -13,11 +14,11 @@ use std::sync::Arc;
 pub struct ScrapeTask {
     url: String,
     url_id: i64,
-    repo: Arc<dyn db::CommentsRepository>,
+    repo: Arc<dyn CommentsRepository>,
 }
 
 impl ScrapeTask {
-    pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn db::CommentsRepository>) -> Self {
+    pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn CommentsRepository>) -> Self {
         ScrapeTask {
             url,
             url_id,
@@ -113,7 +114,7 @@ impl TaskQueueProcessor for ScrapeTask {
 #[cfg(test)]
 mod tests_task_hashing {
     use super::ScrapeTask;
-    use crate::db::{CommentsRepository, DbCommentRow};
+    use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::sync::Arc;
@@ -144,10 +145,6 @@ mod tests_task_hashing {
             _url_id: i64,
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
-        }
-
-        async fn list_links(&self) -> Result<Vec<crate::db::DbUrlRow>, sqlx::Error> {
-            Ok(vec![])
         }
     }
 

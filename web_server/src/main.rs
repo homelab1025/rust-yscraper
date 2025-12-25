@@ -19,7 +19,7 @@ use web_server::api::links::list_links;
 use web_server::api::ping::{ping, RealSystemTime};
 use web_server::api::ApiDoc;
 use web_server::config::AppConfig;
-use web_server::db::PgCommentsRepository;
+use web_server::db::postgresql::PgCommentsRepository;
 use web_server::task_queue::TaskDedupQueue;
 
 const CONFIG_PATH: &str = "config.properties";

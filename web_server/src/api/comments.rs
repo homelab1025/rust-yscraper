@@ -1,7 +1,7 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::AppState;
 use crate::api::scrape_task::ScrapeTask;
-use crate::db;
+use crate::db::comments_repository::CommentsRepository;
 use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
@@ -13,7 +13,7 @@ use utoipa::{IntoParams, ToSchema};
 
 #[derive(Clone)]
 pub struct CommentsAppState {
-    pub repo: Arc<dyn db::CommentsRepository>,
+    pub repo: Arc<dyn CommentsRepository>,
     // TODO: actually use this in the scraper
     pub http_client: Arc<Client>,
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
@@ -180,7 +180,7 @@ pub async fn scrape_comments(
 mod tests {
     use super::*;
     use crate::api::scrape_task::ScrapeTask;
-    use crate::db::{CommentsRepository, DbCommentRow};
+    use crate::db::comments_repository::DbCommentRow;
     use async_trait::async_trait;
     use reqwest::Client;
     use std::fmt::Debug;
@@ -251,10 +251,6 @@ mod tests {
         ) -> Result<usize, sqlx::Error> {
             // Default to success for tests that don't exercise DB
             Ok(0)
-        }
-
-        async fn list_links(&self) -> Result<Vec<crate::db::DbUrlRow>, sqlx::Error> {
-            Ok(vec![])
         }
     }
 

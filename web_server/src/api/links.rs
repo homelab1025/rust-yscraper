@@ -1,16 +1,16 @@
 use crate::api::app_state::AppState;
 use crate::api::common::{ApiError, ApiErrorCode};
-use crate::db::CommentsRepository;
-use axum::Json;
+use crate::db::links_repository::LinksRepository;
 use axum::extract::{FromRef, State};
 use axum::http::StatusCode;
+use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
 
 #[derive(Clone)]
 pub struct LinksAppState {
-    pub repo: Arc<dyn CommentsRepository>,
+    pub repo: Arc<dyn LinksRepository>,
 }
 
 impl FromRef<AppState> for LinksAppState {
