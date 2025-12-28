@@ -10,7 +10,7 @@ configMapGenerator:
   options:
     disableNameSuffixHash: true
   files:
-  - config.properties=config-prod.properties
+  - config.toml=config-prod.toml
 
 images:
 - name: yscraper-web-server

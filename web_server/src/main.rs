@@ -23,7 +23,7 @@ use web_server::config::AppConfig;
 use web_server::db::postgresql::PgCommentsRepository;
 use web_server::task_queue::TaskDedupQueue;
 
-const CONFIG_PATH: &str = "config.properties";
+const CONFIG_PATH: &str = "config.toml";
 
 fn main() {
     // init logging first
