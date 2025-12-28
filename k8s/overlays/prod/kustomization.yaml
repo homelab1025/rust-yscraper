@@ -1,0 +1,25 @@
+resources:
+- ../../base
+
+secretGenerator:
+- name: yscraper-db-password
+  literals:
+  - username=postgres
+  - password=postgres
+  - host=postgres
+  - port=5432
+  - dbname=yscraper
+
+configMapGenerator:
+- name: web-server-config
+  files:
+  - config.properties=../../../conf/config-prod.properties
+- name: liquibase-changelog
+  files:
+  - ../../../db/changelog/db.changelog-master.yaml
+  - ../../../db/changelog/001_init.sql
+
+images:
+- name: yscraper-web-server
+  newName: ghcr.io/homelab1025/yscraper-web-server # Example production image
+  newTag: latest

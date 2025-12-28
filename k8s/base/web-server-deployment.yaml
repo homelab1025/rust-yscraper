@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  selector:
+    matchLabels:
+      app: web-server
+  template:
+    metadata:
+      labels:
+        app: web-server
+    spec:
+      containers:
+      - name: web-server
+        image: yscraper-web-server:latest # Placeholder image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        - name: YSCR_db_password
+          valueFrom:
+            secretKeyRef:
+              name: yscraper-db-password
+              key: password
+        - name: YSCR_db_username
+          valueFrom:
+            secretKeyRef:
+              name: yscraper-db-password
+              key: username
+        - name: YSCR_db_host
+          valueFrom:
+            secretKeyRef:
+              name: yscraper-db-password
+              key: host
+        - name: YSCR_db_port
+          valueFrom:
+            secretKeyRef:
+              name: yscraper-db-password
+              key: port
+        - name: YSCR_db_name
+          valueFrom:
+            secretKeyRef:
+              name: yscraper-db-password
+              key: dbname
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config.properties
+          subPath: config.properties
+      volumes:
+      - name: config-volume
+        configMap:
+          name: web-server-config
