@@ -1,8 +1,9 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
 use ::config::{Config, File, FileFormat};
+use axum::{
+    Router,
+    routing::{get, post},
+};
+use config::Environment;
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
@@ -13,11 +14,11 @@ use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use web_server::api::ApiDoc;
 use web_server::api::app_state::AppState;
 use web_server::api::comments::{list_comments, scrape_comments};
 use web_server::api::links::list_links;
-use web_server::api::ping::{ping, RealSystemTime};
-use web_server::api::ApiDoc;
+use web_server::api::ping::{RealSystemTime, ping};
 use web_server::config::AppConfig;
 use web_server::db::postgresql::PgCommentsRepository;
 use web_server::task_queue::TaskDedupQueue;
@@ -29,11 +30,17 @@ fn main() {
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
     info!("Starting server...");
 
-    let cfg = AppConfig::from_config(
-        &Config::builder()
-            .add_source(File::new(CONFIG_PATH, FileFormat::Ini).required(false))
-            .build()
-            .expect("Failed to load config file"),
+    let conf = Config::builder()
+        .add_source(File::with_name(CONFIG_PATH).required(true))
+        .add_source(Environment::with_prefix("YSCR").prefix_separator("_"))
+        .build()
+        .expect("Failed to load config file");
+
+    let cfg = AppConfig::from_config(&conf).expect("Failed to create config structure.");
+
+    let connection_url = format!(
+        "postgres://{}:{}@{}:{}/{}",
+        &cfg.db_username, &cfg.db_password, &cfg.db_host, &cfg.db_port, &cfg.db_name
     );
 
     // Build a Tokio runtime and block on the async server startup.
@@ -48,7 +55,7 @@ fn main() {
         let db_pool = match PgPoolOptions::new()
             .max_connections(5)
             .acquire_timeout(Duration::from_secs(5))
-            .connect(&cfg.db_url)
+            .connect(&connection_url)
             .await
         {
             Ok(pool) => pool,
