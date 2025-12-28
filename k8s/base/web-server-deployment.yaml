@@ -44,7 +44,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: yscraper-db-password
-              key: dbname
+              key: name
         volumeMounts:
         - name: config-volume
           mountPath: /app/config.properties
