@@ -18,3 +18,11 @@ This project consists of a web server that:
 - **Swagger Documentation**: Interactive API documentation available at `/swagger-ui`.
 - **Database Persistence**: Robust storage with PostgreSQL and Liquibase for migrations.
 - **Containerized**: Easy to deploy and run using K8s.
+
+## Tools Used
+
+- for k8s deployment manifest files Kustomize
+- for test coverage cargo llvm-cov
+```bash
+cargo llvm-cov --html
+```

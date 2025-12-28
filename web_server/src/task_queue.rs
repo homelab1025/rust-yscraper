@@ -298,4 +298,6 @@ mod tests {
         assert_eq!(t2_executed.load(Ordering::SeqCst), 0);
         assert_eq!(t3_executed.load(Ordering::SeqCst), 0);
     }
+
+    // TODO: test to check that a failing task does not crash the loop
 }
