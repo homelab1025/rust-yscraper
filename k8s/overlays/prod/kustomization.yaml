@@ -7,8 +7,10 @@ resources:
 
 configMapGenerator:
 - name: web-server-config
+  options:
+    disableNameSuffixHash: true
   files:
-  - config.properties=../../../conf/config-prod.properties
+  - config.properties=config-prod.properties
 
 images:
 - name: yscraper-web-server
