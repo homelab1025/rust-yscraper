@@ -21,12 +21,9 @@ RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/target/release/web_server /usr/local/bin/web_server
+COPY --from=builder /app/target/release/web_server /app/web_server
 
-# The application looks for config.properties by default, 
-# but we can also use environment variables as per src/config.rs logic.
-# We'll expose the default port.
 EXPOSE 3000
 
 # Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/web_server"]
+ENTRYPOINT ["/app/web_server"]
