@@ -47,8 +47,8 @@ spec:
               key: name
         volumeMounts:
         - name: config-volume
-          mountPath: /app/config.properties
-          subPath: config.properties
+          mountPath: /app/config2.properties
+          subPath: config2.properties
       volumes:
       - name: config-volume
         configMap:
