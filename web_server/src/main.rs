@@ -1,9 +1,9 @@
-use ::config::{Config, File, FileFormat};
+use ::config::Config;
 use axum::{
     Router,
     routing::{get, post},
 };
-use config::Environment;
+use config::{Environment, File, FileFormat};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
@@ -31,7 +31,7 @@ fn main() {
     info!("Starting server...");
 
     let conf = Config::builder()
-        .add_source(File::with_name(CONFIG_PATH).required(true))
+        .add_source(File::new(CONFIG_PATH, FileFormat::Toml))
         .add_source(Environment::with_prefix("YSCR").prefix_separator("_"))
         .build()
         .expect("Failed to load config file");
