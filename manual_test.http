@@ -7,3 +7,7 @@ Content-Type: application/json
 }
 
 ###
+
+GET https://scraper.lab.wicked/links
+
+###
