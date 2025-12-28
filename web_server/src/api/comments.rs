@@ -68,7 +68,7 @@ pub struct ScrapeResponse {
 /// List comments with pagination
 #[utoipa::path(
     get,
-    path = "/api/comments",
+    path = "/comments",
     params(CommentsQuery),
     responses(
         (status = 200, description = "List of comments", body = CommentsPage),
@@ -132,7 +132,7 @@ pub async fn list_comments(
 /// Trigger a scrape task for a specific Hacker News item
 #[utoipa::path(
     post,
-    path = "/api/comments/scrape",
+    path = "/scrape",
     request_body = ScrapeRequest,
     responses(
         (status = 200, description = "Scrape task scheduled or already scheduled", body = ScrapeResponse),

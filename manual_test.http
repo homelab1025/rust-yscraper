@@ -1,9 +1,9 @@
 ### POST request to example server
-POST http://localhost:3000/scrape
+POST https://scraper.lab.wicked/scrape
 Content-Type: application/json
 
 {
-"url" : "https://news.ycombinator.com/item?id=45561428"
+  "item_id" : 45561428
 }
 
 ###
