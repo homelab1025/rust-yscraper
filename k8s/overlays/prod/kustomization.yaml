@@ -9,6 +9,7 @@ configMapGenerator:
 - name: web-server-config
   options:
     disableNameSuffixHash: true
+  namespace: yscraper
   files:
   - config.toml=config-prod.toml
 
