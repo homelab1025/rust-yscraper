@@ -5,12 +5,11 @@ configMapGenerator:
 - name: web-server-config
   files:
   - config.properties=../../../conf/config-prod.properties
-- name: liquibase-changelog
-  files:
-  - ../../../db/changelog/db.changelog-master.yaml
-  - ../../../db/changelog/001_init.sql
 
 images:
 - name: yscraper-web-server
-  newName: ghcr.io/homelab1025/yscraper-web-server # Example production image
+  newName: ghcr.io/flodia/rust-yscraper
+  newTag: latest
+- name: yscraper-liquibase
+  newName: ghcr.io/flodia/rust-yscraper-liquibase
   newTag: latest

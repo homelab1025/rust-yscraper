@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: liquibase
-        image: liquibase/liquibase:4.23
+        image: yscraper-liquibase
         imagePullPolicy: Always
         command: ["/bin/sh", "-c"]
         env:
@@ -49,12 +49,4 @@ spec:
               --password=${DB_PASSWORD} \
               --driver=org.postgresql.Driver \
               update
-        volumeMounts:
-        - name: changelog
-          mountPath: /liquibase/db/changelog
-          readOnly: true
       restartPolicy: OnFailure
-      volumes:
-      - name: changelog
-        configMap:
-          name: liquibase-changelog
