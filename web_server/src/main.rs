@@ -1,7 +1,7 @@
 use ::config::Config;
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{delete, get, post},
 };
 use config::{Environment, File, FileFormat};
 use log::{error, info};
@@ -17,7 +17,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use web_server::api::ApiDoc;
 use web_server::api::app_state::AppState;
 use web_server::api::comments::{list_comments, scrape_comments};
-use web_server::api::links::list_links;
+use web_server::api::links::{delete_link, list_links};
 use web_server::api::ping::{RealSystemTime, ping};
 use web_server::config::AppConfig;
 use web_server::db::postgresql::PgCommentsRepository;
@@ -74,6 +74,7 @@ fn main() {
             .route("/scrape", post(scrape_comments))
             .route("/comments", get(list_comments))
             .route("/links", get(list_links))
+            .route("/links/:id", delete(delete_link))
             .with_state(app_state)
             .layer(
                 CorsLayer::new()

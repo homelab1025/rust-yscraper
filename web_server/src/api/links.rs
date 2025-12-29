@@ -1,9 +1,9 @@
 use crate::api::app_state::AppState;
 use crate::api::common::{ApiError, ApiErrorCode};
 use crate::db::links_repository::LinksRepository;
-use axum::extract::{FromRef, State};
-use axum::http::StatusCode;
 use axum::Json;
+use axum::extract::{FromRef, Path, State};
+use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -62,21 +62,67 @@ pub async fn list_links(
     Ok(Json(dtos))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/links/{id}",
+    responses(
+        (status = 200, description = "Link deleted successfully"),
+        (status = 404, description = "Link not found", body = ApiError)
+    )
+)]
+pub async fn delete_link(
+    State(state): State<LinksAppState>,
+    Path(id): Path<i64>,
+) -> Result<(), (StatusCode, Json<ApiError>)> {
+    match state.repo.delete_link(id).await {
+        Ok(n) => {
+            if n == 0 {
+                Err((
+                    StatusCode::NOT_FOUND,
+                    Json(ApiError {
+                        code: ApiErrorCode::NotFound,
+                        msg: format!("Link with ID {} not found", id),
+                    }),
+                ))
+            } else {
+                Ok(())
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to delete link: {}", e);
+
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::DatabaseError,
+                    msg: format!("Failed to delete link: {}", e),
+                }),
+            ))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::db::links_repository::DbUrlRow;
     use async_trait::async_trait;
     use chrono::Utc;
+    use sqlx::Error;
 
     struct MockLinksRepository {
         links: Result<Vec<DbUrlRow>, String>,
+        delete_result: Result<u64, String>,
     }
 
     #[async_trait]
     impl LinksRepository for MockLinksRepository {
-        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
-            self.links.clone().map_err(sqlx::Error::Protocol)
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, Error> {
+            self.links.clone().map_err(Error::Protocol)
+        }
+
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            self.delete_result.clone().map_err(Error::Protocol)
         }
     }
 
@@ -100,6 +146,7 @@ mod tests {
         let state = LinksAppState {
             repo: Arc::new(MockLinksRepository {
                 links: Ok(rows.clone()),
+                delete_result: Ok(0),
             }),
         };
 
@@ -125,7 +172,10 @@ mod tests {
     #[tokio::test]
     async fn test_list_links_empty() {
         let state = LinksAppState {
-            repo: Arc::new(MockLinksRepository { links: Ok(vec![]) }),
+            repo: Arc::new(MockLinksRepository {
+                links: Ok(vec![]),
+                delete_result: Ok(0),
+            }),
         };
 
         let result = list_links(State(state)).await;
@@ -140,6 +190,7 @@ mod tests {
         let state = LinksAppState {
             repo: Arc::new(MockLinksRepository {
                 links: Err("DB error".to_string()),
+                delete_result: Ok(0),
             }),
         };
 
@@ -149,6 +200,54 @@ mod tests {
         let (status, Json(err)) = result.unwrap_err();
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
         assert_eq!(err.code, ApiErrorCode::DatabaseError);
-        assert!(err.msg.contains("DB error"));
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_success() {
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository {
+                links: Ok(vec![]),
+                delete_result: Ok(1),
+            }),
+        };
+
+        let result = delete_link(State(state), Path(1)).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_not_found() {
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository {
+                links: Ok(vec![]),
+                delete_result: Ok(0),
+            }),
+        };
+
+        let result = delete_link(State(state), Path(1)).await;
+        assert!(result.is_err());
+
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(err.code, ApiErrorCode::NotFound);
+        assert!(err.msg.contains("Link with ID 1 not found"));
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_db_error() {
+        let state = LinksAppState {
+            repo: Arc::new(MockLinksRepository {
+                links: Ok(vec![]),
+                delete_result: Err("DB error".to_string()),
+            }),
+        };
+
+        let result = delete_link(State(state), Path(1)).await;
+        assert!(result.is_err());
+
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(err.code, ApiErrorCode::DatabaseError);
+        assert!(err.msg.contains("Failed to delete link"));
     }
 }

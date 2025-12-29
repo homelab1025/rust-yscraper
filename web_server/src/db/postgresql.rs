@@ -2,6 +2,7 @@ use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
 use crate::db::links_repository::{DbUrlRow, LinksRepository};
 use crate::CommentRecord;
 use async_trait::async_trait;
+use log::{debug, warn};
 use sqlx::{Pool, Postgres};
 
 pub struct PgCommentsRepository {
@@ -83,5 +84,42 @@ impl LinksRepository for PgCommentsRepository {
         )
         .fetch_all(&self.pool)
         .await
+    }
+
+    async fn delete_link(&self, id: i64) -> Result<u64, sqlx::Error> {
+        let mut tx = self.pool.begin().await?;
+
+        let deleted_links = sqlx::query("DELETE FROM urls WHERE id = $1")
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        debug!(
+            "Found {} link to delete for id {}",
+            deleted_links.rows_affected(),
+            id
+        );
+
+        let delete_comments = sqlx::query("DELETE FROM comments WHERE url_id = $1")
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        let removed_comments = delete_comments.rows_affected();
+
+        debug!(
+            "Found {} comments to delete for link id {}",
+            removed_comments, id
+        );
+        if removed_comments > 0 && deleted_links.rows_affected() == 0 {
+            warn!(
+                "There were {} comments for link id {} but no link was found. This should not happen.",
+                removed_comments, id
+            );
+        }
+
+        tx.commit().await?;
+
+        Ok(deleted_links.rows_affected())
     }
 }

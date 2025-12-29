@@ -1,4 +1,5 @@
 ## TODO
+- delete the link together with the comments that come with it in a transaction
 - create a web interface using reactjs with the following features:
   - deploy this webapp to k8s and serve it from an nginx server as statis content
   - add an id for scraping

@@ -12,4 +12,5 @@ pub enum ApiErrorCode {
     DatabaseError,
     BadRequest,
     SchedulingError,
+    NotFound,
 }
