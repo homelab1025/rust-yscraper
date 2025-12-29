@@ -74,7 +74,7 @@ fn main() {
             .route("/scrape", post(scrape_comments))
             .route("/comments", get(list_comments))
             .route("/links", get(list_links))
-            .route("/links/:id", delete(delete_link))
+            .route("/links/{id}", delete(delete_link))
             .with_state(app_state)
             .layer(
                 CorsLayer::new()
