@@ -17,6 +17,7 @@ use utoipa::OpenApi;
         crate::api::comments::list_comments,
         crate::api::comments::scrape_comments,
         crate::api::links::list_links,
+        crate::api::links::delete_link,
     ),
     components(
         schemas(
