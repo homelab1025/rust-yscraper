@@ -43,6 +43,7 @@ pub struct PingResponse {
 }
 
 #[derive(serde::Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct PingParams {
     /// Message to echo back
     pub msg: Option<String>,

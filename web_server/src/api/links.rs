@@ -65,6 +65,9 @@ pub async fn list_links(
 #[utoipa::path(
     delete,
     path = "/links/{id}",
+    params(
+        ("id" = i64, Path, description = "Link ID to delete")
+    ),
     responses(
         (status = 200, description = "Link deleted successfully"),
         (status = 404, description = "Link not found", body = ApiError)

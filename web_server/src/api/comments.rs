@@ -1,7 +1,7 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::AppState;
-use crate::scrape_task::ScrapeTask;
 use crate::db::comments_repository::CommentsRepository;
+use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
@@ -30,6 +30,7 @@ impl FromRef<AppState> for CommentsAppState {
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct CommentsQuery {
     pub offset: Option<i64>,
     pub count: Option<i64>,
@@ -179,14 +180,14 @@ pub async fn scrape_comments(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::scrape_task::ScrapeTask;
     use crate::db::comments_repository::DbCommentRow;
+    use crate::scrape_task::ScrapeTask;
     use async_trait::async_trait;
     use reqwest::Client;
     use std::fmt::Debug;
     use std::sync::{Arc, Mutex};
-    use tokio::sync::Mutex as AsyncMutex;
     use tokio::sync::mpsc::error::TrySendError;
+    use tokio::sync::Mutex as AsyncMutex;
 
     #[derive(Debug, Default)]
     struct MockedRepo {
