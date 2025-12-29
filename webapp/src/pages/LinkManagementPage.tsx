@@ -2,8 +2,6 @@ import * as React from 'react';
 import {useEffect, useState} from 'react';
 import {
     Alert,
-    Box,
-    Button,
     CircularProgress,
     Container,
     Paper,
@@ -13,10 +11,10 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
     Typography
 } from '@mui/material';
 import axios from 'axios';
+import {AddLink} from "../components/AddLink.tsx";
 
 interface LinkDto {
     id: number;
@@ -27,10 +25,8 @@ interface LinkDto {
 
 export default function LinkManagementPage(): React.JSX.Element {
     const [links, setLinks] = useState<LinkDto[]>([]);
-    const [newLinkId, setNewLinkId] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [submitting, setSubmitting] = useState(false);
 
     const fetchLinks = async () => {
         try {
@@ -50,52 +46,13 @@ export default function LinkManagementPage(): React.JSX.Element {
         fetchLinks();
     }, []);
 
-    const handleAddLink = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newLinkId) return;
-
-        try {
-            setSubmitting(true);
-            await axios.post('/api/scrape', {item_id: parseInt(newLinkId)});
-            setNewLinkId('');
-            await fetchLinks();
-        } catch (err) {
-            setError('Failed to add link');
-            console.error(err);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     return (
         <Container>
             <Typography variant="h4" gutterBottom>
                 Link Management
             </Typography>
 
-            <Paper sx={{padding: 2, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 2}}>
-                <Typography variant="h6">
-                    Add New Link (Hacker News Item ID)
-                </Typography>
-                <Box component="form" onSubmit={handleAddLink} sx={{display: 'flex', gap: 2}}>
-                    <TextField
-                        label="Item ID"
-                        variant="outlined"
-                        size="small"
-                        value={newLinkId}
-                        onChange={(e) => setNewLinkId(e.target.value)}
-                        disabled={submitting}
-                        type="number"
-                    />
-                    <Button
-                        variant="contained"
-                        type="submit"
-                        disabled={submitting || !newLinkId}
-                    >
-                        {submitting ? <CircularProgress size={24}/> : 'Add'}
-                    </Button>
-                </Box>
-            </Paper>
+            <AddLink/>
 
             {error && <Alert severity="error" sx={{mb: 2}}>{error}</Alert>}
 
