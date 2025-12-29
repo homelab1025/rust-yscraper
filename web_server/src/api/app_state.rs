@@ -1,5 +1,5 @@
 use crate::api::ping::TimeProvider;
-use crate::api::scrape_task::ScrapeTask;
+use crate::scrape_task::ScrapeTask;
 use crate::db::CombinedRepository;
 use crate::task_queue::TaskDedupQueue;
 use reqwest::Client;

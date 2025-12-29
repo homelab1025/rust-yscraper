@@ -1,5 +1,5 @@
 use crate::db::comments_repository::CommentsRepository;
-use crate::scrape::scrape::{get_comments, ScrapeError};
+use crate::scrape::{get_comments, ScrapeError};
 use crate::task_queue::TaskQueueProcessor;
 use crate::utils::create_batches;
 use crate::CommentRecord;

@@ -1,9 +1,10 @@
 pub mod api;
 pub mod config;
+pub mod db;
 pub mod scrape;
+pub mod scrape_task;
 pub mod task_queue;
 pub mod utils;
-pub mod db;
 
 #[derive(Debug, Default, Clone)]
 pub struct CommentRecord {

@@ -3,7 +3,6 @@ pub mod comments;
 pub mod common;
 pub mod links;
 pub mod ping;
-pub mod scrape_task;
 
 use crate::api::comments::{CommentDto, CommentsPage, ScrapeRequest, ScrapeResponse, ScrapeState};
 use crate::api::common::{ApiError, ApiErrorCode};

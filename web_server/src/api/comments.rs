@@ -1,6 +1,6 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::AppState;
-use crate::api::scrape_task::ScrapeTask;
+use crate::scrape_task::ScrapeTask;
 use crate::db::comments_repository::CommentsRepository;
 use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
@@ -179,7 +179,7 @@ pub async fn scrape_comments(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::scrape_task::ScrapeTask;
+    use crate::scrape_task::ScrapeTask;
     use crate::db::comments_repository::DbCommentRow;
     use async_trait::async_trait;
     use reqwest::Client;
