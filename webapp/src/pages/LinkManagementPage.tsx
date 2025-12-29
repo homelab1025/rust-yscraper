@@ -4,6 +4,7 @@ import {
     Alert,
     CircularProgress,
     Container,
+    IconButton,
     Paper,
     Table,
     TableBody,
@@ -13,6 +14,7 @@ import {
     TableRow,
     Typography
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import {AddLink} from "../components/AddLink.tsx";
 
@@ -42,6 +44,20 @@ export default function LinkManagementPage(): React.JSX.Element {
         }
     };
 
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this link?')) {
+            return;
+        }
+
+        try {
+            await axios.delete(`/api/links/${id}`);
+            await fetchLinks();
+        } catch (err) {
+            setError('Failed to delete link');
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
         fetchLinks();
     }, []);
@@ -64,18 +80,19 @@ export default function LinkManagementPage(): React.JSX.Element {
                             <TableCell>URL</TableCell>
                             <TableCell>Date Added</TableCell>
                             <TableCell>Status</TableCell>
+                            <TableCell>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     <CircularProgress/>
                                 </TableCell>
                             </TableRow>
                         ) : links.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     No links found.
                                 </TableCell>
                             </TableRow>
@@ -90,6 +107,15 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
                                     <TableCell>{link.status || 'Scraped'}</TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            aria-label="delete"
+                                            color="error"
+                                            onClick={() => handleDelete(link.id)}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}
