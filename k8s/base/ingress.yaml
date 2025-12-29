@@ -13,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: web-server
+            name: webapp
             port:
               number: 80

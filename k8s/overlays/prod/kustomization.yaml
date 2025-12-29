@@ -20,3 +20,6 @@ images:
 - name: yscraper-liquibase
   newName: ghcr.io/homelab1025/rust-yscraper-liquibase
   newTag: latest
+- name: yscraper-webapp
+  newName: ghcr.io/homelab1025/rust-yscraper-webapp
+  newTag: latest

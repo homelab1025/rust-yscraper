@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+spec:
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: yscraper-webapp:latest # Placeholder image
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: BACKEND_URL
+          value: "http://web-server:80"

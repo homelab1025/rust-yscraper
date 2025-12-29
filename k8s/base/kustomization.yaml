@@ -2,4 +2,6 @@ resources:
   - web-server-deployment.yaml
   - web-server-service.yaml
   - liquibase-job.yaml
+  - webapp-deployment.yaml
+  - webapp-service.yaml
   - ingress.yaml
