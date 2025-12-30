@@ -10,9 +10,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   OPENAPI_SPEC_PATH: "target/release/openapi.yaml"
   CACHED_PATHS: |
-    target/release/migration
-    target/release/web_server
-    target/release/openapi.yaml
+    target/release/**
 
 jobs:
 
@@ -35,16 +33,6 @@ jobs:
           echo "Generated Release Version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         shell: bash
-      - name: Cache rust dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Run tests
         run: cargo test
       - name: Build
@@ -52,7 +40,7 @@ jobs:
       - name: Build API spec
         run: target/release/api_gen ${{env.OPENAPI_SPEC_PATH}}
       - name: Cache target
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: target-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{env.CACHED_PATHS}}
@@ -67,7 +55,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Cache target
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: target-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{env.CACHED_PATHS}}
@@ -97,19 +85,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Cache target
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           key: target-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{env.CACHED_PATHS}}
-      - name: Generate TS sources
-        run: openapi-generator generate -g typescript-axios -i ${{env.OPENAPI_SPEC_PATH}} -o webapp/src/lib/server/
-      - name: Install dependencies
-        working-directory: ./webapp
-        run: npm install
-      - name: Build Webapp
-        working-directory: ./webapp
-        run: npm run build
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
