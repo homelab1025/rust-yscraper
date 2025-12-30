@@ -17,8 +17,9 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import {AddLink} from "../components/AddLink.tsx";
 import {CrateApiLinksApi, type LinkDto} from "../api-client";
+import {apiConfig} from "../api-config";
 
-const linksApi = new CrateApiLinksApi();
+const linksApi = new CrateApiLinksApi(apiConfig);
 
 export default function LinkManagementPage(): React.JSX.Element {
     const [links, setLinks] = useState<LinkDto[]>([]);

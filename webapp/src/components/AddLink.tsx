@@ -2,8 +2,9 @@ import {Alert, Box, Button, CircularProgress, Paper, TextField, Typography} from
 import * as React from "react";
 import {useState} from "react";
 import {CrateApiCommentsApi} from "../api-client";
+import {apiConfig} from "../api-config";
 
-const commentsApi = new CrateApiCommentsApi();
+const commentsApi = new CrateApiCommentsApi(apiConfig);
 
 export function AddLink() {
     const [newLinkId, setNewLinkId] = useState('');
