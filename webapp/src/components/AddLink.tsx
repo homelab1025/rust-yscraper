@@ -1,7 +1,9 @@
 import {Alert, Box, Button, CircularProgress, Paper, TextField, Typography} from "@mui/material";
-import axios from "axios";
 import * as React from "react";
 import {useState} from "react";
+import {CrateApiCommentsApi} from "../api-client";
+
+const commentsApi = new CrateApiCommentsApi();
 
 export function AddLink() {
     const [newLinkId, setNewLinkId] = useState('');
@@ -14,7 +16,7 @@ export function AddLink() {
 
         try {
             setSubmitting(true);
-            await axios.post('/api/scrape', {item_id: parseInt(newLinkId)});
+            await commentsApi.scrapeComments({item_id: parseInt(newLinkId)});
             setNewLinkId('');
         } catch (err) {
             setError('Failed to add link');

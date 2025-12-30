@@ -15,15 +15,10 @@ import {
     Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import axios from 'axios';
 import {AddLink} from "../components/AddLink.tsx";
+import {CrateApiLinksApi, type LinkDto} from "../api-client";
 
-interface LinkDto {
-    id: number;
-    url: string;
-    date_added: string;
-    status?: string; // Adding status as mentioned in requirements, although not yet in backend
-}
+const linksApi = new CrateApiLinksApi();
 
 export default function LinkManagementPage(): React.JSX.Element {
     const [links, setLinks] = useState<LinkDto[]>([]);
@@ -33,7 +28,7 @@ export default function LinkManagementPage(): React.JSX.Element {
     const fetchLinks = async () => {
         try {
             setLoading(true);
-            const response = await axios.get<LinkDto[]>('/api/links');
+            const response = await linksApi.listLinks();
             setLinks(response.data);
             setError(null);
         } catch (err) {
@@ -50,7 +45,7 @@ export default function LinkManagementPage(): React.JSX.Element {
         }
 
         try {
-            await axios.delete(`/api/links/${id}`);
+            await linksApi.deleteLink(id);
             await fetchLinks();
         } catch (err) {
             setError('Failed to delete link');
@@ -106,7 +101,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                                         </a>
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
-                                    <TableCell>{link.status || 'Scraped'}</TableCell>
+                                    <TableCell>{'Scraped'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             aria-label="delete"
