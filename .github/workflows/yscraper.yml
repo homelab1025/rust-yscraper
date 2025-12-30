@@ -10,7 +10,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   OPENAPI_SPEC_PATH: "target/release/openapi.yaml"
   CACHED_PATHS: |
-    target/release/**
+    target/release/openapi.yaml
+    target/release/api_gen
+    target/release/web_server
 
 jobs:
 
