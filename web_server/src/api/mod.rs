@@ -34,6 +34,9 @@ use utoipa::OpenApi;
     ),
     tags(
         (name = "web-server", description = "Hacker News Scraper API")
-    )
+    ),
+    info(
+        license(identifier = "CC-BY-NC-ND-4.0")
+    ),
 )]
 pub struct ApiDoc;

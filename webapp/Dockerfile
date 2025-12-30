@@ -3,12 +3,20 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
+## Install Java for openapi generation
+RUN apk update
+RUN apk add openjdk25-jre
+
 # Copy package files and install dependencies
 COPY webapp/package*.json ./
 RUN npm install
 
 # Copy the rest of the application code
 COPY webapp/ ./
+
+# Build the api client
+COPY target/release/openapi.yaml ./
+RUN npm run generate-api
 
 # Build the application
 RUN npm run build

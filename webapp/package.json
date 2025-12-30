@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "generate-api": "openapi-generator-cli generate -i ../openapi.yaml -g typescript-axios -o src/api-client",
+    "generate-api": "openapi-generator-cli generate -i openapi.yaml -g typescript-axios -o src/api-client",
     "preview": "vite preview"
   },
   "dependencies": {
