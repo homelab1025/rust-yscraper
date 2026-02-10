@@ -1,0 +1,24 @@
+--- web_server/src/scrape_task.rs
++++ replace <impl Display for ScrapeTaskError>::fmt -> std::fmt::Result with Ok(Default::default())
+@@ -67,20 +67,17 @@
+         match self {
+             ScrapeTaskError::DatabaseError(e) => Some(e),
+             ScrapeTaskError::ScrapingError(e) => Some(e),
+         }
+     }
+ }
+ impl Display for ScrapeTaskError {
+     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+-        match self {
+-            ScrapeTaskError::DatabaseError(e) => write!(f, "{}", e),
+-            ScrapeTaskError::ScrapingError(e) => write!(f, "{}", e),
+-        }
++        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ #[async_trait]
+ impl TaskQueueProcessor for ScrapeTask {
+     type ProcessorError = ScrapeTaskError;
+ 
+     async fn execute(&self) -> Result<(), ScrapeTaskError> {

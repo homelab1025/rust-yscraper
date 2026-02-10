@@ -1,0 +1,20 @@
+api_gen/src/main.rs:6:5: replace main with ()
+api_gen/src/main.rs:7:19: replace < with == in main
+api_gen/src/main.rs:7:19: replace < with > in main
+api_gen/src/main.rs:7:19: replace < with <= in main
+web_server/src/main.rs:34:5: replace main with ()
+web_server/src/main.rs:134:5: replace start_background_scheduler with ()
+web_server/src/background_scheduler.rs:28:9: replace BackgroundScheduler::run with ()
+web_server/src/background_scheduler.rs:40:40: replace > with == in BackgroundScheduler::run
+web_server/src/background_scheduler.rs:40:40: replace > with < in BackgroundScheduler::run
+web_server/src/background_scheduler.rs:40:40: replace > with >= in BackgroundScheduler::run
+web_server/src/scrape.rs:21:9: replace <impl Display for ScrapeError>::fmt -> std::fmt::Result with Ok(Default::default())
+web_server/src/scrape.rs:67:5: replace validate_thread_title -> Result<(), ScrapeError> with Ok(())
+web_server/src/scrape.rs:142:30: replace && with || in parse_root_comments
+web_server/src/scrape_task.rs:22:9: replace <impl std::fmt::Debug for ScrapeTask>::fmt -> std::fmt::Result with Ok(Default::default())
+web_server/src/scrape_task.rs:44:9: replace ScrapeTask::url -> &str with ""
+web_server/src/scrape_task.rs:44:9: replace ScrapeTask::url -> &str with "xyzzy"
+web_server/src/scrape_task.rs:65:9: replace <impl Display for ScrapeTask>::fmt -> std::fmt::Result with Ok(Default::default())
+web_server/src/scrape_task.rs:77:9: replace <impl Error for ScrapeTaskError>::cause -> Option<&dyn Error> with None
+web_server/src/scrape_task.rs:85:9: replace <impl Display for ScrapeTaskError>::fmt -> std::fmt::Result with Ok(Default::default())
+web_server/src/scrape_task.rs:97:9: replace <impl TaskQueueProcessor for ScrapeTask>::execute -> Result<(), ScrapeTaskError> with Ok(())

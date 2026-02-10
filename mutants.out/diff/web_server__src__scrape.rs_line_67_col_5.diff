@@ -1,0 +1,34 @@
+--- web_server/src/scrape.rs
++++ replace validate_thread_title -> Result<(), ScrapeError> with Ok(())
+@@ -59,30 +59,17 @@
+ 
+     let valid_response = resp.error_for_status()?;
+     valid_response.text().await
+ }
+ 
+ const THREAD_PREFIX: &str = "Ask HN: What Are You Working On";
+ 
+ fn validate_thread_title(html: &str) -> Result<(), ScrapeError> {
+-    let document = Html::parse_document(html);
+-    let tl_sel = Selector::parse("span.titleline").map_err(|_| ElementSelectorError())?;
+-    if let Some(span) = document.select(&tl_sel).next() {
+-        let title_text = span.text().collect::<String>();
+-        if title_text
+-            .to_lowercase()
+-            .starts_with(THREAD_PREFIX.to_lowercase().as_str())
+-        {
+-            return Ok(());
+-        } else {
+-            warn!("Invalid thread title: {}", title_text);
+-        }
+-    }
+-    Err(InvalidThreadTitle())
++    Ok(()) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> {
+     let document = Html::parse_document(html);
+     let tr_sel = Selector::parse("tr.athing.comtr")?;
+     let ind_img_sel = Selector::parse("td.ind img")?;
+     let author_sel = Selector::parse("a.hnuser")?;
+     let age_sel = Selector::parse("span.age")?;

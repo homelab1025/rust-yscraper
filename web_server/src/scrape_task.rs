@@ -1,8 +1,8 @@
+use crate::CommentRecord;
 use crate::db::comments_repository::CommentsRepository;
-use crate::scrape::{get_comments, ScrapeError};
+use crate::scrape::{ScrapeError, get_comments};
 use crate::task_queue::TaskQueueProcessor;
 use crate::utils::create_batches;
-use crate::CommentRecord;
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
@@ -17,6 +17,16 @@ pub struct ScrapeTask {
     repo: Arc<dyn CommentsRepository>,
 }
 
+impl std::fmt::Debug for ScrapeTask {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ScrapeTask")
+            .field("url", &self.url)
+            .field("url_id", &self.url_id)
+            .field("repo", &"<CommentsRepository>")
+            .finish()
+    }
+}
+
 impl ScrapeTask {
     pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn CommentsRepository>) -> Self {
         ScrapeTask {
@@ -25,20 +35,28 @@ impl ScrapeTask {
             repo: comments_repo.clone(),
         }
     }
+
+    pub fn url_id(&self) -> i64 {
+        self.url_id
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
 }
 
 impl Eq for ScrapeTask {}
 
 impl PartialEq for ScrapeTask {
     fn eq(&self, other: &Self) -> bool {
-        self.url_id == other.url_id && self.url == other.url
+        self.url == other.url && self.url_id == other.url_id
     }
 }
 
 impl Hash for ScrapeTask {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.url_id.hash(state);
         self.url.hash(state);
+        self.url_id.hash(state);
     }
 }
 
@@ -78,12 +96,6 @@ impl TaskQueueProcessor for ScrapeTask {
     async fn execute(&self) -> Result<(), ScrapeTaskError> {
         info!("Executing Scrape TASK.");
 
-        // Ensure the URL is recorded in the urls table and get (or confirm) its id
-        if let Err(e) = self.repo.upsert_url(self.url_id, &self.url).await {
-            error!("Failed to upsert url: {}", e);
-            return Err(ScrapeTaskError::DatabaseError(e));
-        }
-
         info!("/scrape called; starting scraping for {}", self.url);
         let comments_retrieval = get_comments(&self.url).await;
         match comments_retrieval {
@@ -103,6 +115,11 @@ impl TaskQueueProcessor for ScrapeTask {
                 }
 
                 info!("Scraping complete; {} comments inserted", total_inserted);
+
+                // Update last_scraped timestamp for scheduling purposes
+                if let Err(e) = self.repo.update_last_scraped(self.url_id).await {
+                    error!("Failed to update last_scraped timestamp: {}", e);
+                }
             }
             Err(error) => return Err(ScrapeTaskError::ScrapingError(error)),
         }
@@ -117,6 +134,7 @@ mod tests_task_hashing {
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use async_trait::async_trait;
     use std::collections::HashSet;
+    use std::hash::{Hash, Hasher};
     use std::sync::Arc;
 
     struct MockRepo;
@@ -135,16 +153,32 @@ mod tests_task_hashing {
             Ok(Vec::new())
         }
 
-        async fn upsert_url(&self, _id: i64, _url: &str) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
-
         async fn upsert_comments(
             &self,
             _comments: &[crate::CommentRecord],
             _url_id: i64,
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
+        }
+
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn get_urls_due_for_refresh(
+            &self,
+        ) -> Result<Vec<crate::db::comments_repository::ScheduledUrl>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
         }
     }
 
@@ -171,9 +205,10 @@ mod tests_task_hashing {
     }
 
     #[test]
-    fn hashset_distinguishes_different_url_ids() {
+    fn hashset_distinguishes_same_url_different_ids() {
+        // Same URL but different url_id -> should be considered different
         let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/1", 2); // different id
+        let t2 = new_task("https://example.com/item/1", 999); // different id
 
         let mut set = HashSet::new();
         set.insert(t1);
@@ -182,7 +217,7 @@ mod tests_task_hashing {
         assert_eq!(
             set.len(),
             2,
-            "Different url_id should produce distinct set entries"
+            "Same URL with different url_id should be distinct"
         );
     }
 
@@ -199,6 +234,104 @@ mod tests_task_hashing {
             set.len(),
             2,
             "Different url should produce distinct set entries"
+        );
+    }
+
+    #[test]
+    fn test_equality_same_url_and_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/1", 1);
+
+        assert_eq!(t1, t2, "Tasks with same URL and url_id should be equal");
+    }
+
+    #[test]
+    fn test_inequality_same_url_different_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/1", 999);
+
+        assert_ne!(
+            t1, t2,
+            "Tasks with same URL but different url_id should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_inequality_different_url_same_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/2", 1);
+
+        assert_ne!(
+            t1, t2,
+            "Tasks with different URL but same url_id should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_inequality_different_url_and_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/2", 999);
+
+        assert_ne!(
+            t1, t2,
+            "Tasks with different URL and url_id should not be equal"
+        );
+    }
+
+    #[test]
+    fn test_hash_consistency_same_url_and_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/1", 1);
+
+        // Same URL and url_id should have same hash
+        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
+        t1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
+        t2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        assert_eq!(hash1, hash2, "Same URL and url_id should have same hash");
+    }
+
+    #[test]
+    fn test_hash_difference_same_url_different_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/1", 999);
+
+        // Same URL but different url_id should have different hashes
+        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
+        t1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
+        t2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        assert_ne!(
+            hash1, hash2,
+            "Same URL but different url_id should have different hashes"
+        );
+    }
+
+    #[test]
+    fn test_hash_difference_different_url_same_id() {
+        let t1 = new_task("https://example.com/item/1", 1);
+        let t2 = new_task("https://example.com/item/2", 1);
+
+        // Different URL but same url_id should have different hashes
+        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
+        t1.hash(&mut hasher1);
+        let hash1 = hasher1.finish();
+
+        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
+        t2.hash(&mut hasher2);
+        let hash2 = hasher2.finish();
+
+        assert_ne!(
+            hash1, hash2,
+            "Different URL but same url_id should have different hashes"
         );
     }
 }

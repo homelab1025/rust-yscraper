@@ -1,0 +1,709 @@
+
+*** web_server/src/background_scheduler.rs:55:9: replace BackgroundScheduler::check_and_schedule_due_urls -> Result<usize, Box<dyn std::error::Error +Send +Sync>> with Ok(0)
+
+*** mutation diff:
+--- web_server/src/background_scheduler.rs
++++ replace BackgroundScheduler::check_and_schedule_due_urls -> Result<usize, Box<dyn std::error::Error +Send +Sync>> with Ok(0)
+@@ -47,50 +47,17 @@
+             }
+         }
+     }
+ 
+     // REFACTOR: Return a specific error type.
+     async fn check_and_schedule_due_urls(
+         &self,
+     ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+-        let due_urls = self.repo.get_urls_due_for_refresh().await?;
+-        let mut scheduled_count = 0;
+-
+-        for url_row in due_urls {
+-            let target_url = url_row.url.clone();
+-            let item_id = url_row.id;
+-
+-            // Create scrape task
+-            let scrape_task = ScrapeTask::new(target_url, item_id, self.repo.clone());
+-
+-            // Schedule the task
+-            match self.task_queue.schedule(scrape_task).await {
+-                Ok(true) => {
+-                    info!("Scheduled refresh for URL ID: {}", item_id);
+-                    scheduled_count += 1;
+-
+-                    // Update last_scraped timestamp to prevent immediate re-scheduling
+-                    if let Err(e) = self.repo.update_last_scraped(item_id).await {
+-                        error!(
+-                            "Failed to update last_scraped for URL ID {}: {}",
+-                            item_id, e
+-                        );
+-                    }
+-                }
+-                Ok(false) => {
+-                    info!("Refresh for URL ID {} already scheduled", item_id);
+-                }
+-                Err(e) => {
+-                    error!("Failed to schedule refresh for URL ID {}: {}", item_id, e);
+-                }
+-            }
+-        }
+-
+-        Ok(scheduled_count)
++        Ok(0) /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+     use crate::db::comments_repository::ScheduledUrl;
+     use async_trait::async_trait;
+
+
+*** /Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo test --no-run --verbose --package=web_server@0.1.0
+       Fresh unicode-ident v1.0.20
+       Fresh cfg-if v1.0.4
+       Fresh pin-project-lite v0.2.16
+       Fresh itoa v1.0.15
+       Fresh futures-core v0.3.31
+       Fresh bytes v1.10.1
+       Fresh proc-macro2 v1.0.101
+       Fresh memchr v2.7.6
+       Fresh once_cell v1.21.3
+       Fresh writeable v0.6.1
+       Fresh litemap v0.8.0
+       Fresh equivalent v1.0.2
+       Fresh core-foundation-sys v0.8.7
+       Fresh quote v1.0.41
+       Fresh libc v0.2.177
+       Fresh hashbrown v0.16.0
+       Fresh slab v0.4.11
+       Fresh tracing-core v0.1.34
+       Fresh version_check v0.9.5
+       Fresh syn v2.0.107
+       Fresh mio v1.1.0
+       Fresh socket2 v0.6.1
+       Fresh stable_deref_trait v1.2.1
+       Fresh pin-utils v0.1.0
+       Fresh percent-encoding v2.3.2
+       Fresh serde_derive v1.0.228
+       Fresh synstructure v0.13.2
+       Fresh zerovec-derive v0.11.1
+       Fresh displaydoc v0.2.5
+       Fresh tokio-macros v2.6.0
+       Fresh tracing-attributes v0.1.30
+       Fresh icu_normalizer_data v2.0.0
+       Fresh icu_properties_data v2.0.1
+       Fresh futures-io v0.3.31
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.0
+       Fresh subtle v2.6.1
+       Fresh futures-task v0.3.31
+       Fresh typenum v1.19.0
+       Fresh serde_core v1.0.228
+       Fresh zerofrom v0.1.6
+       Fresh generic-array v0.14.9
+       Fresh serde v1.0.228
+       Fresh find-msvc-tools v0.1.4
+       Fresh siphasher v1.0.1
+       Fresh scopeguard v1.2.0
+       Fresh ryu v1.0.20
+       Fresh shlex v1.3.0
+       Fresh yoke v0.8.0
+       Fresh crypto-common v0.1.6
+       Fresh phf_shared v0.13.1
+       Fresh lock_api v0.4.14
+       Fresh cc v1.2.41
+       Fresh block-buffer v0.10.4
+       Fresh getrandom v0.2.16
+       Fresh utf8_iter v1.0.4
+       Fresh smallvec v1.15.1
+       Fresh zerovec v0.11.4
+       Fresh digest v0.10.7
+       Fresh futures-macro v0.3.31
+       Fresh zeroize v1.8.2
+       Fresh rustls-pki-types v1.12.0
+       Fresh phf_generator v0.13.1
+       Fresh fnv v1.0.7
+       Fresh autocfg v1.5.0
+       Fresh untrusted v0.9.0
+       Fresh tinystr v0.8.1
+       Fresh http v1.3.1
+       Fresh ring v0.17.14
+       Fresh cpufeatures v0.2.17
+       Fresh icu_locale_core v2.0.0
+       Fresh potential_utf v0.1.3
+       Fresh zerotrie v0.2.2
+       Fresh http-body v1.0.1
+       Fresh sha2 v0.10.9
+       Fresh rustls-webpki v0.103.7
+       Fresh core-foundation v0.9.4
+       Fresh log v0.4.28
+       Fresh icu_provider v2.0.0
+       Fresh rustls v0.23.33
+       Fresh num-traits v0.2.19
+       Fresh crossbeam-utils v0.8.21
+       Fresh icu_collections v2.0.0
+       Fresh webpki-roots v1.0.3
+       Fresh tower-service v0.3.3
+       Fresh crc32fast v1.5.0
+       Fresh phf_codegen v0.13.1
+       Fresh tokio-util v0.7.16
+       Fresh form_urlencoded v1.2.2
+       Fresh indexmap v2.12.0
+       Fresh iana-time-zone v0.1.64
+       Fresh allocator-api2 v0.2.21
+       Fresh foldhash v0.1.5
+       Fresh try-lock v0.2.5
+       Fresh atomic-waker v1.1.2
+       Fresh zerocopy v0.8.27
+       Fresh hashbrown v0.15.5
+       Fresh want v0.3.1
+       Fresh h2 v0.4.12
+       Fresh httparse v1.10.1
+       Fresh system-configuration-sys v0.6.0
+       Fresh icu_normalizer v2.0.0
+       Fresh icu_properties v2.0.1
+       Fresh concurrent-queue v2.5.0
+       Fresh thiserror-impl v2.0.17
+       Fresh parking v2.2.1
+       Fresh new_debug_unreachable v1.0.6
+       Fresh crc-catalog v2.4.0
+       Fresh tinyvec_macros v0.1.1
+       Fresh httpdate v1.0.3
+       Fresh idna_adapter v1.2.1
+       Fresh hashlink v0.10.0
+       Fresh system-configuration v0.6.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh webpki-roots v0.26.11
+       Fresh hyper v1.7.0
+       Fresh tinyvec v1.10.0
+       Fresh crc v3.3.0
+       Fresh event-listener v5.4.1
+       Fresh thiserror v2.0.17
+       Fresh crossbeam-queue v0.3.12
+       Fresh phf_macros v0.13.1
+       Fresh parking_lot_core v0.9.12
+       Fresh rand_core v0.6.4
+       Fresh futures-sink v0.3.31
+       Fresh ipnet v2.11.0
+       Fresh unicode-normalization v0.1.25
+       Fresh rand_chacha v0.3.1
+       Fresh parking_lot v0.12.5
+       Fresh phf v0.13.1
+       Fresh idna v1.1.0
+       Fresh http-body-util v0.1.3
+       Fresh string_cache_codegen v0.6.1
+       Fresh hmac v0.12.1
+       Fresh hyper-util v0.1.17
+       Fresh tokio v1.48.0
+       Fresh errno v0.3.14
+       Fresh aho-corasick v1.1.4
+       Fresh sync_wrapper v1.0.2
+       Fresh zlib-rs v0.5.4
+       Fresh unicode-properties v0.1.4
+       Fresh unicode-bidi v0.3.18
+       Fresh tower-layer v0.3.3
+       Fresh regex-syntax v0.8.8
+       Fresh precomputed-hash v0.1.1
+       Fresh stringprep v0.1.5
+       Fresh regex-automata v0.4.13
+       Fresh libz-rs-sys v0.5.4
+       Fresh rustix v1.1.2
+       Fresh rand v0.8.5
+       Fresh hkdf v0.12.4
+       Fresh getrandom v0.3.4
+       Fresh url v2.5.7
+       Fresh futures-util v0.3.31
+       Fresh atoi v2.0.0
+       Fresh tracing v0.1.41
+       Fresh serde_json v1.0.145
+       Fresh md-5 v0.10.6
+       Fresh security-framework-sys v2.15.0
+       Fresh dotenvy v0.15.7
+       Fresh fastrand v2.3.0
+       Fresh mime v0.3.17
+       Fresh byteorder v1.5.0
+       Fresh mac v0.1.1
+       Fresh alloc-no-stdlib v2.0.4
+       Fresh home v0.5.12
+       Fresh bumpalo v3.19.0
+       Fresh whoami v1.6.1
+       Fresh base64 v0.22.1
+       Fresh same-file v1.0.6
+       Fresh hex v0.4.3
+       Fresh tempfile v3.23.0
+       Fresh alloc-stdlib v0.2.2
+       Fresh futf v0.1.5
+       Fresh walkdir v2.5.0
+       Fresh zopfli v0.8.3
+       Fresh security-framework v2.11.1
+       Fresh regex v1.12.2
+       Fresh string_cache v0.9.0
+       Fresh tower v0.5.2
+       Fresh futures-channel v0.3.31
+       Fresh utf-8 v0.7.6
+       Fresh simd-adler32 v0.3.7
+       Fresh unicase v2.8.1
+       Fresh adler2 v2.0.1
+       Fresh bitflags v2.10.0
+       Fresh dtoa v1.0.10
+       Fresh rust-embed-utils v8.9.0
+       Fresh tendril v0.4.3
+       Fresh web_atoms v0.2.0
+       Fresh miniz_oxide v0.8.9
+       Fresh dtoa-short v0.3.5
+       Fresh brotli-decompressor v4.0.2
+       Fresh zip v3.0.0
+       Fresh native-tls v0.2.14
+       Fresh chrono v0.4.42
+       Fresh futures-intrusive v0.5.0
+       Fresh serde_urlencoded v0.7.1
+       Fresh either v1.15.0
+       Fresh tokio-stream v0.1.17
+       Fresh cssparser-macros v0.6.1
+       Fresh derive_more-impl v2.0.1
+       Fresh num-conv v0.1.0
+       Fresh unsafe-libyaml-norway v0.2.15
+       Fresh heck v0.5.0
+       Fresh time-core v0.1.6
+       Fresh winnow v0.7.13
+       Fresh powerfmt v0.2.0
+       Fresh toml_parser v1.0.6+spec-1.1.0
+       Fresh cssparser v0.36.0
+       Fresh time-macros v0.2.24
+       Fresh sqlx-core v0.8.6
+       Fresh serde_norway v0.9.42
+       Fresh derive_more v2.0.1
+       Fresh sqlx-macros-core v0.8.6
+       Fresh tokio-native-tls v0.3.1
+       Fresh deranged v0.5.4
+       Fresh flate2 v1.1.4
+       Fresh brotli v7.0.0
+       Fresh markup5ever v0.36.1
+       Fresh rust-embed-impl v8.9.0
+       Fresh axum-core v0.5.5
+       Fresh tokio-rustls v0.26.4
+       Fresh utoipa-gen v5.4.0
+       Fresh axum-macros v0.5.0
+       Fresh toml_datetime v0.7.5+spec-1.1.0
+       Fresh servo_arc v0.4.3
+       Fresh serde_spanned v1.0.4
+       Fresh serde_path_to_error v0.1.20
+       Fresh num_threads v0.1.7
+       Fresh matchit v0.8.4
+       Fresh unicode-width v0.2.2
+       Fresh iri-string v0.7.8
+       Fresh rustc-hash v2.1.1
+       Fresh mime_guess v2.0.5
+       Fresh hyper-rustls v0.27.7
+       Fresh rust-embed v8.9.0
+       Fresh getopts v0.2.24
+       Fresh time v0.3.44
+       Fresh toml v0.9.10+spec-1.1.0
+       Fresh selectors v0.33.0
+       Fresh tower-http v0.6.6
+       Fresh axum v0.8.6
+       Fresh utoipa v5.4.0
+       Fresh html5ever v0.36.1
+       Fresh async-compression v0.4.22
+       Fresh sqlx-macros v0.8.6
+       Fresh sqlx-postgres v0.8.6
+       Fresh hyper-tls v0.6.0
+       Fresh encoding_rs v0.8.35
+       Fresh termcolor v1.4.1
+       Fresh ego-tree v0.10.0
+       Fresh pathdiff v0.2.3
+       Fresh sqlx v0.8.6
+       Fresh futures-executor v0.3.31
+       Fresh async-trait v0.1.89
+       Fresh num_cpus v1.17.0
+       Fresh lazy_static v1.5.0
+       Fresh scraper v0.25.0
+       Fresh reqwest v0.12.24
+       Fresh utoipa-swagger-ui v9.0.2
+       Fresh simplelog v0.12.2
+       Fresh config v0.15.18
+       Fresh deadpool-runtime v0.1.4
+       Fresh futures v0.3.31
+       Fresh assert-json-diff v2.0.2
+       Fresh deadpool v0.12.3
+       Dirty web_server v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/web_server): the file `web_server/src/background_scheduler.rs` has changed (1770730248.030533606s, 6s after last build at 1770730242.777151803s)
+   Compiling web_server v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/web_server)
+       Fresh wiremock v0.6.5
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name web_server --edition=2024 web_server/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=b312fb1da2876c20 -C extra-filename=-fd5f10cc33c1172b --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libaxum-4952914bd8588b08.rlib --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rlib --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rlib --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rlib --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libreqwest-c43cecf15a00618f.rlib --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rlib --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rlib --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rlib --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsqlx-4852ca93dcfd305b.rlib --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rlib --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtower_http-c60bfed2c40ef163.rlib --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rlib --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa_swagger_ui-7735f6ec671c0ac2.rlib --extern wiremock=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libwiremock-8d1ec05e87e44b1e.rlib -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name web_server --edition=2024 web_server/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=ece657779fbc782d -C extra-filename=-0a75d983a3cfa97d --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libaxum-4952914bd8588b08.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rmeta --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rmeta --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libreqwest-c43cecf15a00618f.rmeta --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rmeta --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsqlx-4852ca93dcfd305b.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtower_http-c60bfed2c40ef163.rmeta --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rmeta --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa_swagger_ui-7735f6ec671c0ac2.rmeta -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+warning: fields `repo` and `task_queue` are never read
+  --> web_server/src/background_scheduler.rs:9:5
+   |
+ 8 | pub struct BackgroundScheduler {
+   |            ------------------- fields in this struct
+ 9 |     repo: Arc<dyn CommentsRepository>,
+   |     ^^^^
+10 |     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+   |     ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `web_server` (lib test) generated 1 warning (1 duplicate)
+warning: `web_server` (lib) generated 1 warning
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name ping_integration --edition=2024 web_server/tests/ping_integration.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=cd2e2aab03acd9ff -C extra-filename=-7adc7494db132d4b --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libaxum-4952914bd8588b08.rlib --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rlib --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rlib --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rlib --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libreqwest-c43cecf15a00618f.rlib --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rlib --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rlib --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rlib --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsqlx-4852ca93dcfd305b.rlib --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rlib --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtower_http-c60bfed2c40ef163.rlib --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rlib --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa_swagger_ui-7735f6ec671c0ac2.rlib --extern web_server=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libweb_server-0a75d983a3cfa97d.rlib --extern wiremock=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libwiremock-8d1ec05e87e44b1e.rlib -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name web_server --edition=2024 web_server/src/main.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=2c434272532dd757 -C extra-filename=-6b74782e469f8f45 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libaxum-4952914bd8588b08.rlib --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rlib --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rlib --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rlib --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libreqwest-c43cecf15a00618f.rlib --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rlib --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rlib --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rlib --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsqlx-4852ca93dcfd305b.rlib --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rlib --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtower_http-c60bfed2c40ef163.rlib --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rlib --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa_swagger_ui-7735f6ec671c0ac2.rlib --extern web_server=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libweb_server-0a75d983a3cfa97d.rlib --extern wiremock=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libwiremock-8d1ec05e87e44b1e.rlib -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name web_server --edition=2024 web_server/src/main.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=4cdb3b9488d5104d -C extra-filename=-0caed1df1a9470d8 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libaxum-4952914bd8588b08.rlib --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rlib --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rlib --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rlib --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libreqwest-c43cecf15a00618f.rlib --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rlib --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rlib --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rlib --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libsqlx-4852ca93dcfd305b.rlib --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rlib --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libtower_http-c60bfed2c40ef163.rlib --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rlib --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libutoipa_swagger_ui-7735f6ec671c0ac2.rlib --extern web_server=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/libweb_server-0a75d983a3cfa97d.rlib -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.96s
+  Executable `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/web_server-fd5f10cc33c1172b`
+  Executable `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/web_server-6b74782e469f8f45`
+  Executable `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/ping_integration-7adc7494db132d4b`
+
+*** result: Success
+
+*** /Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo test --verbose --package=web_server@0.1.0
+       Fresh unicode-ident v1.0.20
+       Fresh cfg-if v1.0.4
+       Fresh pin-project-lite v0.2.16
+       Fresh itoa v1.0.15
+       Fresh futures-core v0.3.31
+       Fresh bytes v1.10.1
+       Fresh proc-macro2 v1.0.101
+       Fresh memchr v2.7.6
+       Fresh once_cell v1.21.3
+       Fresh writeable v0.6.1
+       Fresh litemap v0.8.0
+       Fresh equivalent v1.0.2
+       Fresh core-foundation-sys v0.8.7
+       Fresh quote v1.0.41
+       Fresh libc v0.2.177
+       Fresh hashbrown v0.16.0
+       Fresh slab v0.4.11
+       Fresh tracing-core v0.1.34
+       Fresh percent-encoding v2.3.2
+       Fresh version_check v0.9.5
+       Fresh syn v2.0.107
+       Fresh socket2 v0.6.1
+       Fresh mio v1.1.0
+       Fresh stable_deref_trait v1.2.1
+       Fresh pin-utils v0.1.0
+       Fresh serde_derive v1.0.228
+       Fresh synstructure v0.13.2
+       Fresh zerovec-derive v0.11.1
+       Fresh displaydoc v0.2.5
+       Fresh tracing-attributes v0.1.30
+       Fresh tokio-macros v2.6.0
+       Fresh icu_properties_data v2.0.1
+       Fresh icu_normalizer_data v2.0.0
+       Fresh futures-task v0.3.31
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.0
+       Fresh subtle v2.6.1
+       Fresh futures-io v0.3.31
+       Fresh serde_core v1.0.228
+       Fresh typenum v1.19.0
+       Fresh zerofrom v0.1.6
+       Fresh generic-array v0.14.9
+       Fresh serde v1.0.228
+       Fresh siphasher v1.0.1
+       Fresh shlex v1.3.0
+       Fresh find-msvc-tools v0.1.4
+       Fresh ryu v1.0.20
+       Fresh scopeguard v1.2.0
+       Fresh yoke v0.8.0
+       Fresh block-buffer v0.10.4
+       Fresh cc v1.2.41
+       Fresh phf_shared v0.13.1
+       Fresh crypto-common v0.1.6
+       Fresh lock_api v0.4.14
+       Fresh getrandom v0.2.16
+       Fresh utf8_iter v1.0.4
+       Fresh smallvec v1.15.1
+       Fresh digest v0.10.7
+       Fresh zerovec v0.11.4
+       Fresh futures-macro v0.3.31
+       Fresh zeroize v1.8.2
+       Fresh rustls-pki-types v1.12.0
+       Fresh phf_generator v0.13.1
+       Fresh fnv v1.0.7
+       Fresh untrusted v0.9.0
+       Fresh autocfg v1.5.0
+       Fresh tinystr v0.8.1
+       Fresh http v1.3.1
+       Fresh ring v0.17.14
+       Fresh cpufeatures v0.2.17
+       Fresh icu_locale_core v2.0.0
+       Fresh potential_utf v0.1.3
+       Fresh zerotrie v0.2.2
+       Fresh http-body v1.0.1
+       Fresh rustls-webpki v0.103.7
+       Fresh sha2 v0.10.9
+       Fresh core-foundation v0.9.4
+       Fresh log v0.4.28
+       Fresh icu_collections v2.0.0
+       Fresh num-traits v0.2.19
+       Fresh rustls v0.23.33
+       Fresh crossbeam-utils v0.8.21
+       Fresh icu_provider v2.0.0
+       Fresh webpki-roots v1.0.3
+       Fresh tower-service v0.3.3
+       Fresh crc32fast v1.5.0
+       Fresh phf_codegen v0.13.1
+       Fresh tokio-util v0.7.16
+       Fresh form_urlencoded v1.2.2
+       Fresh indexmap v2.12.0
+       Fresh iana-time-zone v0.1.64
+       Fresh foldhash v0.1.5
+       Fresh atomic-waker v1.1.2
+       Fresh allocator-api2 v0.2.21
+       Fresh try-lock v0.2.5
+       Fresh httparse v1.10.1
+       Fresh hashbrown v0.15.5
+       Fresh h2 v0.4.12
+       Fresh system-configuration-sys v0.6.0
+       Fresh want v0.3.1
+       Fresh zerocopy v0.8.27
+       Fresh icu_normalizer v2.0.0
+       Fresh icu_properties v2.0.1
+       Fresh concurrent-queue v2.5.0
+       Fresh thiserror-impl v2.0.17
+       Fresh parking v2.2.1
+       Fresh httpdate v1.0.3
+       Fresh tinyvec_macros v0.1.1
+       Fresh new_debug_unreachable v1.0.6
+       Fresh crc-catalog v2.4.0
+       Fresh ppv-lite86 v0.2.21
+       Fresh idna_adapter v1.2.1
+       Fresh system-configuration v0.6.1
+       Fresh hashlink v0.10.0
+       Fresh webpki-roots v0.26.11
+       Fresh thiserror v2.0.17
+       Fresh crc v3.3.0
+       Fresh event-listener v5.4.1
+       Fresh tinyvec v1.10.0
+       Fresh hyper v1.7.0
+       Fresh crossbeam-queue v0.3.12
+       Fresh phf_macros v0.13.1
+       Fresh parking_lot_core v0.9.12
+       Fresh rand_core v0.6.4
+       Fresh futures-sink v0.3.31
+       Fresh ipnet v2.11.0
+       Fresh parking_lot v0.12.5
+       Fresh rand_chacha v0.3.1
+       Fresh unicode-normalization v0.1.25
+       Fresh phf v0.13.1
+       Fresh idna v1.1.0
+       Fresh http-body-util v0.1.3
+       Fresh string_cache_codegen v0.6.1
+       Fresh hmac v0.12.1
+       Fresh hyper-util v0.1.17
+       Fresh tokio v1.48.0
+       Fresh errno v0.3.14
+       Fresh aho-corasick v1.1.4
+       Fresh sync_wrapper v1.0.2
+       Fresh zlib-rs v0.5.4
+       Fresh tower-layer v0.3.3
+       Fresh unicode-bidi v0.3.18
+       Fresh unicode-properties v0.1.4
+       Fresh regex-syntax v0.8.8
+       Fresh precomputed-hash v0.1.1
+       Fresh regex-automata v0.4.13
+       Fresh rustix v1.1.2
+       Fresh libz-rs-sys v0.5.4
+       Fresh stringprep v0.1.5
+       Fresh rand v0.8.5
+       Fresh getrandom v0.3.4
+       Fresh hkdf v0.12.4
+       Fresh url v2.5.7
+       Fresh futures-util v0.3.31
+       Fresh atoi v2.0.0
+       Fresh tracing v0.1.41
+       Fresh serde_json v1.0.145
+       Fresh md-5 v0.10.6
+       Fresh security-framework-sys v2.15.0
+       Fresh mime v0.3.17
+       Fresh fastrand v2.3.0
+       Fresh base64 v0.22.1
+       Fresh mac v0.1.1
+       Fresh bumpalo v3.19.0
+       Fresh byteorder v1.5.0
+       Fresh dotenvy v0.15.7
+       Fresh alloc-no-stdlib v2.0.4
+       Fresh whoami v1.6.1
+       Fresh home v0.5.12
+       Fresh hex v0.4.3
+       Fresh same-file v1.0.6
+       Fresh alloc-stdlib v0.2.2
+       Fresh futf v0.1.5
+       Fresh zopfli v0.8.3
+       Fresh tempfile v3.23.0
+       Fresh security-framework v2.11.1
+       Fresh regex v1.12.2
+       Fresh walkdir v2.5.0
+       Fresh string_cache v0.9.0
+       Fresh tower v0.5.2
+       Fresh futures-channel v0.3.31
+       Fresh adler2 v2.0.1
+       Fresh utf-8 v0.7.6
+       Fresh dtoa v1.0.10
+       Fresh bitflags v2.10.0
+       Fresh simd-adler32 v0.3.7
+       Fresh unicase v2.8.1
+       Fresh zip v3.0.0
+       Fresh dtoa-short v0.3.5
+       Fresh rust-embed-utils v8.9.0
+       Fresh miniz_oxide v0.8.9
+       Fresh web_atoms v0.2.0
+       Fresh tendril v0.4.3
+       Fresh native-tls v0.2.14
+       Fresh brotli-decompressor v4.0.2
+       Fresh chrono v0.4.42
+       Fresh serde_urlencoded v0.7.1
+       Fresh futures-intrusive v0.5.0
+       Fresh tokio-stream v0.1.17
+       Fresh either v1.15.0
+       Fresh cssparser-macros v0.6.1
+       Fresh derive_more-impl v2.0.1
+       Fresh unsafe-libyaml-norway v0.2.15
+       Fresh time-core v0.1.6
+       Fresh winnow v0.7.13
+       Fresh heck v0.5.0
+       Fresh num-conv v0.1.0
+       Fresh powerfmt v0.2.0
+       Fresh time-macros v0.2.24
+       Fresh sqlx-macros-core v0.8.6
+       Fresh serde_norway v0.9.42
+       Fresh toml_parser v1.0.6+spec-1.1.0
+       Fresh sqlx-core v0.8.6
+       Fresh derive_more v2.0.1
+       Fresh cssparser v0.36.0
+       Fresh brotli v7.0.0
+       Fresh deranged v0.5.4
+       Fresh flate2 v1.1.4
+       Fresh markup5ever v0.36.1
+       Fresh tokio-native-tls v0.3.1
+       Fresh rust-embed-impl v8.9.0
+       Fresh axum-core v0.5.5
+       Fresh tokio-rustls v0.26.4
+       Fresh axum-macros v0.5.0
+       Fresh utoipa-gen v5.4.0
+       Fresh serde_spanned v1.0.4
+       Fresh servo_arc v0.4.3
+       Fresh toml_datetime v0.7.5+spec-1.1.0
+       Fresh num_threads v0.1.7
+       Fresh serde_path_to_error v0.1.20
+       Fresh matchit v0.8.4
+       Fresh rustc-hash v2.1.1
+       Fresh unicode-width v0.2.2
+       Fresh iri-string v0.7.8
+       Fresh rust-embed v8.9.0
+       Fresh hyper-rustls v0.27.7
+       Fresh axum v0.8.6
+       Fresh getopts v0.2.24
+       Fresh time v0.3.44
+       Fresh toml v0.9.10+spec-1.1.0
+       Fresh tower-http v0.6.6
+       Fresh selectors v0.33.0
+       Fresh html5ever v0.36.1
+       Fresh async-compression v0.4.22
+       Fresh utoipa v5.4.0
+       Fresh hyper-tls v0.6.0
+       Fresh mime_guess v2.0.5
+       Fresh sqlx-macros v0.8.6
+       Fresh sqlx-postgres v0.8.6
+       Fresh encoding_rs v0.8.35
+       Fresh pathdiff v0.2.3
+       Fresh termcolor v1.4.1
+       Fresh ego-tree v0.10.0
+       Fresh utoipa-swagger-ui v9.0.2
+       Fresh futures-executor v0.3.31
+       Fresh async-trait v0.1.89
+       Fresh num_cpus v1.17.0
+       Fresh lazy_static v1.5.0
+       Fresh reqwest v0.12.24
+       Fresh config v0.15.18
+       Fresh simplelog v0.12.2
+       Fresh scraper v0.25.0
+       Fresh sqlx v0.8.6
+       Fresh deadpool-runtime v0.1.4
+       Fresh futures v0.3.31
+       Fresh assert-json-diff v2.0.2
+       Fresh deadpool v0.12.3
+warning: fields `repo` and `task_queue` are never read
+  --> web_server/src/background_scheduler.rs:9:5
+   |
+ 8 | pub struct BackgroundScheduler {
+   |            ------------------- fields in this struct
+ 9 |     repo: Arc<dyn CommentsRepository>,
+   |     ^^^^
+10 |     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+   |     ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `web_server` (lib) generated 1 warning
+       Fresh wiremock v0.6.5
+       Fresh web_server v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/web_server)
+warning: `web_server` (lib test) generated 1 warning (1 duplicate)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.67s
+     Running `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-03euJH.tmp/target/debug/deps/web_server-fd5f10cc33c1172b`
+
+running 44 tests
+test api::comments::tests::already_scheduled_maps_to_already_scheduled_state ... ok
+test api::comments::tests::accepts_valid_request_with_defaults ... ok
+test api::comments::tests::clamps_count_below_min_to_1_indirectly ... ok
+test api::comments::tests::returns_500_when_page_query_fails ... ok
+test api::comments::tests::rejects_zero_days_limit ... ok
+test api::comments::tests::returns_500_when_count_fails ... ok
+test api::comments::tests::rejects_zero_frequency_hours ... ok
+test api::comments::tests::maps_fields_correctly_from_dbrow_to_dto ... ok
+test api::comments::tests::clamps_count_above_max_to_100_indirectly ... ok
+test api::comments::tests::preserves_desc_order_and_id_tie_break ... ok
+test api::links::tests::test_list_links_db_error ... ok
+test api::links::tests::test_delete_link_db_error ... ok
+test api::links::tests::test_list_links_empty ... ok
+test config::tests::fail_when_no_dbport ... ok
+test api::links::tests::test_delete_link_not_found ... ok
+test api::links::tests::test_delete_link_success ... ok
+test api::comments::tests::returns_empty_list_when_store_empty ... ok
+test api::links::tests::test_list_links_success ... ok
+test background_scheduler::tests::test_schedules_due_urls ... FAILED
+test api::comments::tests::scheduling_error_maps_to_500_and_api_error ... ok
+test api::comments::tests::schedules_task_and_returns_scheduled ... ok
+test scrape_task::tests_task_hashing::hashset_deduplicates_equal_tasks ... ok
+test scrape_task::tests_task_hashing::hashset_distinguishes_different_urls ... ok
+test scrape_task::tests_task_hashing::test_equality_same_url_and_id ... ok
+test scrape_task::tests_task_hashing::hashset_distinguishes_same_url_different_ids ... ok
+test scrape_task::tests_task_hashing::test_hash_consistency_same_url_and_id ... ok
+test scrape_task::tests_task_hashing::test_hash_difference_different_url_same_id ... ok
+test scrape_task::tests_task_hashing::test_hash_difference_same_url_different_id ... ok
+test scrape_task::tests_task_hashing::test_inequality_different_url_and_id ... ok
+test scrape_task::tests_task_hashing::test_inequality_different_url_same_id ... ok
+test scrape_task::tests_task_hashing::test_inequality_same_url_different_id ... ok
+test task_queue::tests::buffer_size_exceeded_blocks_additional_scheduling ... ok
+test task_queue::tests::duplicate_while_first_running_second_is_rejected_and_not_executed ... ok
+test task_queue::tests::different_tasks_are_enqueued_and_both_execute ... ok
+test utils::tests::test_create_batches_exact_multiples ... ok
+test task_queue::tests::identical_task_runs_again_after_first_finished_and_removed ... ok
+test utils::tests::test_create_batches_last_batch_not_full ... ok
+test utils::tests::test_create_batches_zero_size_returns_empty ... ok
+test scrape::tests::get_comments_returns_err_on_connect_error ... ok
+test scrape::tests::get_comments_returns_err_on_http_500 ... ok
+test scrape::tests::get_comments_skips_first_with_invalid_id_keeps_second ... ok
+test scrape::tests::get_comments_happy_path_parses_one_root_comment ... ok
+test scrape::tests::get_comments_skips_first_with_empty_author_and_text ... ok
+test scrape::tests::get_comments_returns_empty_when_page_structure_unparsable_even_with_comment_like_section ... ok
+
+failures:
+
+---- background_scheduler::tests::test_schedules_due_urls stdout ----
+
+thread 'background_scheduler::tests::test_schedules_due_urls' (10064920) panicked at web_server/src/background_scheduler.rs:164:9:
+assertion `left == right` failed
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    background_scheduler::tests::test_schedules_due_urls
+
+test result: FAILED. 43 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+error: test failed, to rerun pass `-p web_server --lib`
+
+*** result: Failure(101)

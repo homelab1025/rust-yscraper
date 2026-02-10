@@ -1,0 +1,28 @@
+--- web_server/src/scrape.rs
++++ replace <impl Display for ScrapeError>::fmt -> std::fmt::Result with Ok(Default::default())
+@@ -13,24 +13,17 @@
+     HtmlFetchError(reqwest::Error),
+     ElementSelectorError(),
+     InvalidThreadTitle(),
+ }
+ 
+ impl Error for ScrapeError {}
+ impl Display for ScrapeError {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        match self {
+-            HtmlFetchError(e) => write!(f, "failed to fetch HTML: {}", e),
+-            ElementSelectorError() => write!(f, "failed to create HTML selector"),
+-            InvalidThreadTitle() => write!(
+-                f,
+-                "invalid thread title: expected prefix 'Ask HN: What Are You Working On'"
+-            ),
+-        }
++        Ok(Default::default()) /* ~ changed by cargo-mutants ~ */
+     }
+ }
+ 
+ pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, ScrapeError> {
+     info!("Fetching URL: {}", url);
+     let html = match fetch_html(url).await {
+         Ok(h) => h,
+         Err(e) => {

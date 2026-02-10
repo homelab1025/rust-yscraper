@@ -1,0 +1,21 @@
+--- web_server/src/background_scheduler.rs
++++ replace > with == in BackgroundScheduler::run
+@@ -32,17 +32,17 @@
+         );
+ 
+         // REFACTOR: Wait on the tasks to finish and then shutdown when receiving the shutdown signal.
+         loop {
+             interval.tick().await;
+ 
+             match self.check_and_schedule_due_urls().await {
+                 Ok(scheduled_count) => {
+-                    if scheduled_count > 0 {
++                    if scheduled_count == /* ~ changed by cargo-mutants ~ */ 0 {
+                         info!("Scheduled {} URLs for refresh", scheduled_count);
+                     }
+                 }
+                 Err(e) => {
+                     error!("Error in background scheduler: {}", e);
+                 }
+             }
+         }

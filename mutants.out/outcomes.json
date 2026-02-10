@@ -1,0 +1,2833 @@
+{
+  "outcomes": [
+    {
+      "scenario": "Baseline",
+      "summary": "Success",
+      "log_path": "log/baseline.log",
+      "diff_path": null,
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 35.040363167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=api_gen@0.1.0",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 3.851555,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=api_gen@0.1.0",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "api_gen/src/main.rs:6:5: replace main with ()",
+          "package": "api_gen",
+          "file": "api_gen/src/main.rs",
+          "function": {
+            "function_name": "main",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 5,
+                "column": 1
+              },
+              "end": {
+                "line": 21,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 6,
+              "column": 5
+            },
+            "end": {
+              "line": 20,
+              "column": 7
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/api_gen__src__main.rs_line_6_col_5.log",
+      "diff_path": "diff/api_gen__src__main.rs_line_6_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 10.493916959,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.182760625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "api_gen/src/main.rs:7:19: replace < with == in main",
+          "package": "api_gen",
+          "file": "api_gen/src/main.rs",
+          "function": {
+            "function_name": "main",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 5,
+                "column": 1
+              },
+              "end": {
+                "line": 21,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 7,
+              "column": 19
+            },
+            "end": {
+              "line": 7,
+              "column": 20
+            }
+          },
+          "replacement": "==",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/api_gen__src__main.rs_line_7_col_19.log",
+      "diff_path": "diff/api_gen__src__main.rs_line_7_col_19.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 0.9707625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 0.979218917,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "api_gen/src/main.rs:7:19: replace < with > in main",
+          "package": "api_gen",
+          "file": "api_gen/src/main.rs",
+          "function": {
+            "function_name": "main",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 5,
+                "column": 1
+              },
+              "end": {
+                "line": 21,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 7,
+              "column": 19
+            },
+            "end": {
+              "line": 7,
+              "column": 20
+            }
+          },
+          "replacement": ">",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/api_gen__src__main.rs_line_7_col_19_001.log",
+      "diff_path": "diff/api_gen__src__main.rs_line_7_col_19_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 1.029526333,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.035337042,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "api_gen/src/main.rs:7:19: replace < with <= in main",
+          "package": "api_gen",
+          "file": "api_gen/src/main.rs",
+          "function": {
+            "function_name": "main",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 5,
+                "column": 1
+              },
+              "end": {
+                "line": 21,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 7,
+              "column": 19
+            },
+            "end": {
+              "line": 7,
+              "column": 20
+            }
+          },
+          "replacement": "<=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/api_gen__src__main.rs_line_7_col_19_002.log",
+      "diff_path": "diff/api_gen__src__main.rs_line_7_col_19_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 0.985346208,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.03754,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=api_gen@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/main.rs:34:5: replace main with ()",
+          "package": "web_server",
+          "file": "web_server/src/main.rs",
+          "function": {
+            "function_name": "main",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 32,
+                "column": 1
+              },
+              "end": {
+                "line": 105,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 34,
+              "column": 5
+            },
+            "end": {
+              "line": 104,
+              "column": 8
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__main.rs_line_34_col_5.log",
+      "diff_path": "diff/web_server__src__main.rs_line_34_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 1.316885542,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.262576833,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/main.rs:112:5: replace build_app_state -> AppState with Default::default()",
+          "package": "web_server",
+          "file": "web_server/src/main.rs",
+          "function": {
+            "function_name": "build_app_state",
+            "return_type": "-> AppState",
+            "span": {
+              "start": {
+                "line": 107,
+                "column": 1
+              },
+              "end": {
+                "line": 128,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 112,
+              "column": 5
+            },
+            "end": {
+              "line": 127,
+              "column": 6
+            }
+          },
+          "replacement": "Default::default()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "Unviable",
+      "log_path": "log/web_server__src__main.rs_line_112_col_5.log",
+      "diff_path": "diff/web_server__src__main.rs_line_112_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 0.936760875,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/main.rs:134:5: replace start_background_scheduler with ()",
+          "package": "web_server",
+          "file": "web_server/src/main.rs",
+          "function": {
+            "function_name": "start_background_scheduler",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 130,
+                "column": 1
+              },
+              "end": {
+                "line": 143,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 134,
+              "column": 5
+            },
+            "end": {
+              "line": 142,
+              "column": 8
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__main.rs_line_134_col_5.log",
+      "diff_path": "diff/web_server__src__main.rs_line_134_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.093922125,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.245803542,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:28:9: replace BackgroundScheduler::run with ()",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::run",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 27,
+                "column": 5
+              },
+              "end": {
+                "line": 49,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 28,
+              "column": 9
+            },
+            "end": {
+              "line": 48,
+              "column": 10
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_28_col_9.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_28_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.34485475,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.133542458,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:40:40: replace > with == in BackgroundScheduler::run",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::run",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 27,
+                "column": 5
+              },
+              "end": {
+                "line": 49,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 40
+            },
+            "end": {
+              "line": 40,
+              "column": 41
+            }
+          },
+          "replacement": "==",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_40_col_40.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_40_col_40.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.866710833,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.121095125,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:40:40: replace > with < in BackgroundScheduler::run",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::run",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 27,
+                "column": 5
+              },
+              "end": {
+                "line": 49,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 40
+            },
+            "end": {
+              "line": 40,
+              "column": 41
+            }
+          },
+          "replacement": "<",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_40_col_40_001.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_40_col_40_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.687141584,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.16581575,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:40:40: replace > with >= in BackgroundScheduler::run",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::run",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 27,
+                "column": 5
+              },
+              "end": {
+                "line": 49,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 40
+            },
+            "end": {
+              "line": 40,
+              "column": 41
+            }
+          },
+          "replacement": ">=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_40_col_40_002.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_40_col_40_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.7048715420000002,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.171449875,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:55:9: replace BackgroundScheduler::check_and_schedule_due_urls -> Result<usize, Box<dyn std::error::Error +Send +Sync>> with Ok(0)",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::check_and_schedule_due_urls",
+            "return_type": "-> Result<usize, Box<dyn std::error::Error +Send +Sync>>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 5
+              },
+              "end": {
+                "line": 89,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 55,
+              "column": 9
+            },
+            "end": {
+              "line": 88,
+              "column": 28
+            }
+          },
+          "replacement": "Ok(0)",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_55_col_9.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_55_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.045235958,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.346808083,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:55:9: replace BackgroundScheduler::check_and_schedule_due_urls -> Result<usize, Box<dyn std::error::Error +Send +Sync>> with Ok(1)",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::check_and_schedule_due_urls",
+            "return_type": "-> Result<usize, Box<dyn std::error::Error +Send +Sync>>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 5
+              },
+              "end": {
+                "line": 89,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 55,
+              "column": 9
+            },
+            "end": {
+              "line": 88,
+              "column": 28
+            }
+          },
+          "replacement": "Ok(1)",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_55_col_9_001.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_55_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.091731333,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.461268958,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:69:37: replace += with -= in BackgroundScheduler::check_and_schedule_due_urls",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::check_and_schedule_due_urls",
+            "return_type": "-> Result<usize, Box<dyn std::error::Error +Send +Sync>>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 5
+              },
+              "end": {
+                "line": 89,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 69,
+              "column": 37
+            },
+            "end": {
+              "line": 69,
+              "column": 39
+            }
+          },
+          "replacement": "-=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_69_col_37.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_69_col_37.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.523128167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.286141375,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/background_scheduler.rs:69:37: replace += with *= in BackgroundScheduler::check_and_schedule_due_urls",
+          "package": "web_server",
+          "file": "web_server/src/background_scheduler.rs",
+          "function": {
+            "function_name": "BackgroundScheduler::check_and_schedule_due_urls",
+            "return_type": "-> Result<usize, Box<dyn std::error::Error +Send +Sync>>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 5
+              },
+              "end": {
+                "line": 89,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 69,
+              "column": 37
+            },
+            "end": {
+              "line": 69,
+              "column": 39
+            }
+          },
+          "replacement": "*=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__background_scheduler.rs_line_69_col_37_001.log",
+      "diff_path": "diff/web_server__src__background_scheduler.rs_line_69_col_37_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.848369584,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.306556167,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/config.rs:26:9: replace AppConfig::from_config -> Result<Self, config::ConfigError> with Ok(Default::default())",
+          "package": "web_server",
+          "file": "web_server/src/config.rs",
+          "function": {
+            "function_name": "AppConfig::from_config",
+            "return_type": "-> Result<Self, config::ConfigError>",
+            "span": {
+              "start": {
+                "line": 23,
+                "column": 5
+              },
+              "end": {
+                "line": 46,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 26,
+              "column": 9
+            },
+            "end": {
+              "line": 45,
+              "column": 11
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "Unviable",
+      "log_path": "log/web_server__src__config.rs_line_26_col_9.log",
+      "diff_path": "diff/web_server__src__config.rs_line_26_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 1.191473708,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:21:9: replace <impl Display for ScrapeError>::fmt -> std::fmt::Result with Ok(Default::default())",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "<impl Display for ScrapeError>::fmt",
+            "return_type": "-> std::fmt::Result",
+            "span": {
+              "start": {
+                "line": 20,
+                "column": 5
+              },
+              "end": {
+                "line": 29,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 21,
+              "column": 9
+            },
+            "end": {
+              "line": 28,
+              "column": 10
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_21_col_9.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_21_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.426261792,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.33031,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:33:5: replace get_comments -> Result<Vec<CommentRecord>, ScrapeError> with Ok(vec![])",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "get_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, ScrapeError>",
+            "span": {
+              "start": {
+                "line": 32,
+                "column": 1
+              },
+              "end": {
+                "line": 50,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 33,
+              "column": 5
+            },
+            "end": {
+              "line": 49,
+              "column": 6
+            }
+          },
+          "replacement": "Ok(vec![])",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_33_col_5.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_33_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.673318583,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.251899125,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:33:5: replace get_comments -> Result<Vec<CommentRecord>, ScrapeError> with Ok(vec![Default::default()])",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "get_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, ScrapeError>",
+            "span": {
+              "start": {
+                "line": 32,
+                "column": 1
+              },
+              "end": {
+                "line": 50,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 33,
+              "column": 5
+            },
+            "end": {
+              "line": 49,
+              "column": 6
+            }
+          },
+          "replacement": "Ok(vec![Default::default()])",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_33_col_5_001.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_33_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.384529375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.245106541,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:53:5: replace fetch_html -> Result<String, reqwest::Error> with Ok(String::new())",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "fetch_html",
+            "return_type": "-> Result<String, reqwest::Error>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 1
+              },
+              "end": {
+                "line": 62,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 53,
+              "column": 5
+            },
+            "end": {
+              "line": 61,
+              "column": 32
+            }
+          },
+          "replacement": "Ok(String::new())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_53_col_5.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_53_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.227150709,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.300336625,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:53:5: replace fetch_html -> Result<String, reqwest::Error> with Ok(\"xyzzy\".into())",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "fetch_html",
+            "return_type": "-> Result<String, reqwest::Error>",
+            "span": {
+              "start": {
+                "line": 52,
+                "column": 1
+              },
+              "end": {
+                "line": 62,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 53,
+              "column": 5
+            },
+            "end": {
+              "line": 61,
+              "column": 32
+            }
+          },
+          "replacement": "Ok(\"xyzzy\".into())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_53_col_5_001.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_53_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.14343375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.293988666,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:67:5: replace validate_thread_title -> Result<(), ScrapeError> with Ok(())",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "validate_thread_title",
+            "return_type": "-> Result<(), ScrapeError>",
+            "span": {
+              "start": {
+                "line": 66,
+                "column": 1
+              },
+              "end": {
+                "line": 81,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 67,
+              "column": 5
+            },
+            "end": {
+              "line": 80,
+              "column": 30
+            }
+          },
+          "replacement": "Ok(())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_67_col_5.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_67_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.735943167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.382148167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:84:5: replace parse_root_comments -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> with Ok(vec![])",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "parse_root_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, SelectorErrorKind<'_>>",
+            "span": {
+              "start": {
+                "line": 83,
+                "column": 1
+              },
+              "end": {
+                "line": 156,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 84,
+              "column": 5
+            },
+            "end": {
+              "line": 155,
+              "column": 24
+            }
+          },
+          "replacement": "Ok(vec![])",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_84_col_5.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_84_col_5.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.981939166,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.304492333,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:84:5: replace parse_root_comments -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> with Ok(vec![Default::default()])",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "parse_root_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, SelectorErrorKind<'_>>",
+            "span": {
+              "start": {
+                "line": 83,
+                "column": 1
+              },
+              "end": {
+                "line": 156,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 84,
+              "column": 5
+            },
+            "end": {
+              "line": 155,
+              "column": 24
+            }
+          },
+          "replacement": "Ok(vec![Default::default()])",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_84_col_5_001.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_84_col_5_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.540739958,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.362291334,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:101:24: replace == with != in parse_root_comments",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "parse_root_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, SelectorErrorKind<'_>>",
+            "span": {
+              "start": {
+                "line": 83,
+                "column": 1
+              },
+              "end": {
+                "line": 156,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 101,
+              "column": 24
+            },
+            "end": {
+              "line": 101,
+              "column": 26
+            }
+          },
+          "replacement": "!=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_101_col_24.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_101_col_24.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.039106959,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.307873083,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:104:12: delete ! in parse_root_comments",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "parse_root_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, SelectorErrorKind<'_>>",
+            "span": {
+              "start": {
+                "line": 83,
+                "column": 1
+              },
+              "end": {
+                "line": 156,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 104,
+              "column": 12
+            },
+            "end": {
+              "line": 104,
+              "column": 13
+            }
+          },
+          "replacement": "",
+          "genre": "UnaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_104_col_12.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_104_col_12.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.5331322910000003,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.408657416,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape.rs:142:30: replace && with || in parse_root_comments",
+          "package": "web_server",
+          "file": "web_server/src/scrape.rs",
+          "function": {
+            "function_name": "parse_root_comments",
+            "return_type": "-> Result<Vec<CommentRecord>, SelectorErrorKind<'_>>",
+            "span": {
+              "start": {
+                "line": 83,
+                "column": 1
+              },
+              "end": {
+                "line": 156,
+                "column": 2
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 142,
+              "column": 30
+            },
+            "end": {
+              "line": 142,
+              "column": 32
+            }
+          },
+          "replacement": "||",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape.rs_line_142_col_30.log",
+      "diff_path": "diff/web_server__src__scrape.rs_line_142_col_30.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.3379698749999998,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.4274775,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:22:9: replace <impl std::fmt::Debug for ScrapeTask>::fmt -> std::fmt::Result with Ok(Default::default())",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl std::fmt::Debug for ScrapeTask>::fmt",
+            "return_type": "-> std::fmt::Result",
+            "span": {
+              "start": {
+                "line": 21,
+                "column": 5
+              },
+              "end": {
+                "line": 27,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 22,
+              "column": 9
+            },
+            "end": {
+              "line": 26,
+              "column": 22
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_22_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_22_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.594765208,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.464942375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:40:9: replace ScrapeTask::url_id -> i64 with 0",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "ScrapeTask::url_id",
+            "return_type": "-> i64",
+            "span": {
+              "start": {
+                "line": 39,
+                "column": 5
+              },
+              "end": {
+                "line": 41,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 9
+            },
+            "end": {
+              "line": 40,
+              "column": 20
+            }
+          },
+          "replacement": "0",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_40_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_40_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.573066375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.3526981249999999,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:40:9: replace ScrapeTask::url_id -> i64 with 1",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "ScrapeTask::url_id",
+            "return_type": "-> i64",
+            "span": {
+              "start": {
+                "line": 39,
+                "column": 5
+              },
+              "end": {
+                "line": 41,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 9
+            },
+            "end": {
+              "line": 40,
+              "column": 20
+            }
+          },
+          "replacement": "1",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_40_col_9_001.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_40_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.2921194590000002,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.3669205,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:40:9: replace ScrapeTask::url_id -> i64 with -1",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "ScrapeTask::url_id",
+            "return_type": "-> i64",
+            "span": {
+              "start": {
+                "line": 39,
+                "column": 5
+              },
+              "end": {
+                "line": 41,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 40,
+              "column": 9
+            },
+            "end": {
+              "line": 40,
+              "column": 20
+            }
+          },
+          "replacement": "-1",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_40_col_9_002.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_40_col_9_002.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.382313,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.358666833,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:44:9: replace ScrapeTask::url -> &str with \"\"",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "ScrapeTask::url",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 43,
+                "column": 5
+              },
+              "end": {
+                "line": 45,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 44,
+              "column": 9
+            },
+            "end": {
+              "line": 44,
+              "column": 18
+            }
+          },
+          "replacement": "\"\"",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_44_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_44_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.191455709,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.524791959,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:44:9: replace ScrapeTask::url -> &str with \"xyzzy\"",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "ScrapeTask::url",
+            "return_type": "-> &str",
+            "span": {
+              "start": {
+                "line": 43,
+                "column": 5
+              },
+              "end": {
+                "line": 45,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 44,
+              "column": 9
+            },
+            "end": {
+              "line": 44,
+              "column": 18
+            }
+          },
+          "replacement": "\"xyzzy\"",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_44_col_9_001.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_44_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.263327417,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.491852833,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:52:9: replace <impl PartialEq for ScrapeTask>::eq -> bool with true",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl PartialEq for ScrapeTask>::eq",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 51,
+                "column": 5
+              },
+              "end": {
+                "line": 53,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 52,
+              "column": 9
+            },
+            "end": {
+              "line": 52,
+              "column": 61
+            }
+          },
+          "replacement": "true",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_52_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_52_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.359449375,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.415323583,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:52:9: replace <impl PartialEq for ScrapeTask>::eq -> bool with false",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl PartialEq for ScrapeTask>::eq",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 51,
+                "column": 5
+              },
+              "end": {
+                "line": 53,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 52,
+              "column": 9
+            },
+            "end": {
+              "line": 52,
+              "column": 61
+            }
+          },
+          "replacement": "false",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_52_col_9_001.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_52_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.355164167,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.4165215,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:52:31: replace && with || in <impl PartialEq for ScrapeTask>::eq",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl PartialEq for ScrapeTask>::eq",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 51,
+                "column": 5
+              },
+              "end": {
+                "line": 53,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 52,
+              "column": 31
+            },
+            "end": {
+              "line": 52,
+              "column": 33
+            }
+          },
+          "replacement": "||",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_52_col_31.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_52_col_31.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.654908917,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.349671209,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:52:18: replace == with != in <impl PartialEq for ScrapeTask>::eq",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl PartialEq for ScrapeTask>::eq",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 51,
+                "column": 5
+              },
+              "end": {
+                "line": 53,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 52,
+              "column": 18
+            },
+            "end": {
+              "line": 52,
+              "column": 20
+            }
+          },
+          "replacement": "!=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_52_col_18.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_52_col_18.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.307175667,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.152368625,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:52:46: replace == with != in <impl PartialEq for ScrapeTask>::eq",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl PartialEq for ScrapeTask>::eq",
+            "return_type": "-> bool",
+            "span": {
+              "start": {
+                "line": 51,
+                "column": 5
+              },
+              "end": {
+                "line": 53,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 52,
+              "column": 46
+            },
+            "end": {
+              "line": 52,
+              "column": 48
+            }
+          },
+          "replacement": "!=",
+          "genre": "BinaryOperator"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_52_col_46.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_52_col_46.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.480744209,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.389893583,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:58:9: replace <impl Hash for ScrapeTask>::hash with ()",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl Hash for ScrapeTask>::hash",
+            "return_type": "",
+            "span": {
+              "start": {
+                "line": 57,
+                "column": 5
+              },
+              "end": {
+                "line": 60,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 58,
+              "column": 9
+            },
+            "end": {
+              "line": 59,
+              "column": 33
+            }
+          },
+          "replacement": "()",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "CaughtMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_58_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_58_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.655352917,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 1.512307208,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:65:9: replace <impl Display for ScrapeTask>::fmt -> std::fmt::Result with Ok(Default::default())",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl Display for ScrapeTask>::fmt",
+            "return_type": "-> std::fmt::Result",
+            "span": {
+              "start": {
+                "line": 64,
+                "column": 5
+              },
+              "end": {
+                "line": 66,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 65,
+              "column": 9
+            },
+            "end": {
+              "line": 65,
+              "column": 76
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_65_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_65_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.574141583,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.868685083,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:77:9: replace <impl Error for ScrapeTaskError>::cause -> Option<&dyn Error> with None",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl Error for ScrapeTaskError>::cause",
+            "return_type": "-> Option<&dyn Error>",
+            "span": {
+              "start": {
+                "line": 76,
+                "column": 5
+              },
+              "end": {
+                "line": 81,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 77,
+              "column": 9
+            },
+            "end": {
+              "line": 80,
+              "column": 10
+            }
+          },
+          "replacement": "None",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_77_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_77_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.815059958,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.870229916,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:77:9: replace <impl Error for ScrapeTaskError>::cause -> Option<&dyn Error> with Some(Box::leak(Box::new(Default::default())))",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl Error for ScrapeTaskError>::cause",
+            "return_type": "-> Option<&dyn Error>",
+            "span": {
+              "start": {
+                "line": 76,
+                "column": 5
+              },
+              "end": {
+                "line": 81,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 77,
+              "column": 9
+            },
+            "end": {
+              "line": 80,
+              "column": 10
+            }
+          },
+          "replacement": "Some(Box::leak(Box::new(Default::default())))",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "Unviable",
+      "log_path": "log/web_server__src__scrape_task.rs_line_77_col_9_001.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_77_col_9_001.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 1.146675709,
+          "process_status": {
+            "Failure": 101
+          },
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:85:9: replace <impl Display for ScrapeTaskError>::fmt -> std::fmt::Result with Ok(Default::default())",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl Display for ScrapeTaskError>::fmt",
+            "return_type": "-> std::fmt::Result",
+            "span": {
+              "start": {
+                "line": 84,
+                "column": 5
+              },
+              "end": {
+                "line": 89,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 85,
+              "column": 9
+            },
+            "end": {
+              "line": 88,
+              "column": 10
+            }
+          },
+          "replacement": "Ok(Default::default())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_85_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_85_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 3.642375834,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.943452625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "Mutant": {
+          "name": "web_server/src/scrape_task.rs:97:9: replace <impl TaskQueueProcessor for ScrapeTask>::execute -> Result<(), ScrapeTaskError> with Ok(())",
+          "package": "web_server",
+          "file": "web_server/src/scrape_task.rs",
+          "function": {
+            "function_name": "<impl TaskQueueProcessor for ScrapeTask>::execute",
+            "return_type": "-> Result<(), ScrapeTaskError>",
+            "span": {
+              "start": {
+                "line": 96,
+                "column": 5
+              },
+              "end": {
+                "line": 128,
+                "column": 6
+              }
+            }
+          },
+          "span": {
+            "start": {
+              "line": 97,
+              "column": 9
+            },
+            "end": {
+              "line": 127,
+              "column": 15
+            }
+          },
+          "replacement": "Ok(())",
+          "genre": "FnValue"
+        }
+      },
+      "summary": "MissedMutant",
+      "log_path": "log/web_server__src__scrape_task.rs_line_97_col_9.log",
+      "diff_path": "diff/web_server__src__scrape_task.rs_line_97_col_9.diff",
+      "phase_results": [
+        {
+          "phase": "Build",
+          "duration": 4.386581708,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--no-run",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        },
+        {
+          "phase": "Test",
+          "duration": 2.91129625,
+          "process_status": "Success",
+          "argv": [
+            "/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo",
+            "test",
+            "--verbose",
+            "--package=web_server@0.1.0"
+          ]
+        }
+      ]
+    }
+  ],
+  "total_mutants": 44,
+  "missed": 20,
+  "caught": 21,
+  "timeout": 0,
+  "unviable": 3,
+  "success": 0,
+  "start_time": "2026-02-10T13:28:44.355404Z",
+  "end_time": null,
+  "cargo_mutants_version": "26.2.0"
+}

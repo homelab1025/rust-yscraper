@@ -1,0 +1,41 @@
+--- web_server/src/background_scheduler.rs
++++ replace BackgroundScheduler::run with ()
+@@ -20,37 +20,17 @@
+         Self {
+             repo,
+             task_queue,
+             check_interval,
+         }
+     }
+ 
+     pub async fn run(&self) {
+-        let mut interval = tokio::time::interval(self.check_interval);
+-        info!(
+-            "Background scheduler started with interval: {:?}",
+-            self.check_interval
+-        );
+-
+-        // REFACTOR: Wait on the tasks to finish and then shutdown when receiving the shutdown signal.
+-        loop {
+-            interval.tick().await;
+-
+-            match self.check_and_schedule_due_urls().await {
+-                Ok(scheduled_count) => {
+-                    if scheduled_count > 0 {
+-                        info!("Scheduled {} URLs for refresh", scheduled_count);
+-                    }
+-                }
+-                Err(e) => {
+-                    error!("Error in background scheduler: {}", e);
+-                }
+-            }
+-        }
++        () /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     // REFACTOR: Return a specific error type.
+     async fn check_and_schedule_due_urls(
+         &self,
+     ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
+         let due_urls = self.repo.get_urls_due_for_refresh().await?;
+         let mut scheduled_count = 0;

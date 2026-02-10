@@ -1,0 +1,39 @@
+--- web_server/src/scrape.rs
++++ replace get_comments -> Result<Vec<CommentRecord>, ScrapeError> with Ok(vec![])
+@@ -25,35 +25,17 @@
+                 f,
+                 "invalid thread title: expected prefix 'Ask HN: What Are You Working On'"
+             ),
+         }
+     }
+ }
+ 
+ pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, ScrapeError> {
+-    info!("Fetching URL: {}", url);
+-    let html = match fetch_html(url).await {
+-        Ok(h) => h,
+-        Err(e) => {
+-            return Err(HtmlFetchError(e));
+-        }
+-    };
+-
+-    // Validate thread title for real HN item pages only
+-    if let Err(e) = validate_thread_title(&html) {
+-        return Err(e);
+-    }
+-
+-    info!("Parsing root comments...");
+-    let comments = parse_root_comments(&html);
+-    match comments {
+-        Ok(c) => Ok(c),
+-        Err(_e) => Err(ElementSelectorError()),
+-    }
++    Ok(vec![]) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
+     let client = reqwest::Client::builder()
+         .timeout(Duration::from_secs(20))
+         .user_agent("rust-yscraper/0.1 (+https://news.ycombinator.com)")
+         .build()?;
+ 

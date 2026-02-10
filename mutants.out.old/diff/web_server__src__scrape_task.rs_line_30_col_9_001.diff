@@ -1,0 +1,21 @@
+--- web_server/src/scrape_task.rs
++++ replace ScrapeTask::url_id -> i64 with 1
+@@ -22,17 +22,17 @@
+         ScrapeTask {
+             url,
+             url_id,
+             repo: comments_repo.clone(),
+         }
+     }
+ 
+     pub fn url_id(&self) -> i64 {
+-        self.url_id
++        1 /* ~ changed by cargo-mutants ~ */
+     }
+ 
+     pub fn url(&self) -> &str {
+         &self.url
+     }
+ }
+ 
+ impl Eq for ScrapeTask {}

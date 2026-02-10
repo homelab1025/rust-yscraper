@@ -1,0 +1,656 @@
+
+*** api_gen/src/main.rs:6:5: replace main with ()
+
+*** mutation diff:
+--- api_gen/src/main.rs
++++ replace main with ()
+@@ -1,21 +1,7 @@
+ use std::{env, fs};
+ use utoipa::OpenApi;
+ use web_server::api::ApiDoc;
+ 
+ fn main() {
+-    let args: Vec<String> = env::args().collect();
+-    if args.len() < 2 {
+-        panic!("Usage: api_gen <output_file>");
+-    }
+-
+-    let output_path = &args[1];
+-    let openapi = ApiDoc::openapi();
+-
+-    match openapi.to_yaml() {
+-        Ok(yaml_desc) => {
+-            println!("OpenAPI spec successfully generated at: {}", output_path);
+-            fs::write(output_path, yaml_desc).unwrap();
+-        }
+-        Err(e) => panic!("Failed to write OpenAPI spec: {}", e),
+-    };
++    () /* ~ changed by cargo-mutants ~ */
+ }
+\ No newline at end of file
+
+
+*** /Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo test --no-run --verbose --package=api_gen@0.1.0
+       Fresh unicode-ident v1.0.20
+       Fresh cfg-if v1.0.4
+       Fresh pin-project-lite v0.2.16
+       Fresh itoa v1.0.15
+       Fresh futures-core v0.3.31
+       Fresh bytes v1.10.1
+       Fresh proc-macro2 v1.0.101
+       Fresh memchr v2.7.6
+       Fresh once_cell v1.21.3
+       Fresh litemap v0.8.0
+       Fresh writeable v0.6.1
+       Fresh equivalent v1.0.2
+       Fresh core-foundation-sys v0.8.7
+       Fresh quote v1.0.41
+       Fresh libc v0.2.177
+       Fresh hashbrown v0.16.0
+       Fresh version_check v0.9.5
+       Fresh tracing-core v0.1.34
+       Fresh syn v2.0.107
+       Fresh mio v1.1.0
+       Fresh socket2 v0.6.1
+       Fresh subtle v2.6.1
+       Fresh stable_deref_trait v1.2.1
+       Fresh percent-encoding v2.3.2
+       Fresh serde_derive v1.0.228
+       Fresh synstructure v0.13.2
+       Fresh zerovec-derive v0.11.1
+       Fresh displaydoc v0.2.5
+       Fresh tracing-attributes v0.1.30
+       Fresh serde_core v1.0.228
+       Fresh tokio-macros v2.6.0
+       Fresh typenum v1.19.0
+       Fresh icu_normalizer_data v2.0.0
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.0
+       Fresh icu_properties_data v2.0.1
+       Fresh slab v0.4.11
+       Fresh generic-array v0.14.9
+       Fresh pin-utils v0.1.0
+       Fresh serde v1.0.228
+       Fresh futures-io v0.3.31
+       Fresh zerofrom v0.1.6
+       Fresh shlex v1.3.0
+       Fresh futures-task v0.3.31
+       Fresh scopeguard v1.2.0
+       Fresh siphasher v1.0.1
+       Fresh find-msvc-tools v0.1.4
+       Fresh crypto-common v0.1.6
+       Fresh block-buffer v0.10.4
+       Fresh yoke v0.8.0
+       Fresh phf_shared v0.13.1
+       Fresh lock_api v0.4.14
+       Fresh cc v1.2.41
+       Fresh getrandom v0.2.16
+       Fresh digest v0.10.7
+       Fresh smallvec v1.15.1
+       Fresh zeroize v1.8.2
+       Fresh ryu v1.0.20
+       Fresh utf8_iter v1.0.4
+       Fresh rustls-pki-types v1.12.0
+       Fresh phf_generator v0.13.1
+       Fresh zerovec v0.11.4
+       Fresh autocfg v1.5.0
+       Fresh fnv v1.0.7
+       Fresh untrusted v0.9.0
+       Fresh cpufeatures v0.2.17
+       Fresh tinystr v0.8.1
+       Fresh http v1.3.1
+       Fresh ring v0.17.14
+       Fresh sha2 v0.10.9
+   Compiling futures-util v0.3.31
+       Fresh log v0.4.28
+       Fresh rustls-webpki v0.103.7
+       Fresh crossbeam-utils v0.8.21
+       Fresh num-traits v0.2.19
+       Fresh http-body v1.0.1
+       Fresh icu_locale_core v2.0.0
+       Fresh webpki-roots v1.0.3
+       Fresh potential_utf v0.1.3
+       Fresh zerotrie v0.2.2
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name futures_util --edition=2018 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-util-0.3.31/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=unreachable_pub --warn=unexpected_cfgs --warn=single_use_lifetimes --warn=rust_2018_idioms --warn=missing_debug_implementations --check-cfg 'cfg(futures_sanitizer)' --cfg 'feature="alloc"' --cfg 'feature="futures-io"' --cfg 'feature="futures-sink"' --cfg 'feature="io"' --cfg 'feature="memchr"' --cfg 'feature="sink"' --cfg 'feature="slab"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("alloc", "async-await", "async-await-macro", "bilock", "cfg-target-has-atomic", "channel", "compat", "default", "futures-channel", "futures-io", "futures-macro", "futures-sink", "futures_01", "io", "io-compat", "memchr", "portable-atomic", "sink", "slab", "std", "tokio-io", "unstable", "write-all-vectored"))' -C metadata=363b1a168d336509 -C extra-filename=-46a33cc3950dfe1e --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_io=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_io-c149c56959f59f9f.rmeta --extern futures_sink=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_sink-7fff9374f776b936.rmeta --extern futures_task=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_task-4df7b688ab263c88.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern pin_utils=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_utils-a3c761c04bda9dae.rmeta --extern slab=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libslab-ea7d17201a3af587.rmeta --cap-lints allow`
+       Fresh rustls v0.23.33
+       Fresh core-foundation v0.9.4
+       Fresh icu_provider v2.0.0
+       Fresh icu_collections v2.0.0
+       Fresh phf_codegen v0.13.1
+       Fresh crc32fast v1.5.0
+       Fresh indexmap v2.12.0
+       Fresh iana-time-zone v0.1.64
+       Fresh allocator-api2 v0.2.21
+       Fresh tower-service v0.3.3
+       Fresh foldhash v0.1.5
+       Fresh zerocopy v0.8.27
+       Fresh concurrent-queue v2.5.0
+       Fresh tokio-util v0.7.16
+       Fresh hashbrown v0.15.5
+       Fresh form_urlencoded v1.2.2
+       Fresh thiserror-impl v2.0.17
+       Fresh crc-catalog v2.4.0
+       Fresh parking v2.2.1
+       Fresh atomic-waker v1.1.2
+       Fresh new_debug_unreachable v1.0.6
+       Fresh tinyvec_macros v0.1.1
+       Fresh try-lock v0.2.5
+       Fresh crc v3.3.0
+       Fresh thiserror v2.0.17
+       Fresh hashlink v0.10.0
+       Fresh system-configuration-sys v0.6.0
+       Fresh h2 v0.4.12
+       Fresh event-listener v5.4.1
+       Fresh httparse v1.10.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh tinyvec v1.10.0
+       Fresh want v0.3.1
+       Fresh icu_properties v2.0.1
+       Fresh icu_normalizer v2.0.0
+       Fresh crossbeam-queue v0.3.12
+       Fresh webpki-roots v0.26.11
+       Fresh phf_macros v0.13.1
+       Fresh parking_lot_core v0.9.12
+       Fresh rand_core v0.6.4
+       Fresh httpdate v1.0.3
+       Fresh futures-sink v0.3.31
+       Fresh idna_adapter v1.2.1
+       Fresh unicode-normalization v0.1.25
+   Compiling hyper v1.7.0
+       Fresh parking_lot v0.12.5
+       Fresh rand_chacha v0.3.1
+       Fresh phf v0.13.1
+       Fresh system-configuration v0.6.1
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name hyper --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-1.7.0/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=unexpected_cfgs --check-cfg 'cfg(hyper_unstable_tracing)' --check-cfg 'cfg(hyper_unstable_ffi)' --cfg 'feature="client"' --cfg 'feature="default"' --cfg 'feature="http1"' --cfg 'feature="http2"' --cfg 'feature="server"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("capi", "client", "default", "ffi", "full", "http1", "http2", "nightly", "server", "tracing"))' -C metadata=7e83611aa884f2e8 -C extra-filename=-a826aa5ef441b58f --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern atomic_waker=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libatomic_waker-b0bffc3cf38abbeb.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern futures_channel=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_channel-e6ad964915e58175.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern h2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libh2-e374618be7ac887b.rmeta --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern http_body=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body-359ec06673bb52cf.rmeta --extern httparse=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttparse-5934c055ab1614be.rmeta --extern httpdate=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttpdate-e980ef76d740a208.rmeta --extern itoa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libitoa-e0a1a21c58583c3e.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern pin_utils=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_utils-a3c761c04bda9dae.rmeta --extern smallvec=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsmallvec-bb6eecc6f40186e0.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern want=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwant-98d99c66b918387a.rmeta --cap-lints allow`
+       Fresh string_cache_codegen v0.6.1
+       Fresh hmac v0.12.1
+       Fresh tokio v1.48.0
+       Fresh errno v0.3.14
+       Fresh sync_wrapper v1.0.2
+       Fresh ipnet v2.11.0
+       Fresh unicode-properties v0.1.4
+       Fresh zlib-rs v0.5.4
+       Fresh tower-layer v0.3.3
+       Fresh unicode-bidi v0.3.18
+       Fresh precomputed-hash v0.1.1
+       Fresh getrandom v0.3.4
+       Fresh hkdf v0.12.4
+       Fresh rustix v1.1.2
+       Fresh libz-rs-sys v0.5.4
+       Fresh stringprep v0.1.5
+       Fresh idna v1.1.0
+       Fresh rand v0.8.5
+       Fresh http-body-util v0.1.3
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name futures_util --edition=2018 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/futures-util-0.3.31/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=unreachable_pub --warn=unexpected_cfgs --warn=single_use_lifetimes --warn=rust_2018_idioms --warn=missing_debug_implementations --check-cfg 'cfg(futures_sanitizer)' --cfg 'feature="alloc"' --cfg 'feature="futures-io"' --cfg 'feature="futures-sink"' --cfg 'feature="io"' --cfg 'feature="memchr"' --cfg 'feature="sink"' --cfg 'feature="slab"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("alloc", "async-await", "async-await-macro", "bilock", "cfg-target-has-atomic", "channel", "compat", "default", "futures-channel", "futures-io", "futures-macro", "futures-sink", "futures_01", "io", "io-compat", "memchr", "portable-atomic", "sink", "slab", "std", "tokio-io", "unstable", "write-all-vectored"))' -C metadata=cf060b3473184f31 -C extra-filename=-7d1a30286cc2b96c --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_io=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_io-c149c56959f59f9f.rmeta --extern futures_sink=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_sink-56f2779b45312c52.rmeta --extern futures_task=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_task-4df7b688ab263c88.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern pin_utils=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_utils-a3c761c04bda9dae.rmeta --extern slab=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libslab-ea7d17201a3af587.rmeta --cap-lints allow`
+       Fresh atoi v2.0.0
+       Fresh tracing v0.1.41
+       Fresh serde_json v1.0.145
+       Fresh md-5 v0.10.6
+       Fresh security-framework-sys v2.15.0
+   Compiling aho-corasick v1.1.4
+       Fresh bumpalo v3.19.0
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name aho_corasick --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.4/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no --cfg 'feature="perf-literal"' --cfg 'feature="std"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "logging", "perf-literal", "std"))' -C metadata=161fa41e0c684449 -C extra-filename=-b0dc7240fb570fc9 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --cap-lints allow`
+       Fresh same-file v1.0.6
+       Fresh alloc-no-stdlib v2.0.4
+   Compiling regex-syntax v0.8.8
+       Fresh home v0.5.12
+       Fresh fastrand v2.3.0
+       Fresh whoami v1.6.1
+       Fresh mac v0.1.1
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name regex_syntax --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.8/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no --allow=unexpected_cfgs --check-cfg 'cfg(docsrs_regex)' --cfg 'feature="default"' --cfg 'feature="std"' --cfg 'feature="unicode"' --cfg 'feature="unicode-age"' --cfg 'feature="unicode-bool"' --cfg 'feature="unicode-case"' --cfg 'feature="unicode-gencat"' --cfg 'feature="unicode-perl"' --cfg 'feature="unicode-script"' --cfg 'feature="unicode-segment"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("arbitrary", "default", "std", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment"))' -C metadata=1e2338ebe0d13715 -C extra-filename=-8ac2eb0d1b53a4b9 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --cap-lints allow`
+       Fresh dotenvy v0.15.7
+       Fresh base64 v0.22.1
+       Fresh hex v0.4.3
+       Fresh byteorder v1.5.0
+       Fresh mime v0.3.17
+       Fresh zopfli v0.8.3
+       Fresh alloc-stdlib v0.2.2
+       Fresh tempfile v3.23.0
+       Fresh walkdir v2.5.0
+       Fresh futf v0.1.5
+       Fresh security-framework v2.11.1
+       Fresh url v2.5.7
+       Fresh string_cache v0.9.0
+       Fresh futures-channel v0.3.31
+       Fresh dtoa v1.0.10
+       Fresh unicase v2.8.1
+       Fresh bitflags v2.10.0
+       Fresh utf-8 v0.7.6
+       Fresh simd-adler32 v0.3.7
+       Fresh adler2 v2.0.1
+       Fresh dtoa-short v0.3.5
+       Fresh tendril v0.4.3
+       Fresh native-tls v0.2.14
+       Fresh zip v3.0.0
+       Fresh miniz_oxide v0.8.9
+       Fresh web_atoms v0.2.0
+       Fresh rust-embed-utils v8.9.0
+       Fresh brotli-decompressor v4.0.2
+       Fresh serde_urlencoded v0.7.1
+       Fresh chrono v0.4.42
+       Fresh futures-intrusive v0.5.0
+       Fresh either v1.15.0
+       Fresh tokio-stream v0.1.17
+       Fresh cssparser-macros v0.6.1
+       Fresh derive_more-impl v2.0.1
+       Fresh unsafe-libyaml-norway v0.2.15
+       Fresh num-conv v0.1.0
+       Fresh winnow v0.7.13
+       Fresh powerfmt v0.2.0
+       Fresh time-core v0.1.6
+       Fresh heck v0.5.0
+       Fresh time-macros v0.2.24
+       Fresh serde_norway v0.9.42
+       Fresh toml_parser v1.0.6+spec-1.1.0
+       Fresh deranged v0.5.4
+       Fresh derive_more v2.0.1
+       Fresh cssparser v0.36.0
+       Fresh rust-embed-impl v8.9.0
+       Fresh brotli v7.0.0
+       Fresh flate2 v1.1.4
+       Fresh markup5ever v0.36.1
+       Fresh tokio-native-tls v0.3.1
+       Fresh axum-core v0.5.5
+       Fresh tokio-rustls v0.26.4
+       Fresh servo_arc v0.4.3
+       Fresh utoipa-gen v5.4.0
+       Fresh axum-macros v0.5.0
+       Fresh num_threads v0.1.7
+       Fresh serde_path_to_error v0.1.20
+       Fresh serde_spanned v1.0.4
+       Fresh toml_datetime v0.7.5+spec-1.1.0
+       Fresh unicode-width v0.2.2
+       Fresh matchit v0.8.4
+       Fresh iri-string v0.7.8
+       Fresh rustc-hash v2.1.1
+       Fresh time v0.3.44
+       Fresh getopts v0.2.24
+       Fresh toml v0.9.10+spec-1.1.0
+       Fresh utoipa v5.4.0
+       Fresh selectors v0.33.0
+       Fresh mime_guess v2.0.5
+       Fresh html5ever v0.36.1
+       Fresh rust-embed v8.9.0
+       Fresh async-compression v0.4.22
+       Fresh encoding_rs v0.8.35
+       Fresh ego-tree v0.10.0
+       Fresh pathdiff v0.2.3
+       Fresh termcolor v1.4.1
+       Fresh async-trait v0.1.89
+       Fresh config v0.15.18
+       Fresh simplelog v0.12.2
+       Fresh scraper v0.25.0
+   Compiling regex-automata v0.4.13
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name regex_automata --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.13/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no --allow=unexpected_cfgs --check-cfg 'cfg(docsrs_regex)' --cfg 'feature="alloc"' --cfg 'feature="dfa-onepass"' --cfg 'feature="hybrid"' --cfg 'feature="meta"' --cfg 'feature="nfa-backtrack"' --cfg 'feature="nfa-pikevm"' --cfg 'feature="nfa-thompson"' --cfg 'feature="perf-inline"' --cfg 'feature="perf-literal"' --cfg 'feature="perf-literal-multisubstring"' --cfg 'feature="perf-literal-substring"' --cfg 'feature="std"' --cfg 'feature="syntax"' --cfg 'feature="unicode"' --cfg 'feature="unicode-age"' --cfg 'feature="unicode-bool"' --cfg 'feature="unicode-case"' --cfg 'feature="unicode-gencat"' --cfg 'feature="unicode-perl"' --cfg 'feature="unicode-script"' --cfg 'feature="unicode-segment"' --cfg 'feature="unicode-word-boundary"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("alloc", "default", "dfa", "dfa-build", "dfa-onepass", "dfa-search", "hybrid", "internal-instrument", "internal-instrument-pikevm", "logging", "meta", "nfa", "nfa-backtrack", "nfa-pikevm", "nfa-thompson", "perf", "perf-inline", "perf-literal", "perf-literal-multisubstring", "perf-literal-substring", "std", "syntax", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment", "unicode-word-boundary"))' -C metadata=0b34899f68d13423 -C extra-filename=-9855dbcb4b2db469 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern aho_corasick=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaho_corasick-b0dc7240fb570fc9.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern regex_syntax=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libregex_syntax-8ac2eb0d1b53a4b9.rmeta --cap-lints allow`
+   Compiling hyper-util v0.1.17
+   Compiling tower v0.5.2
+   Compiling sqlx-core v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name tower --edition=2018 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tower-0.5.2/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="__common"' --cfg 'feature="futures-core"' --cfg 'feature="futures-util"' --cfg 'feature="log"' --cfg 'feature="make"' --cfg 'feature="pin-project-lite"' --cfg 'feature="retry"' --cfg 'feature="sync_wrapper"' --cfg 'feature="timeout"' --cfg 'feature="tokio"' --cfg 'feature="tracing"' --cfg 'feature="util"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("__common", "balance", "buffer", "discover", "filter", "full", "futures-core", "futures-util", "hdrhistogram", "hedge", "indexmap", "limit", "load", "load-shed", "log", "make", "pin-project-lite", "ready-cache", "reconnect", "retry", "slab", "spawn-ready", "steer", "sync_wrapper", "timeout", "tokio", "tokio-stream", "tokio-util", "tracing", "util"))' -C metadata=8254acfbc3b3024b -C extra-filename=-e9f131e31af3a0c4 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern sync_wrapper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsync_wrapper-30294a4c2631f6b3.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tower_layer=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_layer-b221d6b536670d08.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-05c098ce0085b59a.rmeta --cap-lints allow`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name hyper_util --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-util-0.1.17/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="client"' --cfg 'feature="client-legacy"' --cfg 'feature="client-proxy"' --cfg 'feature="client-proxy-system"' --cfg 'feature="default"' --cfg 'feature="http1"' --cfg 'feature="http2"' --cfg 'feature="server"' --cfg 'feature="service"' --cfg 'feature="tokio"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("__internal_happy_eyeballs_tests", "client", "client-legacy", "client-proxy", "client-proxy-system", "default", "full", "http1", "http2", "server", "server-auto", "server-graceful", "service", "tokio", "tracing"))' -C metadata=5f8ba37b1e7e3a37 -C extra-filename=-cce9fccfde3a02b7 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-80c574e62179e036.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern futures_channel=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_channel-e6ad964915e58175.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern http_body=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body-359ec06673bb52cf.rmeta --extern hyper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper-a826aa5ef441b58f.rmeta --extern ipnet=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libipnet-a1ecebc4af782073.rmeta --extern libc=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblibc-9d947e749928f88d.rmeta --extern percent_encoding=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpercent_encoding-da65008b411bfe11.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern socket2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsocket2-d09f8b178d0ed463.rmeta --extern system_configuration=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsystem_configuration-c63f7d2fc57b6623.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-05c098ce0085b59a.rmeta --cap-lints allow`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_core --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-core-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked '--deny=clippy::disallowed_methods' '--deny=clippy::cast_sign_loss' '--deny=clippy::cast_possible_wrap' '--deny=clippy::cast_possible_truncation' --cfg 'feature="_rt-tokio"' --cfg 'feature="_tls-rustls"' --cfg 'feature="_tls-rustls-ring-webpki"' --cfg 'feature="any"' --cfg 'feature="chrono"' --cfg 'feature="crc"' --cfg 'feature="default"' --cfg 'feature="json"' --cfg 'feature="migrate"' --cfg 'feature="offline"' --cfg 'feature="rustls"' --cfg 'feature="serde"' --cfg 'feature="serde_json"' --cfg 'feature="sha2"' --cfg 'feature="tokio"' --cfg 'feature="tokio-stream"' --cfg 'feature="webpki-roots"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("_rt-async-std", "_rt-tokio", "_tls-native-tls", "_tls-none", "_tls-rustls", "_tls-rustls-aws-lc-rs", "_tls-rustls-ring-native-roots", "_tls-rustls-ring-webpki", "any", "async-io", "async-std", "bigdecimal", "bit-vec", "bstr", "chrono", "crc", "default", "ipnet", "ipnetwork", "json", "mac_address", "migrate", "native-tls", "offline", "regex", "rust_decimal", "rustls", "rustls-native-certs", "serde", "serde_json", "sha2", "time", "tokio", "tokio-stream", "uuid", "webpki-roots"))' -C metadata=7004f329301d4ead -C extra-filename=-fab19586a975fc1a --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-80c574e62179e036.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rmeta --extern crc=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrc-b546d5218d9a1b10.rmeta --extern crossbeam_queue=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrossbeam_queue-91c360ee38436cb9.rmeta --extern either=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libeither-24b9c93a0b30465b.rmeta --extern event_listener=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libevent_listener-b50e70b45414cd93.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_intrusive=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_intrusive-9a17961327000557.rmeta --extern futures_io=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_io-c149c56959f59f9f.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern hashbrown=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhashbrown-2c99c199f13d07c6.rmeta --extern hashlink=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhashlink-d57c401dfa743386.rmeta --extern indexmap=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libindexmap-d49e1e8a5316eae4.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern once_cell=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libonce_cell-4a5135b5efdc4b11.rmeta --extern percent_encoding=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpercent_encoding-da65008b411bfe11.rmeta --extern rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls-7543baecaab35159.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-6977eb518b31ae7b.rmeta --extern sha2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsha2-4470b6e87853cfe2.rmeta --extern smallvec=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsmallvec-bb6eecc6f40186e0.rmeta --extern thiserror=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libthiserror-06e18b4d89c205a9.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tokio_stream=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_stream-f74a0186c88b2af5.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-05c098ce0085b59a.rmeta --extern url=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liburl-75488422c84fb6fc.rmeta --extern webpki_roots=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwebpki_roots-3aea91cc59b234d9.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_core --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-core-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked '--deny=clippy::disallowed_methods' '--deny=clippy::cast_sign_loss' '--deny=clippy::cast_possible_wrap' '--deny=clippy::cast_possible_truncation' --cfg 'feature="_rt-tokio"' --cfg 'feature="_tls-rustls"' --cfg 'feature="_tls-rustls-ring-webpki"' --cfg 'feature="any"' --cfg 'feature="chrono"' --cfg 'feature="crc"' --cfg 'feature="default"' --cfg 'feature="json"' --cfg 'feature="migrate"' --cfg 'feature="offline"' --cfg 'feature="rustls"' --cfg 'feature="serde"' --cfg 'feature="serde_json"' --cfg 'feature="sha2"' --cfg 'feature="tokio"' --cfg 'feature="tokio-stream"' --cfg 'feature="webpki-roots"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("_rt-async-std", "_rt-tokio", "_tls-native-tls", "_tls-none", "_tls-rustls", "_tls-rustls-aws-lc-rs", "_tls-rustls-ring-native-roots", "_tls-rustls-ring-webpki", "any", "async-io", "async-std", "bigdecimal", "bit-vec", "bstr", "chrono", "crc", "default", "ipnet", "ipnetwork", "json", "mac_address", "migrate", "native-tls", "offline", "regex", "rust_decimal", "rustls", "rustls-native-certs", "serde", "serde_json", "sha2", "time", "tokio", "tokio-stream", "uuid", "webpki-roots"))' -C metadata=e55cd17f1e391553 -C extra-filename=-9f5373bc188be785 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-9ebd9f7c8533b676.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libchrono-b31d202e2a5e5ec4.rmeta --extern crc=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrc-b546d5218d9a1b10.rmeta --extern crossbeam_queue=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrossbeam_queue-91c360ee38436cb9.rmeta --extern either=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libeither-cbc797763dc15b9c.rmeta --extern event_listener=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libevent_listener-b50e70b45414cd93.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_intrusive=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_intrusive-dc73fa913a038ad9.rmeta --extern futures_io=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_io-c149c56959f59f9f.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-7d1a30286cc2b96c.rmeta --extern hashbrown=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhashbrown-2c99c199f13d07c6.rmeta --extern hashlink=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhashlink-d57c401dfa743386.rmeta --extern indexmap=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libindexmap-125205344ad9e215.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-1a2db4788fb746be.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern once_cell=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libonce_cell-4a5135b5efdc4b11.rmeta --extern percent_encoding=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpercent_encoding-da65008b411bfe11.rmeta --extern rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls-7543baecaab35159.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-501be4a7602b9b94.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-46cf62e69d2f2462.rmeta --extern sha2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsha2-4470b6e87853cfe2.rmeta --extern smallvec=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsmallvec-5ef56de72a0e245d.rmeta --extern thiserror=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libthiserror-06e18b4d89c205a9.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-f57b910b046bd403.rmeta --extern tokio_stream=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_stream-a276cc45d6c16ae7.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-83aa980658f0b1e1.rmeta --extern url=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liburl-68d0ba072ce09ed0.rmeta --extern webpki_roots=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwebpki_roots-3aea91cc59b234d9.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+   Compiling tower-http v0.6.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name tower_http --edition=2018 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tower-http-0.6.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="cors"' --cfg 'feature="default"' --cfg 'feature="follow-redirect"' --cfg 'feature="futures-util"' --cfg 'feature="iri-string"' --cfg 'feature="tower"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("add-extension", "async-compression", "auth", "base64", "catch-panic", "compression-br", "compression-deflate", "compression-full", "compression-gzip", "compression-zstd", "cors", "decompression-br", "decompression-deflate", "decompression-full", "decompression-gzip", "decompression-zstd", "default", "follow-redirect", "fs", "full", "futures-core", "futures-util", "httpdate", "iri-string", "limit", "map-request-body", "map-response-body", "metrics", "mime", "mime_guess", "normalize-path", "percent-encoding", "propagate-header", "redirect", "request-id", "sensitive-headers", "set-header", "set-status", "timeout", "tokio", "tokio-util", "tower", "trace", "tracing", "util", "uuid", "validate-request"))' -C metadata=a1a3a4984cc9e30b -C extra-filename=-8cf3cf5f5a3878d3 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern bitflags=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbitflags-972285b5ed8d6d2a.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern http_body=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body-359ec06673bb52cf.rmeta --extern iri_string=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libiri_string-cd5144841ace9a71.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern tower=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower-e9f131e31af3a0c4.rmeta --extern tower_layer=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_layer-b221d6b536670d08.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --cap-lints allow`
+   Compiling regex v1.12.2
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name regex --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-1.12.2/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no --allow=unexpected_cfgs --check-cfg 'cfg(docsrs_regex)' --cfg 'feature="default"' --cfg 'feature="perf"' --cfg 'feature="perf-backtrack"' --cfg 'feature="perf-cache"' --cfg 'feature="perf-dfa"' --cfg 'feature="perf-inline"' --cfg 'feature="perf-literal"' --cfg 'feature="perf-onepass"' --cfg 'feature="std"' --cfg 'feature="unicode"' --cfg 'feature="unicode-age"' --cfg 'feature="unicode-bool"' --cfg 'feature="unicode-case"' --cfg 'feature="unicode-gencat"' --cfg 'feature="unicode-perl"' --cfg 'feature="unicode-script"' --cfg 'feature="unicode-segment"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("default", "logging", "pattern", "perf", "perf-backtrack", "perf-cache", "perf-dfa", "perf-dfa-full", "perf-inline", "perf-literal", "perf-onepass", "std", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment", "unstable", "use_std"))' -C metadata=73252a0e74823b70 -C extra-filename=-1b5b6fabed82c407 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern aho_corasick=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaho_corasick-b0dc7240fb570fc9.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern regex_automata=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libregex_automata-9855dbcb4b2db469.rmeta --extern regex_syntax=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libregex_syntax-8ac2eb0d1b53a4b9.rmeta --cap-lints allow`
+   Compiling hyper-rustls v0.27.7
+   Compiling hyper-tls v0.6.0
+   Compiling axum v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name hyper_rustls --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-rustls-0.27.7/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="http1"' --cfg 'feature="http2"' --cfg 'feature="ring"' --cfg 'feature="tls12"' --cfg 'feature="webpki-roots"' --cfg 'feature="webpki-tokio"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("aws-lc-rs", "default", "fips", "http1", "http2", "log", "logging", "native-tokio", "ring", "rustls-native-certs", "rustls-platform-verifier", "tls12", "webpki-roots", "webpki-tokio"))' -C metadata=b241e79fe1270428 -C extra-filename=-11fb03e95903c3ff --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern hyper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper-a826aa5ef441b58f.rmeta --extern hyper_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_util-cce9fccfde3a02b7.rmeta --extern rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls-7543baecaab35159.rmeta --extern pki_types=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls_pki_types-3112eedf292f08db.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tokio_rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_rustls-8f2de1b0801a6d3f.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --extern webpki_roots=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwebpki_roots-7c0f7bc2b44e1653.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name axum --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=rust_2018_idioms '--warn=clippy::verbose_file_reads' '--warn=clippy::unused_self' --forbid=unsafe_code --warn=unreachable_pub '--warn=clippy::unnested_or_patterns' '--warn=clippy::uninlined_format_args' '--allow=clippy::type_complexity' '--warn=clippy::todo' '--warn=clippy::suboptimal_flops' '--warn=clippy::str_to_string' '--warn=clippy::return_self_not_must_use' '--warn=clippy::rest_pat_in_fully_bound_structs' '--warn=clippy::option_option' '--warn=clippy::needless_continue' '--warn=clippy::needless_borrow' '--warn=clippy::must_use_candidate' --warn=missing_docs --warn=missing_debug_implementations '--warn=clippy::mem_forget' '--warn=clippy::match_wildcard_for_single_variants' '--warn=clippy::macro_use_imports' '--warn=clippy::lossy_float_literal' '--warn=clippy::linkedlist' '--warn=clippy::inefficient_to_string' '--warn=clippy::imprecise_flops' '--warn=clippy::if_let_mutex' '--warn=clippy::fn_params_excessive_bools' '--warn=clippy::filter_map_next' '--warn=clippy::exit' '--warn=clippy::enum_glob_use' '--warn=clippy::empty_enum' '--warn=clippy::dbg_macro' '--warn=clippy::await_holding_lock' --cfg 'feature="default"' --cfg 'feature="form"' --cfg 'feature="http1"' --cfg 'feature="json"' --cfg 'feature="macros"' --cfg 'feature="matched-path"' --cfg 'feature="original-uri"' --cfg 'feature="query"' --cfg 'feature="tokio"' --cfg 'feature="tower-log"' --cfg 'feature="tracing"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("__private", "__private_docs", "default", "form", "http1", "http2", "json", "macros", "matched-path", "multipart", "original-uri", "query", "tokio", "tower-log", "tracing", "ws"))' -C metadata=a70aeb9e1a573f8b -C extra-filename=-d831edb4071348e9 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern axum_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaxum_core-35eb15e66d2db85d.rmeta --extern axum_macros=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaxum_macros-9c1aa7b4b159e282.dylib --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern form_urlencoded=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libform_urlencoded-72d53622942c245e.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern http_body=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body-359ec06673bb52cf.rmeta --extern http_body_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body_util-9c0b7ba581884b74.rmeta --extern hyper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper-a826aa5ef441b58f.rmeta --extern hyper_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_util-cce9fccfde3a02b7.rmeta --extern itoa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libitoa-e0a1a21c58583c3e.rmeta --extern matchit=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmatchit-b5275d3771ced52c.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern mime=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmime-4d10f548eb0f4473.rmeta --extern percent_encoding=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpercent_encoding-da65008b411bfe11.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern serde_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_core-805dfcb35f26047b.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-6977eb518b31ae7b.rmeta --extern serde_path_to_error=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_path_to_error-ab80dd3e63184be6.rmeta --extern serde_urlencoded=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_urlencoded-07c329137528a6d6.rmeta --extern sync_wrapper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsync_wrapper-30294a4c2631f6b3.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tower=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower-e9f131e31af3a0c4.rmeta --extern tower_layer=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_layer-b221d6b536670d08.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-05c098ce0085b59a.rmeta --cap-lints allow`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name hyper_tls --edition=2018 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-tls-0.6.0/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("alpn", "vendored"))' -C metadata=521f0b81bab633fd -C extra-filename=-e5d4bf7ac55ed6bc --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern http_body_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body_util-9c0b7ba581884b74.rmeta --extern hyper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper-a826aa5ef441b58f.rmeta --extern hyper_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_util-cce9fccfde3a02b7.rmeta --extern native_tls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libnative_tls-534216baf094820a.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tokio_native_tls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_native_tls-524ba210fc2da582.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --cap-lints allow`
+   Compiling utoipa-swagger-ui v9.0.2
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name build_script_build --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-swagger-ui-9.0.2/build.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type bin --emit=dep-info,link -C embed-bitcode=no --warn=unexpected_cfgs --check-cfg 'cfg(doc_cfg)' --cfg 'feature="axum"' --cfg 'feature="default"' --cfg 'feature="url"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("actix-web", "axum", "cache", "debug", "debug-embed", "default", "reqwest", "rocket", "url", "vendored"))' -C metadata=1872abc8fa97aa6e -C extra-filename=-901234395ccfbbf4 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/utoipa-swagger-ui-901234395ccfbbf4 -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern regex=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libregex-1b5b6fabed82c407.rlib --extern url=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liburl-68d0ba072ce09ed0.rlib --extern zip=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libzip-4424ee828f993177.rlib --cap-lints allow`
+   Compiling reqwest v0.12.24
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name reqwest --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/reqwest-0.12.24/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=unexpected_cfgs --check-cfg 'cfg(reqwest_unstable)' --cfg 'feature="__rustls"' --cfg 'feature="__rustls-ring"' --cfg 'feature="__tls"' --cfg 'feature="brotli"' --cfg 'feature="charset"' --cfg 'feature="default"' --cfg 'feature="default-tls"' --cfg 'feature="deflate"' --cfg 'feature="gzip"' --cfg 'feature="h2"' --cfg 'feature="http2"' --cfg 'feature="rustls-tls"' --cfg 'feature="rustls-tls-webpki-roots"' --cfg 'feature="rustls-tls-webpki-roots-no-provider"' --cfg 'feature="system-proxy"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("__rustls", "__rustls-ring", "__tls", "blocking", "brotli", "charset", "cookies", "default", "default-tls", "deflate", "gzip", "h2", "hickory-dns", "http2", "http3", "json", "macos-system-configuration", "multipart", "native-tls", "native-tls-alpn", "native-tls-vendored", "rustls-tls", "rustls-tls-manual-roots", "rustls-tls-manual-roots-no-provider", "rustls-tls-native-roots", "rustls-tls-native-roots-no-provider", "rustls-tls-no-provider", "rustls-tls-webpki-roots", "rustls-tls-webpki-roots-no-provider", "socks", "stream", "system-proxy", "trust-dns", "zstd"))' -C metadata=1e09331bd71cb313 -C extra-filename=-0f18caf2e6c75130 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern async_compression=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libasync_compression-81b644a10eceea2f.rmeta --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-80c574e62179e036.rmeta --extern bytes=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbytes-3ac8ae8146a5f2e9.rmeta --extern encoding_rs=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libencoding_rs-f1d790adecc69364.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern h2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libh2-e374618be7ac887b.rmeta --extern http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp-753596f6414a2e32.rmeta --extern http_body=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body-359ec06673bb52cf.rmeta --extern http_body_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhttp_body_util-9c0b7ba581884b74.rmeta --extern hyper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper-a826aa5ef441b58f.rmeta --extern hyper_rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_rustls-11fb03e95903c3ff.rmeta --extern hyper_tls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_tls-e5d4bf7ac55ed6bc.rmeta --extern hyper_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhyper_util-cce9fccfde3a02b7.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rmeta --extern mime=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmime-4d10f548eb0f4473.rmeta --extern native_tls_crate=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libnative_tls-534216baf094820a.rmeta --extern percent_encoding=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpercent_encoding-da65008b411bfe11.rmeta --extern pin_project_lite=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libpin_project_lite-566e20c278d3df7c.rmeta --extern rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls-7543baecaab35159.rmeta --extern rustls_pki_types=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librustls_pki_types-3112eedf292f08db.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern serde_urlencoded=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_urlencoded-07c329137528a6d6.rmeta --extern sync_wrapper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsync_wrapper-30294a4c2631f6b3.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tokio_native_tls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_native_tls-524ba210fc2da582.rmeta --extern tokio_rustls=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_rustls-8f2de1b0801a6d3f.rmeta --extern tokio_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio_util-a311c24c9850f9fe.rmeta --extern tower=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower-e9f131e31af3a0c4.rmeta --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_http-8cf3cf5f5a3878d3.rmeta --extern tower_service=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_service-c1ab1cd4f8f339d6.rmeta --extern url=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liburl-75488422c84fb6fc.rmeta --extern webpki_roots=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwebpki_roots-7c0f7bc2b44e1653.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+   Compiling sqlx-postgres v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_postgres --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-postgres-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked '--deny=clippy::disallowed_methods' '--deny=clippy::cast_sign_loss' '--deny=clippy::cast_possible_wrap' '--deny=clippy::cast_possible_truncation' --cfg 'feature="any"' --cfg 'feature="chrono"' --cfg 'feature="json"' --cfg 'feature="migrate"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("any", "bigdecimal", "bit-vec", "chrono", "ipnet", "ipnetwork", "json", "mac_address", "migrate", "offline", "rust_decimal", "time", "uuid"))' -C metadata=de40ea371e1c39e3 -C extra-filename=-de317cd764eb5fb2 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern atoi=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libatoi-95059118ae4bc6e4.rmeta --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-80c574e62179e036.rmeta --extern bitflags=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbitflags-972285b5ed8d6d2a.rmeta --extern byteorder=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbyteorder-446171186cde777c.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rmeta --extern crc=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrc-b546d5218d9a1b10.rmeta --extern dotenvy=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libdotenvy-1ef0be9b92da99f6.rmeta --extern futures_channel=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_channel-e6ad964915e58175.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-46a33cc3950dfe1e.rmeta --extern hex=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhex-3dca52aca8dcd8c9.rmeta --extern hkdf=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhkdf-835660fda0791837.rmeta --extern hmac=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhmac-310b9ea7894ae8be.rmeta --extern home=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhome-3ccc73030791495e.rmeta --extern itoa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libitoa-e0a1a21c58583c3e.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rmeta --extern md5=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmd5-6ce986bb628348ac.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern once_cell=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libonce_cell-4a5135b5efdc4b11.rmeta --extern rand=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librand-060e937ad0cf4630.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-6977eb518b31ae7b.rmeta --extern sha2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsha2-4470b6e87853cfe2.rmeta --extern smallvec=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsmallvec-bb6eecc6f40186e0.rmeta --extern sqlx_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_core-fab19586a975fc1a.rmeta --extern stringprep=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libstringprep-95f8c4b0b53c395f.rmeta --extern thiserror=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libthiserror-06e18b4d89c205a9.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-05c098ce0085b59a.rmeta --extern whoami=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwhoami-37fad82e49d4ce08.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_postgres --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-postgres-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no '--deny=clippy::disallowed_methods' '--deny=clippy::cast_sign_loss' '--deny=clippy::cast_possible_wrap' '--deny=clippy::cast_possible_truncation' --cfg 'feature="chrono"' --cfg 'feature="json"' --cfg 'feature="migrate"' --cfg 'feature="offline"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("any", "bigdecimal", "bit-vec", "chrono", "ipnet", "ipnetwork", "json", "mac_address", "migrate", "offline", "rust_decimal", "time", "uuid"))' -C metadata=258663286c862b67 -C extra-filename=-0dcc3f89ff4b08ce --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern atoi=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libatoi-95059118ae4bc6e4.rmeta --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-9ebd9f7c8533b676.rmeta --extern bitflags=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbitflags-c6806614aa5659a6.rmeta --extern byteorder=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbyteorder-446171186cde777c.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libchrono-b31d202e2a5e5ec4.rmeta --extern crc=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libcrc-b546d5218d9a1b10.rmeta --extern dotenvy=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libdotenvy-1ef0be9b92da99f6.rmeta --extern futures_channel=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_channel-ba3b6b243de0f7c8.rmeta --extern futures_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_core-a3765b76a1b78123.rmeta --extern futures_util=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libfutures_util-7d1a30286cc2b96c.rmeta --extern hex=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhex-3dca52aca8dcd8c9.rmeta --extern hkdf=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhkdf-835660fda0791837.rmeta --extern hmac=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhmac-310b9ea7894ae8be.rmeta --extern home=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhome-3ccc73030791495e.rmeta --extern itoa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libitoa-e0a1a21c58583c3e.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-1a2db4788fb746be.rmeta --extern md5=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmd5-6ce986bb628348ac.rmeta --extern memchr=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmemchr-c0ea08ef16f778b9.rmeta --extern once_cell=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libonce_cell-4a5135b5efdc4b11.rmeta --extern rand=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librand-060e937ad0cf4630.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-501be4a7602b9b94.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-46cf62e69d2f2462.rmeta --extern sha2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsha2-4470b6e87853cfe2.rmeta --extern smallvec=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsmallvec-5ef56de72a0e245d.rmeta --extern sqlx_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_core-9f5373bc188be785.rmeta --extern stringprep=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libstringprep-95f8c4b0b53c395f.rmeta --extern thiserror=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libthiserror-06e18b4d89c205a9.rmeta --extern tracing=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtracing-83aa980658f0b1e1.rmeta --extern whoami=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libwhoami-37fad82e49d4ce08.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+     Running `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/utoipa-swagger-ui-901234395ccfbbf4/build-script-build`
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name utoipa_swagger_ui --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/utoipa-swagger-ui-9.0.2/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --warn=unexpected_cfgs --check-cfg 'cfg(doc_cfg)' --cfg 'feature="axum"' --cfg 'feature="default"' --cfg 'feature="url"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("actix-web", "axum", "cache", "debug", "debug-embed", "default", "reqwest", "rocket", "url", "vendored"))' -C metadata=b20eef7eafce1964 -C extra-filename=-f4676265b5c9092c --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaxum-d831edb4071348e9.rmeta --extern base64=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libbase64-80c574e62179e036.rmeta --extern mime_guess=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libmime_guess-58046604b5df5cff.rmeta --extern rust_embed=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/librust_embed-74c559947476b2e9.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-6977eb518b31ae7b.rmeta --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rmeta --cap-lints allow`
+   Compiling sqlx-macros-core v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_macros_core --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-macros-core-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no --warn=unexpected_cfgs --cfg 'feature="_rt-tokio"' --cfg 'feature="_tls-rustls-ring-webpki"' --cfg 'feature="chrono"' --cfg 'feature="default"' --cfg 'feature="derive"' --cfg 'feature="json"' --cfg 'feature="macros"' --cfg 'feature="migrate"' --cfg 'feature="postgres"' --cfg 'feature="sqlx-postgres"' --cfg 'feature="tokio"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("_rt-async-std", "_rt-tokio", "_sqlite", "_tls-native-tls", "_tls-rustls-aws-lc-rs", "_tls-rustls-ring-native-roots", "_tls-rustls-ring-webpki", "async-std", "bigdecimal", "bit-vec", "chrono", "default", "derive", "ipnet", "ipnetwork", "json", "mac_address", "macros", "migrate", "mysql", "postgres", "rust_decimal", "sqlite", "sqlite-unbundled", "sqlx-mysql", "sqlx-postgres", "sqlx-sqlite", "time", "tokio", "uuid"))' -C metadata=f5a27aa2bb44738e -C extra-filename=-557413739fa79ba5 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern dotenvy=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libdotenvy-1ef0be9b92da99f6.rmeta --extern either=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libeither-cbc797763dc15b9c.rmeta --extern heck=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libheck-99fa9ad8066eb37c.rmeta --extern hex=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libhex-3dca52aca8dcd8c9.rmeta --extern once_cell=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libonce_cell-4a5135b5efdc4b11.rmeta --extern proc_macro2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libproc_macro2-cd1fab5036db69c1.rmeta --extern quote=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libquote-f3788733dc5c6d80.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-501be4a7602b9b94.rmeta --extern serde_json=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde_json-46cf62e69d2f2462.rmeta --extern sha2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsha2-4470b6e87853cfe2.rmeta --extern sqlx_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_core-9f5373bc188be785.rmeta --extern sqlx_postgres=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_postgres-0dcc3f89ff4b08ce.rmeta --extern syn=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsyn-11c899f96e911d6f.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-f57b910b046bd403.rmeta --extern url=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liburl-68d0ba072ce09ed0.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+   Compiling sqlx-macros v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx_macros --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-macros-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type proc-macro --emit=dep-info,link -C prefer-dynamic -C embed-bitcode=no '--deny=clippy::disallowed_methods' '--deny=clippy::cast_sign_loss' '--deny=clippy::cast_possible_wrap' '--deny=clippy::cast_possible_truncation' --cfg 'feature="_rt-tokio"' --cfg 'feature="_tls-rustls-ring-webpki"' --cfg 'feature="chrono"' --cfg 'feature="default"' --cfg 'feature="derive"' --cfg 'feature="json"' --cfg 'feature="macros"' --cfg 'feature="migrate"' --cfg 'feature="postgres"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("_rt-async-std", "_rt-tokio", "_tls-native-tls", "_tls-rustls-aws-lc-rs", "_tls-rustls-ring-native-roots", "_tls-rustls-ring-webpki", "bigdecimal", "bit-vec", "chrono", "default", "derive", "ipnet", "ipnetwork", "json", "mac_address", "macros", "migrate", "mysql", "postgres", "rust_decimal", "sqlite", "sqlite-unbundled", "time", "uuid"))' -C metadata=e3d4510e7ea99290 -C extra-filename=-debb722fd0a2cf27 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern proc_macro2=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libproc_macro2-cd1fab5036db69c1.rlib --extern quote=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libquote-f3788733dc5c6d80.rlib --extern sqlx_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_core-9f5373bc188be785.rlib --extern sqlx_macros_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_macros_core-557413739fa79ba5.rlib --extern syn=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsyn-11c899f96e911d6f.rlib --extern proc_macro --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+   Compiling sqlx v0.8.6
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name sqlx --edition=2021 /Users/flodia/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-0.8.6/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --cfg 'feature="_rt-tokio"' --cfg 'feature="any"' --cfg 'feature="chrono"' --cfg 'feature="default"' --cfg 'feature="derive"' --cfg 'feature="json"' --cfg 'feature="macros"' --cfg 'feature="migrate"' --cfg 'feature="postgres"' --cfg 'feature="runtime-tokio"' --cfg 'feature="sqlx-macros"' --cfg 'feature="sqlx-postgres"' --cfg 'feature="tls-rustls"' --cfg 'feature="tls-rustls-ring"' --cfg 'feature="tls-rustls-ring-webpki"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("_rt-async-std", "_rt-tokio", "_sqlite", "_unstable-all-types", "all-databases", "any", "bigdecimal", "bit-vec", "bstr", "chrono", "default", "derive", "ipnet", "ipnetwork", "json", "mac_address", "macros", "migrate", "mysql", "postgres", "regexp", "runtime-async-std", "runtime-async-std-native-tls", "runtime-async-std-rustls", "runtime-tokio", "runtime-tokio-native-tls", "runtime-tokio-rustls", "rust_decimal", "sqlite", "sqlite-preupdate-hook", "sqlite-unbundled", "sqlx-macros", "sqlx-mysql", "sqlx-postgres", "sqlx-sqlite", "time", "tls-native-tls", "tls-none", "tls-rustls", "tls-rustls-aws-lc-rs", "tls-rustls-ring", "tls-rustls-ring-native-roots", "tls-rustls-ring-webpki", "uuid"))' -C metadata=2338685040249345 -C extra-filename=-7c280fa0ab8b80ba --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern sqlx_core=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_core-fab19586a975fc1a.rmeta --extern sqlx_macros=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_macros-debb722fd0a2cf27.dylib --extern sqlx_postgres=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx_postgres-de317cd764eb5fb2.rmeta --cap-lints allow -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+   Compiling web_server v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/web_server)
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name web_server --edition=2024 web_server/src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=7ce6f30399273bb3 -C extra-filename=-3f7fc8e9d90f7e4e --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern async_trait=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libasync_trait-ae2f10919cd2e8df.dylib --extern axum=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libaxum-d831edb4071348e9.rmeta --extern chrono=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libchrono-9859fe6076af19ac.rmeta --extern config=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libconfig-f40ba4ebeee6c0d8.rmeta --extern log=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/liblog-fc6c83a4ffc6262e.rmeta --extern reqwest=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libreqwest-0f18caf2e6c75130.rmeta --extern scraper=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libscraper-53a9cb78477a04da.rmeta --extern serde=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libserde-554b0f92baeaa5bb.rmeta --extern simplelog=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsimplelog-1c745a869dd1ac26.rmeta --extern sqlx=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libsqlx-7c280fa0ab8b80ba.rmeta --extern tokio=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtokio-90e1568fea555fb1.rmeta --extern tower_http=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libtower_http-8cf3cf5f5a3878d3.rmeta --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rmeta --extern utoipa_swagger_ui=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libutoipa_swagger_ui-f4676265b5c9092c.rmeta -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+warning: unused import: `TaskDedupQueue`
+ --> web_server/src/api/app_state.rs:5:25
+  |
+5 | use crate::task_queue::{TaskDedupQueue, TaskScheduler};
+  |                         ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `web_server` (lib) generated 1 warning (run `cargo fix --lib -p web_server` to apply 1 suggestion)
+   Compiling api_gen v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/api_gen)
+     Running `/Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc --crate-name api_gen --edition=2024 api_gen/src/main.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 -C split-debuginfo=unpacked --test --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=25e48171d15673d6 -C extra-filename=-b16198a291ade553 --out-dir /private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps -C incremental=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/incremental -L dependency=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps --extern utoipa=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libutoipa-ce0794d9203a9647.rlib --extern web_server=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/libweb_server-3f7fc8e9d90f7e4e.rlib -L native=/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/build/ring-7ca8c1bba8683b21/out`
+warning: unused imports: `env` and `fs`
+ --> api_gen/src/main.rs:1:11
+  |
+1 | use std::{env, fs};
+  |           ^^^  ^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `utoipa::OpenApi`
+ --> api_gen/src/main.rs:2:5
+  |
+2 | use utoipa::OpenApi;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `web_server::api::ApiDoc`
+ --> api_gen/src/main.rs:3:5
+  |
+3 | use web_server::api::ApiDoc;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `api_gen` (bin "api_gen" test) generated 3 warnings (run `cargo fix --bin "api_gen" -p api_gen --tests` to apply 3 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.97s
+  Executable `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/api_gen-b16198a291ade553`
+
+*** result: Success
+
+*** /Users/flodia/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo test --verbose --package=api_gen@0.1.0
+       Fresh unicode-ident v1.0.20
+       Fresh cfg-if v1.0.4
+       Fresh pin-project-lite v0.2.16
+       Fresh itoa v1.0.15
+       Fresh futures-core v0.3.31
+       Fresh bytes v1.10.1
+       Fresh proc-macro2 v1.0.101
+       Fresh memchr v2.7.6
+       Fresh once_cell v1.21.3
+       Fresh litemap v0.8.0
+       Fresh writeable v0.6.1
+       Fresh equivalent v1.0.2
+       Fresh core-foundation-sys v0.8.7
+       Fresh quote v1.0.41
+       Fresh libc v0.2.177
+       Fresh hashbrown v0.16.0
+       Fresh version_check v0.9.5
+       Fresh tracing-core v0.1.34
+       Fresh syn v2.0.107
+       Fresh mio v1.1.0
+       Fresh socket2 v0.6.1
+       Fresh subtle v2.6.1
+       Fresh percent-encoding v2.3.2
+       Fresh serde_derive v1.0.228
+       Fresh synstructure v0.13.2
+       Fresh zerovec-derive v0.11.1
+       Fresh displaydoc v0.2.5
+       Fresh tracing-attributes v0.1.30
+       Fresh stable_deref_trait v1.2.1
+       Fresh icu_normalizer_data v2.0.0
+       Fresh tokio-macros v2.6.0
+       Fresh icu_properties_data v2.0.1
+       Fresh typenum v1.19.0
+       Fresh serde_core v1.0.228
+       Fresh zerofrom-derive v0.1.6
+       Fresh yoke-derive v0.8.0
+       Fresh slab v0.4.11
+       Fresh pin-utils v0.1.0
+       Fresh serde v1.0.228
+       Fresh shlex v1.3.0
+       Fresh zerofrom v0.1.6
+       Fresh generic-array v0.14.9
+       Fresh scopeguard v1.2.0
+       Fresh find-msvc-tools v0.1.4
+       Fresh futures-task v0.3.31
+       Fresh siphasher v1.0.1
+       Fresh futures-io v0.3.31
+       Fresh getrandom v0.2.16
+       Fresh crypto-common v0.1.6
+       Fresh block-buffer v0.10.4
+       Fresh phf_shared v0.13.1
+       Fresh cc v1.2.41
+       Fresh lock_api v0.4.14
+       Fresh yoke v0.8.0
+       Fresh smallvec v1.15.1
+       Fresh utf8_iter v1.0.4
+       Fresh ryu v1.0.20
+       Fresh zeroize v1.8.2
+       Fresh digest v0.10.7
+       Fresh zerovec v0.11.4
+       Fresh rustls-pki-types v1.12.0
+       Fresh untrusted v0.9.0
+       Fresh phf_generator v0.13.1
+       Fresh autocfg v1.5.0
+       Fresh fnv v1.0.7
+       Fresh cpufeatures v0.2.17
+       Fresh tinystr v0.8.1
+       Fresh http v1.3.1
+       Fresh ring v0.17.14
+       Fresh sha2 v0.10.9
+       Fresh log v0.4.28
+       Fresh rustls-webpki v0.103.7
+       Fresh http-body v1.0.1
+       Fresh crossbeam-utils v0.8.21
+       Fresh icu_locale_core v2.0.0
+       Fresh webpki-roots v1.0.3
+       Fresh potential_utf v0.1.3
+       Fresh zerotrie v0.2.2
+       Fresh rustls v0.23.33
+       Fresh num-traits v0.2.19
+       Fresh core-foundation v0.9.4
+       Fresh icu_provider v2.0.0
+       Fresh crc32fast v1.5.0
+       Fresh icu_collections v2.0.0
+       Fresh phf_codegen v0.13.1
+       Fresh indexmap v2.12.0
+       Fresh iana-time-zone v0.1.64
+       Fresh allocator-api2 v0.2.21
+       Fresh tower-service v0.3.3
+       Fresh foldhash v0.1.5
+       Fresh zerocopy v0.8.27
+       Fresh concurrent-queue v2.5.0
+       Fresh tokio-util v0.7.16
+       Fresh thiserror-impl v2.0.17
+       Fresh form_urlencoded v1.2.2
+       Fresh tinyvec_macros v0.1.1
+       Fresh hashbrown v0.15.5
+       Fresh atomic-waker v1.1.2
+       Fresh new_debug_unreachable v1.0.6
+       Fresh try-lock v0.2.5
+       Fresh crc-catalog v2.4.0
+       Fresh parking v2.2.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh thiserror v2.0.17
+       Fresh tinyvec v1.10.0
+       Fresh crc v3.3.0
+       Fresh want v0.3.1
+       Fresh h2 v0.4.12
+       Fresh event-listener v5.4.1
+       Fresh httparse v1.10.1
+       Fresh hashlink v0.10.0
+       Fresh system-configuration-sys v0.6.0
+       Fresh icu_normalizer v2.0.0
+       Fresh icu_properties v2.0.1
+       Fresh crossbeam-queue v0.3.12
+       Fresh webpki-roots v0.26.11
+       Fresh phf_macros v0.13.1
+       Fresh parking_lot_core v0.9.12
+       Fresh rand_core v0.6.4
+       Fresh futures-sink v0.3.31
+       Fresh httpdate v1.0.3
+       Fresh idna_adapter v1.2.1
+       Fresh system-configuration v0.6.1
+       Fresh unicode-normalization v0.1.25
+       Fresh string_cache_codegen v0.6.1
+       Fresh hyper v1.7.0
+       Fresh parking_lot v0.12.5
+       Fresh rand_chacha v0.3.1
+       Fresh phf v0.13.1
+       Fresh hmac v0.12.1
+       Fresh tokio v1.48.0
+       Fresh errno v0.3.14
+       Fresh sync_wrapper v1.0.2
+       Fresh ipnet v2.11.0
+       Fresh precomputed-hash v0.1.1
+       Fresh zlib-rs v0.5.4
+       Fresh unicode-properties v0.1.4
+       Fresh unicode-bidi v0.3.18
+       Fresh tower-layer v0.3.3
+       Fresh getrandom v0.3.4
+       Fresh hkdf v0.12.4
+       Fresh rand v0.8.5
+       Fresh libz-rs-sys v0.5.4
+       Fresh stringprep v0.1.5
+       Fresh hyper-util v0.1.17
+       Fresh rustix v1.1.2
+       Fresh idna v1.1.0
+       Fresh futures-util v0.3.31
+       Fresh atoi v2.0.0
+       Fresh http-body-util v0.1.3
+       Fresh tracing v0.1.41
+       Fresh serde_json v1.0.145
+       Fresh md-5 v0.10.6
+       Fresh security-framework-sys v2.15.0
+       Fresh aho-corasick v1.1.4
+       Fresh alloc-no-stdlib v2.0.4
+       Fresh same-file v1.0.6
+       Fresh dotenvy v0.15.7
+       Fresh mime v0.3.17
+       Fresh bumpalo v3.19.0
+       Fresh hex v0.4.3
+       Fresh base64 v0.22.1
+       Fresh mac v0.1.1
+       Fresh fastrand v2.3.0
+       Fresh byteorder v1.5.0
+       Fresh home v0.5.12
+       Fresh regex-syntax v0.8.8
+       Fresh whoami v1.6.1
+       Fresh alloc-stdlib v0.2.2
+       Fresh walkdir v2.5.0
+       Fresh zopfli v0.8.3
+       Fresh futf v0.1.5
+       Fresh tempfile v3.23.0
+       Fresh regex-automata v0.4.13
+       Fresh security-framework v2.11.1
+       Fresh url v2.5.7
+       Fresh tower v0.5.2
+       Fresh string_cache v0.9.0
+       Fresh futures-channel v0.3.31
+       Fresh adler2 v2.0.1
+       Fresh simd-adler32 v0.3.7
+       Fresh dtoa v1.0.10
+       Fresh unicase v2.8.1
+       Fresh utf-8 v0.7.6
+       Fresh bitflags v2.10.0
+       Fresh zip v3.0.0
+       Fresh native-tls v0.2.14
+       Fresh regex v1.12.2
+       Fresh dtoa-short v0.3.5
+       Fresh web_atoms v0.2.0
+       Fresh tendril v0.4.3
+       Fresh miniz_oxide v0.8.9
+       Fresh rust-embed-utils v8.9.0
+       Fresh brotli-decompressor v4.0.2
+       Fresh serde_urlencoded v0.7.1
+       Fresh chrono v0.4.42
+       Fresh futures-intrusive v0.5.0
+       Fresh either v1.15.0
+       Fresh tokio-stream v0.1.17
+       Fresh cssparser-macros v0.6.1
+       Fresh derive_more-impl v2.0.1
+       Fresh unsafe-libyaml-norway v0.2.15
+       Fresh winnow v0.7.13
+       Fresh num-conv v0.1.0
+       Fresh powerfmt v0.2.0
+       Fresh heck v0.5.0
+       Fresh time-core v0.1.6
+       Fresh toml_parser v1.0.6+spec-1.1.0
+       Fresh sqlx-macros-core v0.8.6
+       Fresh derive_more v2.0.1
+       Fresh deranged v0.5.4
+       Fresh time-macros v0.2.24
+       Fresh sqlx-core v0.8.6
+       Fresh serde_norway v0.9.42
+       Fresh cssparser v0.36.0
+       Fresh flate2 v1.1.4
+       Fresh markup5ever v0.36.1
+       Fresh brotli v7.0.0
+       Fresh rust-embed-impl v8.9.0
+       Fresh tokio-native-tls v0.3.1
+       Fresh axum-core v0.5.5
+       Fresh tokio-rustls v0.26.4
+       Fresh servo_arc v0.4.3
+       Fresh utoipa-gen v5.4.0
+       Fresh axum-macros v0.5.0
+       Fresh toml_datetime v0.7.5+spec-1.1.0
+       Fresh serde_path_to_error v0.1.20
+       Fresh serde_spanned v1.0.4
+       Fresh num_threads v0.1.7
+       Fresh unicode-width v0.2.2
+       Fresh matchit v0.8.4
+       Fresh iri-string v0.7.8
+       Fresh rustc-hash v2.1.1
+       Fresh html5ever v0.36.1
+       Fresh hyper-rustls v0.27.7
+       Fresh utoipa v5.4.0
+       Fresh async-compression v0.4.22
+       Fresh axum v0.8.6
+       Fresh tower-http v0.6.6
+       Fresh selectors v0.33.0
+       Fresh toml v0.9.10+spec-1.1.0
+       Fresh getopts v0.2.24
+       Fresh time v0.3.44
+       Fresh hyper-tls v0.6.0
+       Fresh rust-embed v8.9.0
+       Fresh sqlx-macros v0.8.6
+       Fresh sqlx-postgres v0.8.6
+       Fresh mime_guess v2.0.5
+       Fresh encoding_rs v0.8.35
+       Fresh pathdiff v0.2.3
+       Fresh termcolor v1.4.1
+       Fresh ego-tree v0.10.0
+       Fresh sqlx v0.8.6
+       Fresh async-trait v0.1.89
+       Fresh config v0.15.18
+       Fresh utoipa-swagger-ui v9.0.2
+       Fresh reqwest v0.12.24
+       Fresh scraper v0.25.0
+       Fresh simplelog v0.12.2
+       Fresh web_server v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/web_server)
+warning: unused import: `TaskDedupQueue`
+ --> web_server/src/api/app_state.rs:5:25
+  |
+5 | use crate::task_queue::{TaskDedupQueue, TaskScheduler};
+  |                         ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `web_server` (lib) generated 1 warning (run `cargo fix --lib -p web_server` to apply 1 suggestion)
+       Fresh api_gen v0.1.0 (/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/api_gen)
+warning: unused imports: `env` and `fs`
+ --> api_gen/src/main.rs:1:11
+  |
+1 | use std::{env, fs};
+  |           ^^^  ^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `utoipa::OpenApi`
+ --> api_gen/src/main.rs:2:5
+  |
+2 | use utoipa::OpenApi;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `web_server::api::ApiDoc`
+ --> api_gen/src/main.rs:3:5
+  |
+3 | use web_server::api::ApiDoc;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `api_gen` (bin "api_gen" test) generated 3 warnings (run `cargo fix --bin "api_gen" -p api_gen --tests` to apply 3 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.05s
+     Running `/private/var/folders/sb/jp6hj62n75s27lgc45mps0jr0000gp/T/cargo-mutants-rust-yscraper-nsrbzy.tmp/target/debug/deps/api_gen-b16198a291ade553`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+*** result: Success
