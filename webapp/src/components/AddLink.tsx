@@ -1,10 +1,10 @@
 import {Alert, Box, Button, CircularProgress, Paper, TextField, Typography} from "@mui/material";
 import * as React from "react";
 import {useState} from "react";
-import {CrateApiCommentsApi} from "../api-client";
+import {CrateApiLinksApi} from "../api-client";
 import {apiConfig} from "../api-config";
 
-const commentsApi = new CrateApiCommentsApi(apiConfig);
+const linksApi = new CrateApiLinksApi(apiConfig);
 
 export function AddLink() {
     const [newLinkId, setNewLinkId] = useState('');
@@ -17,7 +17,7 @@ export function AddLink() {
 
         try {
             setSubmitting(true);
-            await commentsApi.scrapeComments({item_id: parseInt(newLinkId)});
+            await linksApi.scrapeLink({scrapeRequest: {item_id: parseInt(newLinkId)}});
             setNewLinkId('');
         } catch (err) {
             setError('Failed to add link');
@@ -26,6 +26,7 @@ export function AddLink() {
             setSubmitting(false);
         }
     };
+
 
     return (<Paper sx={{padding: 2, marginBottom: 3, display: "flex", alignItems: "center", gap: 2}}>
         <Typography variant="h6">

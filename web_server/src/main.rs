@@ -16,13 +16,12 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use web_server::api::ApiDoc;
 use web_server::api::app_state::AppState;
-use web_server::api::comments::{list_comments, scrape_comments};
-use web_server::api::links::{delete_link, list_links};
+use web_server::api::comments::list_comments;
+use web_server::api::links::{delete_link, list_links, scrape_link};
 use web_server::api::ping::{RealSystemTime, ping};
 use web_server::background_scheduler::BackgroundScheduler;
 use web_server::config::AppConfig;
 use web_server::db::CombinedRepository;
-use web_server::db::comments_repository::CommentsRepository;
 use web_server::db::postgresql::PgCommentsRepository;
 use web_server::scrape_task::ScrapeTask;
 use web_server::task_queue::{TaskDedupQueue, TaskScheduler};
@@ -81,7 +80,7 @@ fn main() {
         let app = Router::new()
             .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
             .route("/ping", get(ping))
-            .route("/scrape", post(scrape_comments))
+            .route("/scrape", post(scrape_link))
             .route("/comments", get(list_comments))
             .route("/links", get(list_links))
             .route("/links/{id}", delete(delete_link))
@@ -128,7 +127,7 @@ AppState {
 }
 
 async fn start_background_scheduler(
-    repo: Arc<dyn CommentsRepository>,
+    repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
 ) {
     let bg_scheduler = BackgroundScheduler::new(

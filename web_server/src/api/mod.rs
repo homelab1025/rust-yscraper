@@ -4,9 +4,9 @@ pub mod common;
 pub mod links;
 pub mod ping;
 
-use crate::api::comments::{CommentDto, CommentsPage, ScrapeRequest, ScrapeResponse, ScrapeState};
+use crate::api::comments::{CommentDto, CommentsPage};
 use crate::api::common::{ApiError, ApiErrorCode};
-use crate::api::links::LinkDto;
+use crate::api::links::{LinkDto, ScrapeRequest, ScrapeResponse, ScrapeState};
 use crate::api::ping::PingResponse;
 use utoipa::OpenApi;
 
@@ -15,7 +15,7 @@ use utoipa::OpenApi;
     paths(
         crate::api::ping::ping,
         crate::api::comments::list_comments,
-        crate::api::comments::scrape_comments,
+        crate::api::links::scrape_link,
         crate::api::links::list_links,
         crate::api::links::delete_link,
     ),

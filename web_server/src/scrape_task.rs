@@ -1,5 +1,5 @@
 use crate::CommentRecord;
-use crate::db::comments_repository::CommentsRepository;
+use crate::db::CombinedRepository;
 use crate::scrape::{ScrapeError, get_comments};
 use crate::task_queue::TaskQueueProcessor;
 use crate::utils::create_batches;
@@ -14,7 +14,7 @@ use std::sync::Arc;
 pub struct ScrapeTask {
     url: String,
     url_id: i64,
-    repo: Arc<dyn CommentsRepository>,
+    repo: Arc<dyn CombinedRepository>,
 }
 
 impl std::fmt::Debug for ScrapeTask {
@@ -22,13 +22,13 @@ impl std::fmt::Debug for ScrapeTask {
         f.debug_struct("ScrapeTask")
             .field("url", &self.url)
             .field("url_id", &self.url_id)
-            .field("repo", &"<CommentsRepository>")
+            .field("repo", &"<CombinedRepository>")
             .finish()
     }
 }
 
 impl ScrapeTask {
-    pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn CommentsRepository>) -> Self {
+    pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn CombinedRepository>) -> Self {
         ScrapeTask {
             url,
             url_id,
@@ -131,7 +131,9 @@ impl TaskQueueProcessor for ScrapeTask {
 #[cfg(test)]
 mod tests_task_hashing {
     use super::ScrapeTask;
+    use crate::db::CombinedRepository;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
+    use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
@@ -160,6 +162,17 @@ mod tests_task_hashing {
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
         }
+    }
+
+    #[async_trait]
+    impl LinksRepository for MockRepo {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            Ok(0)
+        }
 
         async fn upsert_url_with_scheduling(
             &self,
@@ -173,7 +186,7 @@ mod tests_task_hashing {
 
         async fn get_urls_due_for_refresh(
             &self,
-        ) -> Result<Vec<crate::db::comments_repository::ScheduledUrl>, sqlx::Error> {
+        ) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
 
@@ -183,7 +196,7 @@ mod tests_task_hashing {
     }
 
     fn new_task(url: &str, url_id: i64) -> ScrapeTask {
-        let repo: Arc<dyn CommentsRepository> = Arc::new(MockRepo {});
+        let repo: Arc<dyn CombinedRepository> = Arc::new(MockRepo {});
         ScrapeTask::new(url.to_string(), url_id, repo)
     }
 

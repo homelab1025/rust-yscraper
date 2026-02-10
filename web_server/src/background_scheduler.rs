@@ -1,4 +1,4 @@
-use crate::db::comments_repository::CommentsRepository;
+use crate::db::CombinedRepository;
 use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
 use log::{error, info};
@@ -6,14 +6,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 pub struct BackgroundScheduler {
-    repo: Arc<dyn CommentsRepository>,
+    repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     check_interval: Duration,
 }
 
 impl BackgroundScheduler {
     pub fn new(
-        repo: Arc<dyn CommentsRepository>,
+        repo: Arc<dyn CombinedRepository>,
         task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
         check_interval: Duration,
     ) -> Self {
@@ -92,7 +92,8 @@ impl BackgroundScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::comments_repository::ScheduledUrl;
+    use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
+    use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
     use async_trait::async_trait;
     use chrono::Utc;
     use std::sync::{Arc, Mutex};
@@ -120,7 +121,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
-        ) -> Result<Vec<crate::db::comments_repository::DbCommentRow>, sqlx::Error> {
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(vec![])
         }
 
@@ -129,6 +130,17 @@ mod tests {
             _comments: &[crate::CommentRecord],
             _url_id: i64,
         ) -> Result<usize, sqlx::Error> {
+            Ok(0)
+        }
+    }
+
+    #[async_trait]
+    impl LinksRepository for MockRepo {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
             Ok(0)
         }
 
