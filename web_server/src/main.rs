@@ -7,7 +7,7 @@ use config::{Environment, File, FileFormat};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -19,9 +19,13 @@ use web_server::api::app_state::AppState;
 use web_server::api::comments::{list_comments, scrape_comments};
 use web_server::api::links::{delete_link, list_links};
 use web_server::api::ping::{RealSystemTime, ping};
+use web_server::background_scheduler::BackgroundScheduler;
 use web_server::config::AppConfig;
+use web_server::db::CombinedRepository;
+use web_server::db::comments_repository::CommentsRepository;
 use web_server::db::postgresql::PgCommentsRepository;
-use web_server::task_queue::TaskDedupQueue;
+use web_server::scrape_task::ScrapeTask;
+use web_server::task_queue::{TaskDedupQueue, TaskScheduler};
 
 const CONFIG_PATH: &str = "config.toml";
 
@@ -65,7 +69,13 @@ fn main() {
             }
         };
 
-        let app_state = build_app_state(db_pool);
+        let comments_repo = Arc::new(PgCommentsRepository::new(db_pool.clone()));
+        let task_queue = Arc::new(TaskDedupQueue::new(4));
+
+        // Start background scheduler
+        start_background_scheduler(comments_repo.clone(), task_queue.clone()).await;
+
+        let app_state = build_app_state(comments_repo, task_queue, cfg.clone());
 
         // Build router
         let app = Router::new()
@@ -94,9 +104,11 @@ fn main() {
     });
 }
 
-fn build_app_state(db_pool: Pool<Postgres>) -> AppState {
-    let queue = Arc::new(TaskDedupQueue::new(4));
-
+fn build_app_state(
+    comments_repo: Arc<dyn CombinedRepository>,
+    task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    config: AppConfig,
+) -> AppState {
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
         .user_agent("web-server/0.1 (+https://news.ycombinator.com)")
@@ -104,13 +116,28 @@ fn build_app_state(db_pool: Pool<Postgres>) -> AppState {
         .unwrap();
     let http_client = Arc::new(http_client);
 
-    let comments_repo = Arc::new(PgCommentsRepository::new(db_pool));
     let real_time_provider = Arc::new(RealSystemTime {});
 
-    AppState {
+AppState {
         repo: comments_repo,
         time_provider: real_time_provider,
         http_client,
-        task_queue: queue,
+        task_queue,
+        config,
     }
+}
+
+async fn start_background_scheduler(
+    repo: Arc<dyn CommentsRepository>,
+    task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+) {
+    let bg_scheduler = BackgroundScheduler::new(
+        repo.clone(),
+        task_queue.clone(),
+        Duration::from_secs(60), // Check every minute
+    );
+
+    tokio::spawn(async move {
+        bg_scheduler.run().await;
+    });
 }

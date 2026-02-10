@@ -6,3 +6,7 @@ db_user="postgres"
 db_password="postgres"
 dp_port=5432
 db_name="yscraper"
+
+# Scheduling defaults
+default_days_limit=7
+default_frequency_hours=24

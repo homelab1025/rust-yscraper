@@ -39,9 +39,7 @@ pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Scrape
     };
 
     // Validate thread title for real HN item pages only
-    if let Err(e) = validate_thread_title(&html) {
-        return Err(e);
-    }
+    validate_thread_title(&html)?;
 
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);

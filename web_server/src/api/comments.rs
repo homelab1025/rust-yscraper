@@ -17,6 +17,8 @@ pub struct CommentsAppState {
     // TODO: actually use this in the scraper
     pub http_client: Arc<Client>,
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    pub default_days_limit: u32,
+    pub default_frequency_hours: u32,
 }
 
 impl FromRef<AppState> for CommentsAppState {
@@ -25,6 +27,8 @@ impl FromRef<AppState> for CommentsAppState {
             repo: input.repo.clone(),
             http_client: input.http_client.clone(),
             task_queue: input.task_queue.clone(),
+            default_days_limit: input.config.default_days_limit,
+            default_frequency_hours: input.config.default_frequency_hours,
         }
     }
 }
@@ -54,6 +58,31 @@ pub struct CommentsPage {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ScrapeRequest {
     pub item_id: i64,
+    /// Number of days to keep refreshing comments (default: 7)
+    pub days_limit: Option<u32>,
+    /// Frequency in hours between refreshes (default: 24)
+    pub frequency_hours: Option<u32>,
+}
+
+fn validate_scrape_request(request: &ScrapeRequest, default_days_limit: u32, default_frequency_hours: u32) -> Result<(u32, u32), ApiError> {
+    let days_limit = request.days_limit.unwrap_or(default_days_limit);
+    let frequency_hours = request.frequency_hours.unwrap_or(default_frequency_hours);
+    
+    if days_limit == 0 {
+        return Err(ApiError {
+            code: ApiErrorCode::BadRequest,
+            msg: "days_limit must be greater than 0".to_string(),
+        });
+    }
+    
+    if frequency_hours == 0 {
+        return Err(ApiError {
+            code: ApiErrorCode::BadRequest,
+            msg: "frequency_hours must be greater than 0".to_string(),
+        });
+    }
+    
+    Ok((days_limit, frequency_hours))
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -145,15 +174,39 @@ pub async fn scrape_comments(
     State(state): State<CommentsAppState>,
     Json(payload): Json<ScrapeRequest>,
 ) -> Result<Json<ScrapeResponse>, (StatusCode, Json<ApiError>)> {
+    // Validate request and extract defaults
+    let (days_limit, frequency_hours) = validate_scrape_request(&payload, state.default_days_limit, state.default_frequency_hours)
+        .map_err(|e| (StatusCode::BAD_REQUEST, Json(e)))?;
+
     let item_id = payload.item_id;
     let target_url = format!("https://news.ycombinator.com/item?id={}", item_id);
 
+    // Store URL with scheduling metadata (always succeeds)
+    if let Err(e) = state.repo.upsert_url_with_scheduling(
+        item_id, 
+        &target_url, 
+        frequency_hours, 
+        days_limit
+    ).await {
+        error!("Failed to upsert URL with scheduling: {}", e);
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                code: ApiErrorCode::DatabaseError,
+                msg: "failed to schedule URL".to_string(),
+            }),
+        ));
+    }
+
+    // REFACTOR: we need to rethink what gets passed to the scrape task and unify this with the backgroun scheduler.
+    // Always schedule the initial scrape
     let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone());
     let schedule_res = state.task_queue.schedule(scrape_task).await;
 
     match schedule_res {
         Ok(true) => {
-            info!("Scraping task scheduled successfully.");
+            info!("Scraping task scheduled successfully with {}-day limit and {}-hour frequency.", 
+                  days_limit, frequency_hours);
             Ok(Json(ScrapeResponse {
                 state: ScrapeState::Scheduled,
             }))
@@ -170,7 +223,7 @@ pub async fn scrape_comments(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiError {
                     code: ApiErrorCode::SchedulingError,
-                    msg: String::from("could not schedule scrape task"),
+                    msg: "could not schedule scrape task".to_string(),
                 }),
             ))
         }
@@ -240,11 +293,6 @@ mod tests {
             }
         }
 
-        async fn upsert_url(&self, _id: i64, _url: &str) -> Result<(), sqlx::Error> {
-            // Default to success for tests that don't exercise DB
-            Ok(())
-        }
-
         async fn upsert_comments(
             &self,
             _comments: &[crate::CommentRecord],
@@ -252,6 +300,18 @@ mod tests {
         ) -> Result<usize, sqlx::Error> {
             // Default to success for tests that don't exercise DB
             Ok(0)
+        }
+
+        async fn upsert_url_with_scheduling(&self, _id: i64, _url: &str, _frequency_hours: u32, _days_limit: u32) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<crate::db::comments_repository::ScheduledUrl>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
         }
     }
 
@@ -303,6 +363,8 @@ mod tests {
             repo: repo.clone(),
             http_client: client,
             task_queue: scheduler.clone() as Arc<dyn crate::task_queue::TaskScheduler<ScrapeTask>>,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         };
 
         (state, scheduler, repo)
@@ -312,7 +374,11 @@ mod tests {
     async fn schedules_task_and_returns_scheduled() {
         let (state, stub_sched, repo) = make_state(ScheduleOutcome::Scheduled);
         let item_id = 12345_i64;
-        let payload = ScrapeRequest { item_id };
+        let payload = ScrapeRequest { 
+            item_id,
+            days_limit: None,
+            frequency_hours: None,
+        };
 
         let res = scrape_comments(State(state), Json(payload)).await;
 
@@ -335,7 +401,11 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn already_scheduled_maps_to_already_scheduled_state() {
         let (state, _stub_sched, _repo) = make_state(ScheduleOutcome::AlreadyInQueue);
-        let payload = ScrapeRequest { item_id: 77 };
+        let payload = ScrapeRequest { 
+            item_id: 77,
+            days_limit: None,
+            frequency_hours: None,
+        };
 
         let res = scrape_comments(State(state), Json(payload)).await;
         let Json(body) = res.expect("expected Ok(Json)");
@@ -348,7 +418,11 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn scheduling_error_maps_to_500_and_api_error() {
         let (state, _stub_sched, _repo) = make_state(ScheduleOutcome::Error);
-        let payload = ScrapeRequest { item_id: 5 };
+        let payload = ScrapeRequest { 
+            item_id: 5,
+            days_limit: None,
+            frequency_hours: None,
+        };
 
         let res = scrape_comments(State(state), Json(payload)).await;
         let (status, Json(err)) = res.expect_err("expected error response");
@@ -381,6 +455,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: Some(0),
@@ -403,6 +479,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: Some(0),
@@ -422,6 +500,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: None,
@@ -447,6 +527,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: None,
@@ -467,6 +549,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: None,
@@ -491,6 +575,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: None,
@@ -511,6 +597,8 @@ mod tests {
             repo,
             http_client: Arc::new(Default::default()),
             task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
         });
         let query = Query(CommentsQuery {
             offset: Some(0),
@@ -522,5 +610,69 @@ mod tests {
         assert_eq!(err.1.code, ApiErrorCode::DatabaseError);
         // Handler currently returns the same message for page error as count error
         assert_eq!(err.1.msg, "failed to count comments");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn rejects_zero_days_limit() {
+        let state = State(CommentsAppState {
+            repo: Arc::new(MockedRepo::default()),
+            http_client: Arc::new(Default::default()),
+            task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        });
+        
+        let payload = ScrapeRequest { 
+            item_id: 123,
+            days_limit: Some(0),
+            frequency_hours: None,
+        };
+        
+        let resp = scrape_comments(state, Json(payload)).await;
+        let err = resp.unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1.code, ApiErrorCode::BadRequest);
+        assert_eq!(err.1.msg, "days_limit must be greater than 0");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn rejects_zero_frequency_hours() {
+        let state = State(CommentsAppState {
+            repo: Arc::new(MockedRepo::default()),
+            http_client: Arc::new(Default::default()),
+            task_queue: Arc::new(crate::task_queue::TaskDedupQueue::new(3)),
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        });
+        
+        let payload = ScrapeRequest { 
+            item_id: 123,
+            days_limit: None,
+            frequency_hours: Some(0),
+        };
+        
+        let resp = scrape_comments(state, Json(payload)).await;
+        let err = resp.unwrap_err();
+        assert_eq!(err.0, StatusCode::BAD_REQUEST);
+        assert_eq!(err.1.code, ApiErrorCode::BadRequest);
+        assert_eq!(err.1.msg, "frequency_hours must be greater than 0");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn accepts_valid_request_with_defaults() {
+        let (state, _scheduler, _repo) = make_state(ScheduleOutcome::Scheduled);
+        
+        let payload = ScrapeRequest { 
+            item_id: 123,
+            days_limit: None,
+            frequency_hours: None,
+        };
+        
+        let resp = scrape_comments(State(state), Json(payload)).await;
+        let Json(body) = resp.expect("expected Ok(Json)");
+        match body.state {
+            ScrapeState::Scheduled => {}
+            _ => panic!("expected Scheduled state"),
+        }
     }
 }
