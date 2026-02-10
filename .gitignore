@@ -2,3 +2,5 @@
 .idea/
 comments.db
 .output.txt
+mutants.out/
+mutants.out.old/
