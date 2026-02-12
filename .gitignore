@@ -4,3 +4,5 @@ comments.db
 .output.txt
 mutants.out/
 mutants.out.old/
+/mutants.out.old/
+/mutants.out/

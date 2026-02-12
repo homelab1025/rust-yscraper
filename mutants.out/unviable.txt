@@ -1,3 +1,0 @@
-web_server/src/main.rs:112:5: replace build_app_state -> AppState with Default::default()
-web_server/src/config.rs:26:9: replace AppConfig::from_config -> Result<Self, config::ConfigError> with Ok(Default::default())
-web_server/src/scrape_task.rs:77:9: replace <impl Error for ScrapeTaskError>::cause -> Option<&dyn Error> with Some(Box::leak(Box::new(Default::default())))
