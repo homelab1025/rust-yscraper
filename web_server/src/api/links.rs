@@ -117,7 +117,7 @@ pub async fn scrape_link(
         ));
     }
 
-    // REFACTOR: we need to rethink what gets passed to the scrape task and unify this with the backgroun scheduler.
+    // REFACTOR: we need to rethink what gets passed to the scrape task and unify this with the background scheduler.
     // Always schedule the initial scrape
     let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone());
     let schedule_res = state.task_queue.schedule(scrape_task).await;
