@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS urls (
     id BIGINT PRIMARY KEY,
     url TEXT NOT NULL UNIQUE,
-    date_added TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    date_added TIMESTAMPTZ NOT NULL
 );
 
 -- Create comments table
