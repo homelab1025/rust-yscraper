@@ -62,6 +62,7 @@ implement `FromRef<AppState>` so handlers can extract only what they need.
 
 - database schema is managed using Liquibase(`db/changelog/`)
 - the HN item ID is used directly as the primary key for both `urls.id` and `comments.id`.
+- when schema is changed, you can't just change the DDL sql files in the `db/changelog/` folder, but have to add a new change to the `changelog-master.yaml` file and the corresponding sql file for the change.
 
 ### Scraping
 
