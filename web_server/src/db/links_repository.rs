@@ -36,7 +36,10 @@ pub struct DbUrlRow {
 pub struct ScheduledUrl {
     pub id: i64,
     pub url: String,
+    // when it was last successfully scraped
     pub last_scraped: Option<chrono::DateTime<chrono::Utc>>,
+    // hours between scrapes
     pub frequency_hours: i32,
+    // for how many days to refresh comments
     pub days_limit: i32,
 }
