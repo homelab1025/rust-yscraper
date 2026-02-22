@@ -6,7 +6,6 @@ use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
 use log::error;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
@@ -15,7 +14,6 @@ use utoipa::{IntoParams, ToSchema};
 pub struct CommentsAppState {
     pub repo: Arc<dyn CommentsRepository>,
     // TODO: actually use this in the scraper
-    pub http_client: Arc<Client>,
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     pub default_days_limit: u32,
     pub default_frequency_hours: u32,
@@ -25,7 +23,6 @@ impl FromRef<AppState> for CommentsAppState {
     fn from_ref(input: &AppState) -> Self {
         CommentsAppState {
             repo: input.repo.clone(),
-            http_client: input.http_client.clone(),
             task_queue: input.task_queue.clone(),
             default_days_limit: input.config.default_days_limit,
             default_frequency_hours: input.config.default_frequency_hours,
@@ -230,7 +227,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(5, rows));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -254,7 +250,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(150, rows));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -275,7 +270,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(0, vec![]));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -302,7 +296,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(3, rows));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -324,7 +317,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(1, vec![row]));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -350,7 +342,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_count_err());
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,
@@ -372,7 +363,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_page_err(10));
         let state = State(CommentsAppState {
             repo,
-            http_client: Arc::new(Default::default()),
             task_queue: Arc::new(DummyScheduler),
             default_days_limit: 7,
             default_frequency_hours: 24,

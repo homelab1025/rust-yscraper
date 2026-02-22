@@ -108,19 +108,11 @@ fn build_app_state(
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     config: AppConfig,
 ) -> AppState {
-    let http_client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(20))
-        .user_agent("web-server/0.1 (+https://news.ycombinator.com)")
-        .build()
-        .unwrap();
-    let http_client = Arc::new(http_client);
-
     let real_time_provider = Arc::new(RealSystemTime {});
 
-AppState {
+    AppState {
         repo: comments_repo,
         time_provider: real_time_provider,
-        http_client,
         task_queue,
         config,
     }
