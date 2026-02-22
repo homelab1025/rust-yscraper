@@ -121,7 +121,10 @@ impl ExecutableTask for ScrapeTask {
                     error!("Failed to update last_scraped timestamp: {}", e);
                 }
             }
-            Err(error) => return Err(ScrapeTaskError::ScrapingError(error)),
+            Err(error) => {
+                error!("Scraping failed for {}: {}", self.url, error);
+                return Err(ScrapeTaskError::ScrapingError(error));
+            }
         }
 
         Ok(())

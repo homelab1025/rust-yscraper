@@ -152,9 +152,12 @@ impl LinksRepository for PgCommentsRepository {
             r#"
             SELECT id, url, last_scraped, frequency_hours, days_limit
             FROM urls
-            WHERE date_added >= ($1 - INTERVAL '1 day' * days_limit) AND
-                  ((last_scraped IS NOT NULL AND last_scraped < $1 - INTERVAL '1 hour' * frequency_hours) OR (last_scraped IS NULL))
-            ORDER BY last_scraped ASC
+            WHERE (date_added + INTERVAL '1 day' * days_limit) >= $1 AND
+                  (
+                    last_scraped IS NULL OR 
+                    last_scraped + INTERVAL '1 hour' * frequency_hours < $1
+                  )
+            ORDER BY last_scraped ASC NULLS FIRST
             "#
         )
         .bind(now)
@@ -171,4 +174,5 @@ impl LinksRepository for PgCommentsRepository {
             .await?;
         Ok(())
     }
+
 }
