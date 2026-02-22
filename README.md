@@ -1,88 +1,58 @@
-# Rust Hacker News Scraper
+# Project Functionality and Functional Analysis
 
-A Rust-based web application that scrapes comments (only the first layer, not the children of the comments) from Hacker News threads, stores them in a PostgreSQL database, and provides a RESTful API to access the data.
+## Project Overview
 
-## Overview
+`rust-yscraper` is a specialized web scraping and monitoring tool designed to track and archive comments from Hacker News (HN). It focuses particularly on the "Ask HN: What Are You Working On" recurring threads, allowing users to keep a historical record of community updates over time.
 
-This project consists of a web server that:
-- Scrapes Hacker News (HN) comment threads.
-- Extracts comment text, author, and metadata.
-- Persists data in a PostgreSQL database using SQLx.
-- Exposes a REST API via Axum.
-- Provides a Swagger UI for API exploration.
+The project is built with a Rust backend (Axum), a PostgreSQL database, and a React-based web frontend.
 
-## Features
+## Core Functionality
 
-- **Concurrent Scraping**: Uses a task queue to handle multiple scrape requests efficiently.
-- **REST API**: Endpoints for listing comments, links, and triggering scrapes.
-- **Swagger Documentation**: Interactive API documentation available at `/swagger-ui`.
-- **Database Persistence**: Robust storage with PostgreSQL and Liquibase for migrations.
-- **Containerized**: Easy to deploy and run using K8s.
+### 1. Targeted Scraping
+The application allows users to trigger a scrape for a specific Hacker News item ID. The scraper fetches the HTML from HN and extracts key information:
+- **Comment Metadata**: Author, timestamp, and unique comment ID.
+- **Comment Content**: The text body of the comment.
+- **Root-Level Extraction**: The scraper specifically targets top-level comments (direct responses to the thread), filtering out nested replies.
 
-## Tools Used
+### 2. Automated Monitoring (Background Scheduling)
+Beyond manual triggers, the system includes a background scheduler that handles periodic refreshes of tracked links:
+- **Configurable Frequency**: Users can define how often a thread should be re-scraped (e.g., every 24 hours).
+- **Time Limits**: Scrapes can be limited to a specific duration after the link was added (e.g., stop refreshing after 7 days).
+- **Task Deduplication**: A task queue ensures that the same link isn't being scraped multiple times concurrently.
 
-- for k8s deployment manifest files Kustomize
-- for test coverage cargo llvm-cov
-```bash
-cargo llvm-cov --html
-```
+### 3. Data Persistence
+All extracted data is stored in a PostgreSQL database:
+- **Incremental Updates**: The system uses "upsert" logic (insert or update on conflict) to ensure that comment text changes or re-scrapes don't create duplicate records.
+- **Historical Tracking**: Stores when links were added and when they were last successfully scraped.
 
-## Deployment
+### 4. RESTful API & UI
+- **API Endpoints**: Provides endpoints for triggering scrapes, listing stored comments (with pagination), listing tracked links, and deleting links (which cascades to their comments).
+- **Swagger Documentation**: Interactive documentation is available for all API endpoints.
+- **Web Frontend**: A user interface to view comments, add new threads for tracking, and manage existing links.
 
-### Prerequisites
+---
 
-- **Rust** (latest stable)
-- **Node.js** (v24+ recommended) and **npm**
-- **Docker** and **Docker Compose**
-- **kubectl** and **Kustomize** (for K8s deployment)
+## Potential Functional Issues & Limitations
 
-### Local Development
+### Acceptable ones
+- High Specialization (Rigidity): The scraper contains a mandatory validation step that checks if the thread title starts with "Ask HN: What Are You Working On".
+-  Shallow Scraping (No Nested Comments): The current logic explicitly filters for comments with an indentation level of 0.
+- Blindness to Comment Deletions/Moves: The system uses an "upsert" strategy based on the comment ID.
 
-1.  **Database Setup**:
-    Start the PostgreSQL database and apply migrations using Docker Compose:
-    ```bash
-    docker compose up -d postgres
-    docker compose up --no-deps liquibase
-    ```
+### To consider repairing
 
-2.  **Backend**:
-    Run the Rust web server:
-    ```bash
-    cargo run -p web_server
-    ```
-    The API will be available at `http://localhost:3000` and Swagger UI at `http://localhost:3000/swagger-ui`.
+#### Lack of Pagination Support
+Hacker News paginates threads with a large number of comments (usually via a "More" link at the bottom). The scraper currently only processes the first page of results.
+- **Impact**: For very active threads (which "What Are You Working On" usually are), a large percentage of comments will never be captured.
 
-3.  **Frontend**:
-    Navigate to the `webapp` directory, install dependencies, and start the development server:
-    ```bash
-    cd webapp
-    npm install
-    npm run dev
-    ```
-    The web application will be accessible at `http://localhost:5173`.
+#### Fragility to HTML Structure Changes
+The scraper relies on specific CSS classes (`tr.athing.comtr`) and, more critically, on the `width` attribute of a spacer image to determine comment depth.
+- **Impact**: Hacker News occasionally updates its markup. If they move to a modern CSS-based layout for indentation or change their class names, the scraper will stop functioning immediately and may require significant updates to its selectors.
 
-### Docker Compose
+#### Rate Limiting and IP Reputation
+The implementation lacks explicit handling for HTTP 429 (Too Many Requests) or back-off strategies tailored to HN's specific anti-scraping measures.
+- **Impact**: Rapidly adding many links or running the scheduler with very high frequency could result in the server's IP being temporarily or permanently blocked by Hacker News.
 
-For local testing with all dependencies, you can use the provided `docker-compose.yml`. Note that currently, it is primarily configured to run the infrastructure (Postgres, Liquibase, Adminer).
-
-To start the infrastructure:
-```bash
-docker compose up -d
-```
-
-### Kubernetes (Production)
-
-The project includes K8s manifests managed with Kustomize in the `k8s/` directory.
-
-1.  **Build and Push Images**:
-    Ensure the Docker images for `web_server` and `webapp` are built and pushed to your registry (the default in `k8s/overlays/prod` is `ghcr.io/homelab1025/rust-yscraper`).
-
-2.  **Configuration**:
-    - Update `k8s/overlays/prod/config-prod.toml` with your production settings.
-    - Ensure a Kubernetes secret `yscraper-db-password` exists with the necessary database credentials (`username`, `password`, `host`, `port`, `name`) in the namespace where you will deploy the application.
-
-3.  **Deploy**:
-    Apply the production overlay:
-    ```bash
-    kubectl apply -k k8s/overlays/prod
-    ```
+#### Silent Failures in Background Tasks
+While background tasks are logged, there is no functional mechanism in the API or UI to alert the user if a scheduled scrape failed.
+- **Impact**: A user might believe a thread is being tracked successfully, while in reality, the scraper is failing due to a title validation error or network issue. The only way to know is to manually check the database timestamps or server logs.

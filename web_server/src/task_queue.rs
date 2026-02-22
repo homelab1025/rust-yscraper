@@ -11,7 +11,7 @@ use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 
 #[async_trait]
-pub trait TaskQueueProcessor: Display + Hash + Clone + Eq + Send + Sync + 'static {
+pub trait ExecutableTask: Display + Hash + Clone + Eq + Send + Sync + 'static {
     type ProcessorError: Error + Send + Sync + 'static;
     async fn execute(&self) -> Result<(), Self::ProcessorError>;
 }
@@ -19,7 +19,7 @@ pub trait TaskQueueProcessor: Display + Hash + Clone + Eq + Send + Sync + 'stati
 #[async_trait]
 pub trait TaskScheduler<T>: Send + Sync
 where
-    T: TaskQueueProcessor,
+    T: ExecutableTask,
 {
     async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>>;
 }
@@ -31,7 +31,7 @@ pub struct TaskDedupQueue<T> {
 
 impl<T> TaskDedupQueue<T>
 where
-    T: TaskQueueProcessor,
+    T: ExecutableTask,
 {
     pub fn new(buffer_size: usize) -> Self {
         let task_set = Arc::new(Mutex::new(HashSet::new()));
@@ -63,7 +63,7 @@ where
 #[async_trait]
 impl<T> TaskScheduler<T> for TaskDedupQueue<T>
 where
-    T: TaskQueueProcessor + Display + Hash + Clone + Eq + Send + Sync + 'static,
+    T: ExecutableTask + Display + Hash + Clone + Eq + Send + Sync + 'static,
 {
     async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>> {
         info!("Scraping task: {}", task);
@@ -77,7 +77,10 @@ where
         } else {
             task_set.insert(task_ref.clone());
             // self.tx.send(task).await?;
-            let _sent = self.tx.try_send(task)?;
+            if let Err(e) = self.tx.try_send(task) {
+                task_set.remove(&task_ref);
+                return Err(e);
+            }
         }
 
         info!("Scrape task set size: {}", task_set.len());
@@ -103,6 +106,7 @@ mod tests {
         executed: Arc<AtomicUsize>,
         start_notify: Option<Arc<Notify>>,
         done_notify: Option<Arc<Notify>>,
+        should_fail: bool,
     }
 
     impl Clone for TestTask {
@@ -114,6 +118,7 @@ mod tests {
                 executed: self.executed.clone(),
                 start_notify: None,
                 done_notify: None,
+                should_fail: self.should_fail,
             }
         }
     }
@@ -147,7 +152,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl TaskQueueProcessor for TestTask {
+    impl ExecutableTask for TestTask {
         type ProcessorError = DummyError;
 
         async fn execute(&self) -> Result<(), DummyError> {
@@ -156,6 +161,9 @@ mod tests {
                 started.notify_one();
             }
             tokio::time::sleep(self.delay).await;
+            if self.should_fail {
+                return Err(DummyError {});
+            }
             if let Some(done) = &self.done_notify {
                 done.notify_one();
             }
@@ -167,6 +175,7 @@ mod tests {
         id: u64,
         delay: Duration,
         executed: &Arc<AtomicUsize>,
+        should_fail: bool,
     ) -> (TestTask, Arc<Notify>, Arc<Notify>) {
         let started = Arc::new(Notify::new());
         let done = Arc::new(Notify::new());
@@ -177,6 +186,7 @@ mod tests {
                 executed: executed.clone(),
                 start_notify: Some(started.clone()),
                 done_notify: Some(done.clone()),
+                should_fail,
             },
             started,
             done,
@@ -191,8 +201,8 @@ mod tests {
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
 
-        let (t1, t1_start, _t1_done) = make_task(1, Duration::from_millis(10), &t1_executed);
-        let (t2, t2_start, _t2_done) = make_task(2, Duration::from_millis(10), &t2_executed);
+        let (t1, t1_start, _t1_done) = make_task(1, Duration::from_millis(10), &t1_executed, false);
+        let (t2, t2_start, _t2_done) = make_task(2, Duration::from_millis(10), &t2_executed, false);
 
         // schedule two different tasks
         let r1 = processor.schedule(t1).await.expect("send ok");
@@ -216,7 +226,7 @@ mod tests {
         let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
 
         let t1_executed = Arc::new(AtomicUsize::new(0));
-        let (t1, t1_start, _t1_done) = make_task(42, Duration::from_secs(10), &t1_executed);
+        let (t1, t1_start, _t1_done) = make_task(42, Duration::from_secs(10), &t1_executed, false);
         // schedule first
         let r1 = processor.schedule(t1).await.expect("send ok");
         assert!(r1);
@@ -227,7 +237,8 @@ mod tests {
 
         // schedule duplicate while first still running
         let t2_executed = Arc::new(AtomicUsize::new(0));
-        let (dup, _dup_start, _dup_done) = make_task(42, Duration::from_millis(10), &t2_executed);
+        let (dup, _dup_start, _dup_done) =
+            make_task(42, Duration::from_millis(10), &t2_executed, false);
         let r2 = processor.schedule(dup).await.expect("send ok");
         assert!(!r2, "duplicate should be rejected");
 
@@ -243,7 +254,7 @@ mod tests {
         let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
         let t1_executed = Arc::new(AtomicUsize::new(0));
 
-        let (t1, _t1_start, t1_done) = make_task(7, Duration::from_millis(5), &t1_executed);
+        let (t1, _t1_start, t1_done) = make_task(7, Duration::from_millis(5), &t1_executed, false);
         let r1 = processor.schedule(t1).await.expect("send ok");
         assert!(r1);
 
@@ -256,7 +267,7 @@ mod tests {
 
         // now schedule an identical task again; should be accepted and executed
         let t2_executed = Arc::new(AtomicUsize::new(0));
-        let (t2, t2_start, _t2_done) = make_task(7, Duration::from_millis(5), &t2_executed);
+        let (t2, t2_start, _t2_done) = make_task(7, Duration::from_millis(5), &t2_executed, false);
         let r2 = processor.schedule(t2).await.expect("send ok");
         assert!(
             r2,
@@ -280,9 +291,12 @@ mod tests {
         let t2_executed = Arc::new(AtomicUsize::new(0));
         let t3_executed = Arc::new(AtomicUsize::new(0));
 
-        let (t1, t1_start, _t1_done) = make_task(100, Duration::from_millis(200), &t1_executed);
-        let (t2, _t2_start, _t2_done) = make_task(101, Duration::from_millis(200), &t2_executed);
-        let (t3, _t3_start, _t3_done) = make_task(102, Duration::from_millis(10), &t3_executed);
+        let (t1, t1_start, _t1_done) =
+            make_task(100, Duration::from_millis(200), &t1_executed, false);
+        let (t2, _t2_start, _t2_done) =
+            make_task(101, Duration::from_millis(200), &t2_executed, false);
+        let (t3, _t3_start, _t3_done) =
+            make_task(102, Duration::from_millis(10), &t3_executed, false);
 
         // schedule the first two tasks; with buffer=1, t1 will be received immediately, t2 will fill the channel buffer
         assert!(processor.schedule(t1).await.expect("send ok"));
@@ -299,5 +313,70 @@ mod tests {
         assert_eq!(t3_executed.load(Ordering::SeqCst), 0);
     }
 
-    // TODO: test to check that a failing task does not crash the loop
+    #[tokio::test(flavor = "current_thread")]
+    async fn send_failure_does_not_prevent_other_tasks_from_scheduling() {
+        time::pause();
+
+        // buffer=1: exactly one task can sit in the channel while the worker is busy
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(1);
+        let occupier_executed = Arc::new(AtomicUsize::new(0));
+        let filler_executed = Arc::new(AtomicUsize::new(0));
+        let t1_executed = Arc::new(AtomicUsize::new(0));
+        let t2_executed = Arc::new(AtomicUsize::new(0));
+
+        // Schedule occupier — worker picks it up and starts sleeping, leaving the channel empty
+        let (occupier, occupier_start, _) =
+            make_task(0, Duration::from_millis(100), &occupier_executed, false);
+        assert!(processor.schedule(occupier).await.expect("send ok"));
+        time::advance(Duration::from_millis(1)).await;
+        occupier_start.notified().await; // confirm worker is now inside execute()
+
+        // Fill the channel buffer so the next send will fail
+        let (filler, _, _) = make_task(1, Duration::from_millis(100), &filler_executed, false);
+        assert!(processor.schedule(filler).await.expect("send ok"));
+
+        // t1: try_send fails — channel is full; the fix must remove t1 from the HashSet on failure
+        let (t1, _, _) = make_task(2, Duration::from_millis(5), &t1_executed, false);
+        assert!(
+            processor.schedule(t1).await.is_err(),
+            "t1 should fail: channel is full"
+        );
+
+        // Drain the channel: let occupier finish, then filler finish
+        time::advance(Duration::from_millis(150)).await; // occupier done; worker picks up filler
+        time::advance(Duration::from_millis(150)).await; // filler done; channel is now empty
+
+        // t1 was removed from the HashSet on failure, so it can be re-scheduled now
+        let (t1_retry, _, t1_done) = make_task(2, Duration::from_millis(5), &t1_executed, false);
+        let r1 = processor.schedule(t1_retry).await.expect("send ok");
+        assert!(r1, "t1 must be re-schedulable after its prior send failure");
+
+        // Let t1_retry complete before filling the buffer again (buffer=1)
+        time::advance(Duration::from_millis(1)).await; // worker picks up t1_retry
+        time::advance(Duration::from_millis(10)).await; // t1_retry finishes
+        t1_done.notified().await;
+
+        // t2 is also unblocked
+        let (t2, _, t2_done) = make_task(3, Duration::from_millis(5), &t2_executed, false);
+        let r2 = processor.schedule(t2).await.expect("send ok");
+        assert!(
+            r2,
+            "t2 should be scheduled successfully after the channel drains"
+        );
+
+        time::advance(Duration::from_millis(1)).await;
+        time::advance(Duration::from_millis(10)).await;
+        t2_done.notified().await;
+
+        assert_eq!(
+            t1_executed.load(Ordering::SeqCst),
+            1,
+            "t1 ran after being re-scheduled"
+        );
+        assert_eq!(
+            t2_executed.load(Ordering::SeqCst),
+            1,
+            "t2 executed despite t1's prior failure"
+        );
+    }
 }
