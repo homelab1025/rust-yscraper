@@ -1,8 +1,7 @@
-use crate::CommentRecord;
 use crate::db::CombinedRepository;
-use crate::scrape::{ScrapeError, get_comments};
-use crate::task_queue::TaskQueueProcessor;
-use crate::utils::create_batches;
+use crate::scrape::{get_comments, ScrapeError};
+use crate::task_queue::ExecutableTask;
+use crate::CommentRecord;
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
@@ -90,7 +89,7 @@ impl Display for ScrapeTaskError {
 }
 
 #[async_trait]
-impl TaskQueueProcessor for ScrapeTask {
+impl ExecutableTask for ScrapeTask {
     type ProcessorError = ScrapeTaskError;
 
     async fn execute(&self) -> Result<(), ScrapeTaskError> {
@@ -102,7 +101,8 @@ impl TaskQueueProcessor for ScrapeTask {
             Ok(comments) => {
                 info!("Parsed {} root comments", comments.len());
 
-                let batches: Vec<Vec<CommentRecord>> = create_batches(&comments, 10);
+                let batches: Vec<Vec<CommentRecord>> =
+                    comments.chunks(10).map(|chunk| chunk.to_vec()).collect();
                 let mut total_inserted = 0usize;
                 for batch in batches.iter() {
                     match self.repo.upsert_comments(batch, self.url_id).await {
@@ -131,9 +131,9 @@ impl TaskQueueProcessor for ScrapeTask {
 #[cfg(test)]
 mod tests_task_hashing {
     use super::ScrapeTask;
-    use crate::db::CombinedRepository;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::db::CombinedRepository;
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
@@ -184,9 +184,7 @@ mod tests_task_hashing {
             Ok(())
         }
 
-        async fn get_urls_due_for_refresh(
-            &self,
-        ) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
 
