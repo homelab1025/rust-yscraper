@@ -33,8 +33,12 @@ fn main() {
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).unwrap();
     info!("Starting server...");
 
+    let config_path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| CONFIG_PATH.to_string());
+
     let conf = Config::builder()
-        .add_source(File::new(CONFIG_PATH, FileFormat::Toml))
+        .add_source(File::new(&config_path, FileFormat::Toml))
         .add_source(Environment::with_prefix("YSCR").prefix_separator("_"))
         .build()
         .expect("Failed to load config file");
