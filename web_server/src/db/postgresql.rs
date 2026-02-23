@@ -18,29 +18,54 @@ impl PgCommentsRepository {
 
 #[async_trait]
 impl CommentsRepository for PgCommentsRepository {
-    async fn count_comments(&self) -> Result<i64, sqlx::Error> {
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
+    async fn count_comments(&self, url_id: Option<i64>) -> Result<i64, sqlx::Error> {
+        match url_id {
+            Some(id) => sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM comments WHERE url_id = $1",
+            )
+            .bind(id)
             .fetch_one(&self.pool)
-            .await
+            .await,
+            None => sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
+                .fetch_one(&self.pool)
+                .await,
+        }
     }
 
     async fn page_comments(
         &self,
         offset: i64,
         count: i64,
+        url_id: Option<i64>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
-        sqlx::query_as::<_, DbCommentRow>(
-            r#"
-            SELECT id, author, date, text, url_id
-            FROM comments
-            ORDER BY date DESC, id DESC
-            LIMIT $1 OFFSET $2
-            "#,
-        )
-        .bind(count)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await
+        match url_id {
+            Some(id) => sqlx::query_as::<_, DbCommentRow>(
+                r#"
+                SELECT id, author, date, text, url_id
+                FROM comments
+                WHERE url_id = $1
+                ORDER BY date DESC, id DESC
+                LIMIT $2 OFFSET $3
+                "#,
+            )
+            .bind(id)
+            .bind(count)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await,
+            None => sqlx::query_as::<_, DbCommentRow>(
+                r#"
+                SELECT id, author, date, text, url_id
+                FROM comments
+                ORDER BY date DESC, id DESC
+                LIMIT $1 OFFSET $2
+                "#,
+            )
+            .bind(count)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await,
+        }
     }
 
     async fn upsert_comments(

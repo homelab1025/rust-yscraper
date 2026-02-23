@@ -3,14 +3,15 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait CommentsRepository: Send + Sync {
-    /// Total number of comments in the store.
-    async fn count_comments(&self) -> Result<i64, sqlx::Error>;
+    /// Total number of comments in the store, optionally filtered by url_id.
+    async fn count_comments(&self, url_id: Option<i64>) -> Result<i64, sqlx::Error>;
 
-    /// Returns a page of comments ordered by date desc, id desc.
+    /// Returns a page of comments ordered by date desc, id desc, optionally filtered by url_id.
     async fn page_comments(
         &self,
         offset: i64,
         count: i64,
+        url_id: Option<i64>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error>;
 
     /// Insert or update a batch of comments for a given url_id.

@@ -113,7 +113,7 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self) -> Result<i64, sqlx::Error> {
+        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> {
             Ok(0)
         }
 
@@ -121,6 +121,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
+            _url_id: Option<i64>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(vec![])
         }

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {useEffect, useState} from 'react';
+import {Link} from 'react-router-dom';
 import {
     Alert,
     CircularProgress,
@@ -104,6 +105,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
                                     <TableCell>{'Scraped'}</TableCell>
                                     <TableCell>
+                                        <Link to={`/comments?url_id=${link.id}`}>See Comments</Link>
                                         <IconButton
                                             aria-label="delete"
                                             color="error"

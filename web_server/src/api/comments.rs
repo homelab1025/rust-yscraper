@@ -5,7 +5,7 @@ use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
-use log::error;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
@@ -32,9 +32,20 @@ impl FromRef<AppState> for CommentsAppState {
 
 #[derive(Debug, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
-pub struct CommentsQuery {
+pub struct CommentsFilter {
     pub offset: Option<i64>,
     pub count: Option<i64>,
+    pub url_id: Option<i64>,
+}
+
+impl std::fmt::Display for CommentsFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "CommentsFilter {{ offset: {:?}, count: {:?}, url_id: {:?} }}",
+            self.offset, self.count, self.url_id
+        )
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
@@ -56,7 +67,7 @@ pub struct CommentsPage {
 #[utoipa::path(
     get,
     path = "/comments",
-    params(CommentsQuery),
+    params(CommentsFilter),
     responses(
         (status = 200, description = "List of comments", body = CommentsPage),
         (status = 500, description = "Database error", body = ApiError)
@@ -65,13 +76,14 @@ pub struct CommentsPage {
 #[axum::debug_handler]
 pub async fn list_comments(
     State(state): State<CommentsAppState>,
-    Query(filter): Query<CommentsQuery>,
+    Query(filter): Query<CommentsFilter>,
 ) -> Result<Json<CommentsPage>, (StatusCode, Json<ApiError>)> {
+    info!("list_comments called with {}", filter);
     let offset = filter.offset.unwrap_or(0).max(0);
     let count = filter.count.unwrap_or(10).clamp(1, 100);
 
     // total count
-    let total = match state.repo.count_comments().await {
+    let total = match state.repo.count_comments(filter.url_id).await {
         Ok(c) => c,
         Err(e) => {
             error!("Failed to count comments: {}", e);
@@ -86,7 +98,7 @@ pub async fn list_comments(
     };
 
     // page items ordered by date desc; fallback id desc for ties
-    let rows = match state.repo.page_comments(offset, count).await {
+    let rows = match state.repo.page_comments(offset, count, filter.url_id).await {
         Ok(r) => r,
         Err(e) => {
             error!("Failed to fetch comments page: {}", e);
@@ -159,7 +171,7 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockedRepo {
-        async fn count_comments(&self) -> Result<i64, sqlx::Error> {
+        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> {
             match *self.count_ok.lock().await {
                 Some(v) => Ok(v),
                 None => Err(sqlx::Error::RowNotFound),
@@ -170,6 +182,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
+            _url_id: Option<i64>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             match &*self.page_ok.lock().await {
                 Some(rows) => Ok(rows.clone()),
@@ -189,11 +202,27 @@ mod tests {
 
     #[async_trait]
     impl LinksRepository for MockedRepo {
-        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> { Ok(vec![]) }
-        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> { Ok(0) }
-        async fn upsert_url_with_scheduling(&self, _id: i64, _url: &str, _frequency_hours: u32, _days_limit: u32) -> Result<(), sqlx::Error> { Ok(()) }
-        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> { Ok(vec![]) }
-        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> { Ok(()) }
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            Ok(0)
+        }
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
+            Ok(vec![])
+        }
+        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     // Minimal dummy scheduler for CommentsAppState
@@ -231,9 +260,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(0),
+            url_id: None,
         });
 
         let resp = list_comments(state, query).await;
@@ -254,9 +284,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(1000),
+            url_id: None,
         });
 
         let resp = list_comments(state, query).await;
@@ -274,9 +305,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: None,
             count: None,
+            url_id: None,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -300,9 +332,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: None,
             count: None,
+            url_id: None,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -321,9 +354,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: None,
             count: None,
+            url_id: None,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -346,9 +380,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: None,
             count: None,
+            url_id: None,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_err());
@@ -367,9 +402,10 @@ mod tests {
             default_days_limit: 7,
             default_frequency_hours: 24,
         });
-        let query = Query(CommentsQuery {
+        let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(10),
+            url_id: None,
         });
         let resp = list_comments(state, query).await;
         let err = resp.unwrap_err();

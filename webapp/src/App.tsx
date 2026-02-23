@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme, CssBaseline, Container } from '@mui/material';
 import Navigation from './components/Navigation';
 import LinkManagementPage from './pages/LinkManagementPage';
+import CommentsPage from './pages/CommentsPage';
 import AboutPage from './pages/AboutPage';
 
 const theme = createTheme({
@@ -22,6 +23,7 @@ function App() {
         <Container component="main" sx={{ py: 4 }}>
           <Routes>
             <Route path="/links" element={<LinkManagementPage />} />
+            <Route path="/comments" element={<CommentsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/" element={<Navigate to="/links" replace />} />
           </Routes>

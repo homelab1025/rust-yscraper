@@ -243,8 +243,8 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self) -> Result<i64, sqlx::Error> { Ok(0) }
-        async fn page_comments(&self, _offset: i64, _count: i64) -> Result<Vec<DbCommentRow>, sqlx::Error> { Ok(vec![]) }
+        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> { Ok(0) }
+        async fn page_comments(&self, _offset: i64, _count: i64, _url_id: Option<i64>) -> Result<Vec<DbCommentRow>, sqlx::Error> { Ok(vec![]) }
         async fn upsert_comments(&self, _comments: &[crate::CommentRecord], _url_id: i64) -> Result<usize, sqlx::Error> { Ok(0) }
     }
 

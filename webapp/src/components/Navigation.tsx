@@ -4,22 +4,24 @@ import { useLocation } from 'react-router-dom';
 
 const Navigation = () => {
   const location = useLocation();
+  const knownPaths = ['/links', '/about'];
   const currentPath = location.pathname === '/' ? '/links' : location.pathname;
+  const tabValue = knownPaths.includes(currentPath) ? currentPath : false;
 
   return (
     <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-      <Tabs value={currentPath}>
+      <Tabs value={tabValue}>
         <Tab 
           label="Links" 
           value="/links" 
           component={Link} 
           to="/links" 
         />
-        <Tab 
-          label="About" 
-          value="/about" 
-          component={Link} 
-          to="/about" 
+        <Tab
+          label="About"
+          value="/about"
+          component={Link}
+          to="/about"
         />
       </Tabs>
     </Box>
