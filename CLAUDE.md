@@ -5,6 +5,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Code Handling
 - use Serena as an MCP so to get accurate information about the codebase (using LSP) whenever reading or writing code.
 
+## Coding Conventions
+- Formatting
+  - Run `cargo fmt --all` before committing. Keep `rustfmt` defaults; if you need to deviate, justify it in a comment and a `rustfmt.toml`.
+- Linting
+    - Run `cargo clippy --all-targets --all-features -D warnings` locally. Prefer fixing over `#[allow(...)]`. If an allow is justified, scope it to the smallest block and add a short comment.
+- Naming & style
+    - Follow Rust’s conventional casing: `snake_case` for functions/variables/modules, `CamelCase` for types/traits, `SCREAMING_SNAKE_CASE` for constants, and `lowercase` crate names.
+    - Prefer explicit module `pub` visibility; don’t export internal helpers by default. Use `pub(crate)` when sharing within the crate.
+- Dependencies management
+  - If introducing new dependencies, add them to `Cargo.toml` with minimal features.
+  - If dependencies are needed in workspace members, add them to root `Cargo.toml` with minimal features and reference them in workspace members.
+  - Pass dependencies explicitly as parameters (e.g., `&SqlitePool`, `&Client`). Avoid singletons.
+- Error management
+  - Avoid `unwrap()`/`expect()` in non-test code. Use `?`.
+  - Return `Result<T, E>` over panics. Do NOT use `anyhow`. Only`thiserror` is acceptable if considedered necesary.
+- Logging
+    - Use `log` macros (`trace!`, `debug!`, `info!`, `warn!`, `error!`). Keep logs structured and actionable. Avoid logging secrets.
+- Concurrency & async
+    - Use `tokio` primitives. Prefer `async fn` and `.await` over manual threads. Bound concurrency with `FuturesUnordered` or `Semaphore` rather than spawning unbounded tasks.
+    - Avoid blocking calls on async threads (e.g., file I/O or CPU-heavy work) unless wrapped in `tokio::task::spawn_blocking`.
 ## Commands
 
 ```bash
