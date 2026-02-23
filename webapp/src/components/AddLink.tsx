@@ -17,7 +17,7 @@ export function AddLink() {
 
         try {
             setSubmitting(true);
-            await linksApi.scrapeLink({scrapeRequest: {item_id: parseInt(newLinkId)}});
+            await linksApi.scrapeLink({item_id: parseInt(newLinkId)});
             setNewLinkId('');
         } catch (err) {
             setError('Failed to add link');
