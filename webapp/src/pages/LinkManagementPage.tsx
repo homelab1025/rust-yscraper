@@ -1,6 +1,6 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Alert,
     CircularProgress,
@@ -16,9 +16,10 @@ import {
     Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {AddLink} from "../components/AddLink.tsx";
-import {CrateApiLinksApi, type LinkDto} from "../api-client";
-import {apiConfig} from "../api-config";
+import CommentIcon from '@mui/icons-material/Comment';
+import { AddLink } from "../components/AddLink.tsx";
+import { CrateApiLinksApi, type LinkDto } from "../api-client";
+import { apiConfig } from "../api-config";
 
 const linksApi = new CrateApiLinksApi(apiConfig);
 
@@ -65,9 +66,9 @@ export default function LinkManagementPage(): React.JSX.Element {
                 Link Management
             </Typography>
 
-            <AddLink/>
+            <AddLink />
 
-            {error && <Alert severity="error" sx={{mb: 2}}>{error}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             <TableContainer component={Paper}>
                 <Table>
@@ -85,7 +86,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={6} align="center">
-                                    <CircularProgress/>
+                                    <CircularProgress />
                                 </TableCell>
                             </TableRow>
                         ) : links.length === 0 ? (
@@ -107,7 +108,14 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     <TableCell>{link.comment_count}</TableCell>
                                     <TableCell>{'Scraped'}</TableCell>
                                     <TableCell>
-                                        <Link to={`/comments?url_id=${link.id}`}>See Comments</Link>
+                                        <IconButton
+                                            component={Link}
+                                            to={`/comments?url_id=${link.id}`}
+                                            aria-label="see comments"
+                                            color="primary"
+                                        >
+                                            <CommentIcon />
+                                        </IconButton>
                                         <IconButton
                                             aria-label="delete"
                                             color="error"
