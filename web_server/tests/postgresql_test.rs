@@ -52,9 +52,7 @@ async fn setup_db() -> (PgPool, testcontainers::ContainerAsync<Postgres>) {
         ])
         .with_ready_conditions(vec![WaitFor::message_on_stdout("UPDATE SUMMARY")]);
 
-    let _liquibase_container = AsyncRunner::start(liquibase)
-        .await
-        .unwrap();
+    let _liquibase_container = AsyncRunner::start(liquibase).await.unwrap();
 
     let conn_str = format!("postgres://postgres:postgres@{}:{}/postgres", host, port);
     let pool = PgPool::connect(&conn_str)

@@ -1,8 +1,8 @@
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use web_server::api::ping::{PingParams, TimeProvider, ping, PingAppState};
 use std::sync::Arc;
 use std::time::{Duration, SystemTimeError};
+use web_server::api::ping::{PingAppState, PingParams, TimeProvider, ping};
 
 struct MockTimeProvider {
     now_duration: Duration,

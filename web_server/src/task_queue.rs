@@ -6,9 +6,9 @@ use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::DerefMut;
 use std::sync::Arc;
-use tokio::sync::mpsc::error::TrySendError;
-use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::error::TrySendError;
 
 #[async_trait]
 pub trait ExecutableTask: Display + Hash + Clone + Eq + Send + Sync + 'static {
@@ -95,8 +95,8 @@ mod tests {
     use crate::task_queue::Error;
     use std::fmt;
     use std::fmt::Formatter;
-    use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::Notify;
     use tokio::time::{self, Duration};
 

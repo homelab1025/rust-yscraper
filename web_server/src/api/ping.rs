@@ -1,8 +1,8 @@
 use crate::api::app_state::AppState;
 use axum::extract::FromRef;
 use axum::{
-    extract::{Query, State},
     Json,
+    extract::{Query, State},
 };
 use serde::Serialize;
 use std::sync::Arc;
