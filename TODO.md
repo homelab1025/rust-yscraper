@@ -1,6 +1,6 @@
 ## TODO
 
-- the comment gets a new attribute named "state" which reflects whether the comment was picked or discarded. This can be encoded in a number in the application code. The user can pick or discard a comment based on the 
+- the comment gets a new attribute named "state" which reflects whether the comment was picked or discarded. This can be encoded in a number in the application code. The user can pick or discard a comment.
 - ideas could be grouped in clusters based on functional areas/domains
 - create a web interface using reactjs with the following features:
   - (page) list the comments that have been scraped and provide the possibility to filter them.

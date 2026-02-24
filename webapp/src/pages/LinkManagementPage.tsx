@@ -3,8 +3,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Alert,
+    Button,
     CircularProgress,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     IconButton,
     Paper,
     Table,
@@ -27,6 +33,8 @@ export default function LinkManagementPage(): React.JSX.Element {
     const [links, setLinks] = useState<LinkDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
 
     const fetchLinks = async () => {
         try {
@@ -42,18 +50,29 @@ export default function LinkManagementPage(): React.JSX.Element {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Are you sure you want to delete this link?')) {
-            return;
-        }
+    const handleDelete = (id: number) => {
+        setLinkToDelete(id);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (linkToDelete === null) return;
 
         try {
-            await linksApi.deleteLink(id);
+            await linksApi.deleteLink(linkToDelete);
             await fetchLinks();
         } catch (err) {
             setError('Failed to delete link');
             console.error(err);
+        } finally {
+            setDeleteDialogOpen(false);
+            setLinkToDelete(null);
         }
+    };
+
+    const handleCloseDeleteDialog = () => {
+        setDeleteDialogOpen(false);
+        setLinkToDelete(null);
     };
 
     useEffect(() => {
@@ -66,7 +85,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                 Link Management
             </Typography>
 
-            <AddLink />
+            <AddLink onSuccess={fetchLinks} />
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -130,6 +149,28 @@ export default function LinkManagementPage(): React.JSX.Element {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={handleCloseDeleteDialog}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+            >
+                <DialogTitle id="delete-dialog-title">
+                    {"Confirm Delete"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="delete-dialog-description">
+                        Are you sure you want to delete this link? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 }
