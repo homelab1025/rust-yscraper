@@ -15,8 +15,7 @@ use utoipa::ToSchema;
 pub struct LinksAppState {
     pub repo: Arc<dyn CombinedRepository>,
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
-    pub default_days_limit: u32,
-    pub default_frequency_hours: u32,
+    pub config: crate::config::AppConfig,
 }
 
 impl FromRef<AppState> for LinksAppState {
@@ -24,8 +23,7 @@ impl FromRef<AppState> for LinksAppState {
         LinksAppState {
             repo: input.repo.clone(),
             task_queue: input.task_queue.clone(),
-            default_days_limit: input.config.default_days_limit,
-            default_frequency_hours: input.config.default_frequency_hours,
+            config: input.config.clone(),
         }
     }
 }
@@ -35,6 +33,7 @@ pub struct LinkDto {
     pub id: i64,
     pub url: String,
     pub date_added: String,
+    pub comment_count: u32,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -46,24 +45,28 @@ pub struct ScrapeRequest {
     pub frequency_hours: Option<u32>,
 }
 
-fn validate_scrape_request(request: &ScrapeRequest, default_days_limit: u32, default_frequency_hours: u32) -> Result<(u32, u32), ApiError> {
+fn validate_scrape_request(
+    request: &ScrapeRequest,
+    default_days_limit: u32,
+    default_frequency_hours: u32,
+) -> Result<(u32, u32), ApiError> {
     let days_limit = request.days_limit.unwrap_or(default_days_limit);
     let frequency_hours = request.frequency_hours.unwrap_or(default_frequency_hours);
-    
+
     if days_limit == 0 {
         return Err(ApiError {
             code: ApiErrorCode::BadRequest,
             msg: "days_limit must be greater than 0".to_string(),
         });
     }
-    
+
     if frequency_hours == 0 {
         return Err(ApiError {
             code: ApiErrorCode::BadRequest,
             msg: "frequency_hours must be greater than 0".to_string(),
         });
     }
-    
+
     Ok((days_limit, frequency_hours))
 }
 
@@ -94,19 +97,22 @@ pub async fn scrape_link(
     Json(payload): Json<ScrapeRequest>,
 ) -> Result<Json<ScrapeResponse>, (StatusCode, Json<ApiError>)> {
     // Validate request and extract defaults
-    let (days_limit, frequency_hours) = validate_scrape_request(&payload, state.default_days_limit, state.default_frequency_hours)
-        .map_err(|e| (StatusCode::BAD_REQUEST, Json(e)))?;
+    let (days_limit, frequency_hours) = validate_scrape_request(
+        &payload,
+        state.config.default_days_limit,
+        state.config.default_frequency_hours,
+    )
+    .map_err(|e| (StatusCode::BAD_REQUEST, Json(e)))?;
 
     let item_id = payload.item_id;
     let target_url = format!("https://news.ycombinator.com/item?id={}", item_id);
 
     // Store URL with scheduling metadata (always succeeds)
-    if let Err(e) = state.repo.upsert_url_with_scheduling(
-        item_id, 
-        &target_url, 
-        frequency_hours, 
-        days_limit
-    ).await {
+    if let Err(e) = state
+        .repo
+        .upsert_url_with_scheduling(item_id, &target_url, frequency_hours, days_limit)
+        .await
+    {
         error!("Failed to upsert URL with scheduling: {}", e);
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -124,8 +130,10 @@ pub async fn scrape_link(
 
     match schedule_res {
         Ok(true) => {
-            info!("Scraping task scheduled successfully with {}-day limit and {}-hour frequency.", 
-                  days_limit, frequency_hours);
+            info!(
+                "Scraping task scheduled successfully with {}-day limit and {}-hour frequency.",
+                days_limit, frequency_hours
+            );
             Ok(Json(ScrapeResponse {
                 state: ScrapeState::Scheduled,
             }))
@@ -177,6 +185,7 @@ pub async fn list_links(
             id: row.id,
             url: row.url,
             date_added: row.date_added.to_rfc3339(),
+            comment_count: row.comment_count as u32,
         })
         .collect();
 
@@ -243,9 +252,24 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> { Ok(0) }
-        async fn page_comments(&self, _offset: i64, _count: i64, _url_id: Option<i64>) -> Result<Vec<DbCommentRow>, sqlx::Error> { Ok(vec![]) }
-        async fn upsert_comments(&self, _comments: &[crate::CommentRecord], _url_id: i64) -> Result<usize, sqlx::Error> { Ok(0) }
+        async fn count_comments(&self, _url_id: i64) -> Result<u32, sqlx::Error> {
+            Ok(0)
+        }
+        async fn page_comments(
+            &self,
+            _offset: i64,
+            _count: i64,
+            _url_id: i64,
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+        async fn upsert_comments(
+            &self,
+            _comments: &[crate::CommentRecord],
+            _url_id: i64,
+        ) -> Result<usize, sqlx::Error> {
+            Ok(0)
+        }
     }
 
     #[async_trait]
@@ -256,13 +280,22 @@ mod tests {
         async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
             self.delete_result.clone().map_err(Error::Protocol)
         }
-        async fn upsert_url_with_scheduling(&self, _id: i64, _url: &str, _frequency_hours: u32, _days_limit: u32) -> Result<(), sqlx::Error> {
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
             Ok(())
         }
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
         async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
     }
@@ -292,11 +325,25 @@ mod tests {
         delete_result: Result<u64, String>,
         schedule_outcome: ScheduleOutcome,
     ) -> LinksAppState {
-        LinksAppState {
-            repo: Arc::new(MockRepo { links, delete_result }),
-            task_queue: Arc::new(StubScheduler { outcome: schedule_outcome }),
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
             default_days_limit: 7,
             default_frequency_hours: 24,
+        };
+        LinksAppState {
+            repo: Arc::new(MockRepo {
+                links,
+                delete_result,
+            }),
+            task_queue: Arc::new(StubScheduler {
+                outcome: schedule_outcome,
+            }),
+            config,
         }
     }
 
@@ -305,17 +352,37 @@ mod tests {
         let time_url1 = Utc::now();
         let time_url2 = Utc::now();
         let rows = vec![
-            DbUrlRow { id: 1, url: "https://example.com/1".to_string(), date_added: time_url1 },
-            DbUrlRow { id: 2, url: "https://example.com/2".to_string(), date_added: time_url2 },
+            DbUrlRow {
+                id: 1,
+                url: "https://example.com/1".to_string(),
+                date_added: time_url1,
+                comment_count: 5,
+            },
+            DbUrlRow {
+                id: 2,
+                url: "https://example.com/2".to_string(),
+                date_added: time_url2,
+                comment_count: 10,
+            },
         ];
         let state = make_state(Ok(rows.clone()), Ok(0), ScheduleOutcome::Scheduled);
 
         let result = list_links(State(state)).await;
         let Json(links) = result.unwrap();
-        
+
         assert_eq!(links.len(), 2);
-        assert!(links.contains(&LinkDto { id: 1, url: "https://example.com/1".to_string(), date_added: time_url1.to_rfc3339() }));
-        assert!(links.contains(&LinkDto { id: 2, url: "https://example.com/2".to_string(), date_added: time_url2.to_rfc3339() }));
+        assert!(links.contains(&LinkDto {
+            id: 1,
+            url: "https://example.com/1".to_string(),
+            date_added: time_url1.to_rfc3339(),
+            comment_count: 5
+        }));
+        assert!(links.contains(&LinkDto {
+            id: 2,
+            url: "https://example.com/2".to_string(),
+            date_added: time_url2.to_rfc3339(),
+            comment_count: 10
+        }));
     }
 
     #[tokio::test]
@@ -328,7 +395,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_links_db_error() {
-        let state = make_state(Err("DB error".to_string()), Ok(0), ScheduleOutcome::Scheduled);
+        let state = make_state(
+            Err("DB error".to_string()),
+            Ok(0),
+            ScheduleOutcome::Scheduled,
+        );
         let result = list_links(State(state)).await;
         let (status, Json(err)) = result.unwrap_err();
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
@@ -353,7 +424,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_link_db_error() {
-        let state = make_state(Ok(vec![]), Err("DB error".to_string()), ScheduleOutcome::Scheduled);
+        let state = make_state(
+            Ok(vec![]),
+            Err("DB error".to_string()),
+            ScheduleOutcome::Scheduled,
+        );
         let result = delete_link(State(state), Path(1)).await;
         let (status, Json(err)) = result.unwrap_err();
         assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
@@ -363,8 +438,12 @@ mod tests {
     #[tokio::test]
     async fn test_scrape_link_scheduled() {
         let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
-        let payload = ScrapeRequest { item_id: 123, days_limit: None, frequency_hours: None };
-        
+        let payload = ScrapeRequest {
+            item_id: 123,
+            days_limit: None,
+            frequency_hours: None,
+        };
+
         let result = scrape_link(State(state), Json(payload)).await;
         let Json(resp) = result.unwrap();
         matches!(resp.state, ScrapeState::Scheduled);
@@ -373,8 +452,12 @@ mod tests {
     #[tokio::test]
     async fn test_scrape_link_already_scheduled() {
         let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::AlreadyInQueue);
-        let payload = ScrapeRequest { item_id: 123, days_limit: None, frequency_hours: None };
-        
+        let payload = ScrapeRequest {
+            item_id: 123,
+            days_limit: None,
+            frequency_hours: None,
+        };
+
         let result = scrape_link(State(state), Json(payload)).await;
         let Json(resp) = result.unwrap();
         matches!(resp.state, ScrapeState::AlreadyScheduled);

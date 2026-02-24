@@ -76,6 +76,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                             <TableCell>ID</TableCell>
                             <TableCell>URL</TableCell>
                             <TableCell>Date Added</TableCell>
+                            <TableCell>Comments</TableCell>
                             <TableCell>Status</TableCell>
                             <TableCell>Actions</TableCell>
                         </TableRow>
@@ -83,13 +84,13 @@ export default function LinkManagementPage(): React.JSX.Element {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} align="center">
+                                <TableCell colSpan={6} align="center">
                                     <CircularProgress/>
                                 </TableCell>
                             </TableRow>
                         ) : links.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} align="center">
+                                <TableCell colSpan={6} align="center">
                                     No links found.
                                 </TableCell>
                             </TableRow>
@@ -103,6 +104,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                                         </a>
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
+                                    <TableCell>{link.comment_count}</TableCell>
                                     <TableCell>{'Scraped'}</TableCell>
                                     <TableCell>
                                         <Link to={`/comments?url_id=${link.id}`}>See Comments</Link>

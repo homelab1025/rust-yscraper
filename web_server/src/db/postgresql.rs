@@ -1,6 +1,6 @@
+use crate::CommentRecord;
 use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
 use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
-use crate::CommentRecord;
 use async_trait::async_trait;
 use chrono::Utc;
 use log::{debug, warn};
@@ -18,54 +18,34 @@ impl PgCommentsRepository {
 
 #[async_trait]
 impl CommentsRepository for PgCommentsRepository {
-    async fn count_comments(&self, url_id: Option<i64>) -> Result<i64, sqlx::Error> {
-        match url_id {
-            Some(id) => sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM comments WHERE url_id = $1",
-            )
-            .bind(id)
+    async fn count_comments(&self, url_id: i64) -> Result<u32, sqlx::Error> {
+        sqlx::query_scalar::<_, i32>("SELECT comment_count FROM urls WHERE id = $1")
+            .bind(url_id)
             .fetch_one(&self.pool)
-            .await,
-            None => sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM comments")
-                .fetch_one(&self.pool)
-                .await,
-        }
+            .await
+            .map(|c| c as u32)
     }
 
     async fn page_comments(
         &self,
         offset: i64,
         count: i64,
-        url_id: Option<i64>,
+        url_id: i64,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
-        match url_id {
-            Some(id) => sqlx::query_as::<_, DbCommentRow>(
-                r#"
-                SELECT id, author, date, text, url_id
-                FROM comments
-                WHERE url_id = $1
-                ORDER BY date DESC, id DESC
-                LIMIT $2 OFFSET $3
-                "#,
-            )
-            .bind(id)
-            .bind(count)
-            .bind(offset)
-            .fetch_all(&self.pool)
-            .await,
-            None => sqlx::query_as::<_, DbCommentRow>(
-                r#"
-                SELECT id, author, date, text, url_id
-                FROM comments
-                ORDER BY date DESC, id DESC
-                LIMIT $1 OFFSET $2
-                "#,
-            )
-            .bind(count)
-            .bind(offset)
-            .fetch_all(&self.pool)
-            .await,
-        }
+        sqlx::query_as::<_, DbCommentRow>(
+            r#"
+            SELECT id, author, date, text, url_id
+            FROM comments
+            WHERE url_id = $1
+            ORDER BY date DESC, id DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(url_id)
+        .bind(count)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
     }
 
     async fn upsert_comments(
@@ -97,7 +77,7 @@ impl CommentsRepository for PgCommentsRepository {
 impl LinksRepository for PgCommentsRepository {
     async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
         sqlx::query_as::<_, DbUrlRow>(
-            "SELECT id, url, date_added FROM urls ORDER BY date_added DESC",
+            "SELECT id, url, date_added, comment_count FROM urls ORDER BY date_added DESC",
         )
         .fetch_all(&self.pool)
         .await
@@ -153,8 +133,8 @@ impl LinksRepository for PgCommentsRepository {
         // Note: Only update URL field on conflict to preserve original scheduling values
         sqlx::query(
             r#"
-            INSERT INTO urls (id, url, date_added, frequency_hours, days_limit)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO urls (id, url, date_added, frequency_hours, days_limit, comment_count)
+            VALUES ($1, $2, $3, $4, $5, 0)
             ON CONFLICT (id) DO UPDATE SET
                 url = EXCLUDED.url
             "#,
@@ -175,7 +155,7 @@ impl LinksRepository for PgCommentsRepository {
 
         sqlx::query_as::<_, ScheduledUrl>(
             r#"
-            SELECT id, url, last_scraped, frequency_hours, days_limit
+            SELECT id, url, last_scraped, frequency_hours, days_limit, comment_count
             FROM urls
             WHERE (date_added + INTERVAL '1 day' * days_limit) >= $1 AND
                   (
@@ -183,7 +163,7 @@ impl LinksRepository for PgCommentsRepository {
                     last_scraped + INTERVAL '1 hour' * frequency_hours < $1
                   )
             ORDER BY last_scraped ASC NULLS FIRST
-            "#
+            "#,
         )
         .bind(now)
         .fetch_all(&self.pool)
@@ -200,4 +180,17 @@ impl LinksRepository for PgCommentsRepository {
         Ok(())
     }
 
+    async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            UPDATE urls 
+            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1)
+            WHERE id = $1
+            "#,
+        )
+        .bind(url_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }

@@ -15,8 +15,7 @@ pub struct CommentsAppState {
     pub repo: Arc<dyn CommentsRepository>,
     // TODO: actually use this in the scraper
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
-    pub default_days_limit: u32,
-    pub default_frequency_hours: u32,
+    pub config: crate::config::AppConfig,
 }
 
 impl FromRef<AppState> for CommentsAppState {
@@ -24,8 +23,7 @@ impl FromRef<AppState> for CommentsAppState {
         CommentsAppState {
             repo: input.repo.clone(),
             task_queue: input.task_queue.clone(),
-            default_days_limit: input.config.default_days_limit,
-            default_frequency_hours: input.config.default_frequency_hours,
+            config: input.config.clone(),
         }
     }
 }
@@ -35,14 +33,14 @@ impl FromRef<AppState> for CommentsAppState {
 pub struct CommentsFilter {
     pub offset: Option<i64>,
     pub count: Option<i64>,
-    pub url_id: Option<i64>,
+    pub url_id: i64,
 }
 
 impl std::fmt::Display for CommentsFilter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "CommentsFilter {{ offset: {:?}, count: {:?}, url_id: {:?} }}",
+            "CommentsFilter {{ offset: {:?}, count: {:?}, url_id: {} }}",
             self.offset, self.count, self.url_id
         )
     }
@@ -84,7 +82,7 @@ pub async fn list_comments(
 
     // total count
     let total = match state.repo.count_comments(filter.url_id).await {
-        Ok(c) => c,
+        Ok(c) => c as i64,
         Err(e) => {
             error!("Failed to count comments: {}", e);
             Err((
@@ -135,8 +133,8 @@ mod tests {
     use crate::scrape_task::ScrapeTask;
     use async_trait::async_trait;
     use std::sync::Arc;
-    use tokio::sync::mpsc::error::TrySendError;
     use tokio::sync::Mutex as AsyncMutex;
+    use tokio::sync::mpsc::error::TrySendError;
 
     #[derive(Debug, Default)]
     struct MockedRepo {
@@ -171,9 +169,9 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockedRepo {
-        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> {
+        async fn count_comments(&self, _url_id: i64) -> Result<u32, sqlx::Error> {
             match *self.count_ok.lock().await {
-                Some(v) => Ok(v),
+                Some(v) => Ok(v as u32),
                 None => Err(sqlx::Error::RowNotFound),
             }
         }
@@ -182,7 +180,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: Option<i64>,
+            _url_id: i64,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             match &*self.page_ok.lock().await {
                 Some(rows) => Ok(rows.clone()),
@@ -223,6 +221,9 @@ mod tests {
         async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
+        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     // Minimal dummy scheduler for CommentsAppState
@@ -257,13 +258,21 @@ mod tests {
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config: crate::config::AppConfig {
+                server_port: 3000,
+                db_username: "u".to_string(),
+                db_password: "p".to_string(),
+                db_name: "n".to_string(),
+                db_host: "h".to_string(),
+                db_port: 5432,
+                default_days_limit: 7,
+                default_frequency_hours: 24,
+            },
         });
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(0),
-            url_id: None,
+            url_id: 9,
         });
 
         let resp = list_comments(state, query).await;
@@ -278,16 +287,25 @@ mod tests {
             .map(|i| make_comment_row(i as i64, "u", "2024-04-01", "t", 2))
             .collect();
         let repo = Arc::new(MockedRepo::with_ok(150, rows));
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(1000),
-            url_id: None,
+            url_id: 2,
         });
 
         let resp = list_comments(state, query).await;
@@ -299,16 +317,25 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn returns_empty_list_when_store_empty() {
         let repo = Arc::new(MockedRepo::with_ok(0, vec![]));
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: None,
+            url_id: 1,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -326,16 +353,25 @@ mod tests {
             make_comment_row(1, "c", "2024-01-01", "t1", 1),
         ];
         let repo = Arc::new(MockedRepo::with_ok(3, rows));
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: None,
+            url_id: 1,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -348,16 +384,25 @@ mod tests {
     async fn maps_fields_correctly_from_dbrow_to_dto() {
         let row = make_comment_row(42, "zoe", "2024-05-05", "hello", 77);
         let repo = Arc::new(MockedRepo::with_ok(1, vec![row]));
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: None,
+            url_id: 77,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
@@ -374,16 +419,25 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn returns_500_when_count_fails() {
         let repo = Arc::new(MockedRepo::with_count_err());
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: None,
+            url_id: 1,
         });
         let resp = list_comments(state, query).await;
         assert!(resp.is_err());
@@ -396,16 +450,25 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn returns_500_when_page_query_fails() {
         let repo = Arc::new(MockedRepo::with_page_err(10));
+        let config = crate::config::AppConfig {
+            server_port: 3000,
+            db_username: "u".to_string(),
+            db_password: "p".to_string(),
+            db_name: "n".to_string(),
+            db_host: "h".to_string(),
+            db_port: 5432,
+            default_days_limit: 7,
+            default_frequency_hours: 24,
+        };
         let state = State(CommentsAppState {
             repo,
             task_queue: Arc::new(DummyScheduler),
-            default_days_limit: 7,
-            default_frequency_hours: 24,
+            config,
         });
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(10),
-            url_id: None,
+            url_id: 1,
         });
         let resp = list_comments(state, query).await;
         let err = resp.unwrap_err();

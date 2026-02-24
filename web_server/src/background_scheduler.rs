@@ -105,7 +105,7 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> {
+        async fn count_comments(&self, _url_id: i64) -> Result<u32, sqlx::Error> {
             Ok(0)
         }
 
@@ -113,7 +113,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: Option<i64>,
+            _url_id: i64,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(vec![])
         }
@@ -154,6 +154,10 @@ mod tests {
         async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
+
+        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     struct MockScheduler {
@@ -189,6 +193,7 @@ mod tests {
             last_scraped: Some(past_time),
             frequency_hours: 24,
             days_limit: 7,
+            comment_count: 0,
         };
 
         let repo = Arc::new(MockRepo::new(vec![url_row]));

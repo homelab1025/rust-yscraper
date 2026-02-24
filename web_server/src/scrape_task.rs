@@ -1,7 +1,7 @@
-use crate::db::CombinedRepository;
-use crate::scrape::{get_comments, ScrapeError};
-use crate::task_queue::ExecutableTask;
 use crate::CommentRecord;
+use crate::db::CombinedRepository;
+use crate::scrape::{ScrapeError, get_comments};
+use crate::task_queue::ExecutableTask;
 use async_trait::async_trait;
 use log::{error, info};
 use std::error::Error;
@@ -116,9 +116,12 @@ impl ExecutableTask for ScrapeTask {
 
                 info!("Scraping complete; {} comments inserted", total_inserted);
 
-                // Update last_scraped timestamp for scheduling purposes
+                // Update last_scraped timestamp and comment count for scheduling and display
                 if let Err(e) = self.repo.update_last_scraped(self.url_id).await {
                     error!("Failed to update last_scraped timestamp: {}", e);
+                }
+                if let Err(e) = self.repo.update_comment_count(self.url_id).await {
+                    error!("Failed to update comment count: {}", e);
                 }
             }
             Err(error) => {
@@ -134,9 +137,9 @@ impl ExecutableTask for ScrapeTask {
 #[cfg(test)]
 mod tests_task_hashing {
     use super::ScrapeTask;
+    use crate::db::CombinedRepository;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
-    use crate::db::CombinedRepository;
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
@@ -146,7 +149,7 @@ mod tests_task_hashing {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self, _url_id: Option<i64>) -> Result<i64, sqlx::Error> {
+        async fn count_comments(&self, _url_id: i64) -> Result<u32, sqlx::Error> {
             Ok(0)
         }
 
@@ -154,7 +157,7 @@ mod tests_task_hashing {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: Option<i64>,
+            _url_id: i64,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(Vec::new())
         }
@@ -193,6 +196,10 @@ mod tests_task_hashing {
         }
 
         async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
     }
