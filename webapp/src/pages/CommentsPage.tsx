@@ -71,7 +71,15 @@ export default function CommentsPage(): React.JSX.Element {
             directionRef.current === 'down'
                 ? (rowRefs.current[selectedIndex + 1] ?? rowRefs.current[selectedIndex])
                 : rowRefs.current[selectedIndex];
-        scrollTarget?.scrollIntoView({ block: 'nearest' });
+        
+        if (scrollTarget) {
+            // When at the top row and navigating up, scroll the entire page to top
+            if (selectedIndex === 0 && directionRef.current === 'up') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                scrollTarget.scrollIntoView({ block: 'nearest' });
+            }
+        }
     }, [selectedIndex]);
 
     useEffect(() => {
