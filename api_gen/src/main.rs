@@ -11,11 +11,12 @@ fn main() {
     let output_path = &args[1];
     let openapi = ApiDoc::openapi();
 
-    match openapi.to_yaml() {
-        Ok(yaml_desc) => {
-            println!("OpenAPI spec successfully generated at: {}", output_path);
-            fs::write(output_path, yaml_desc).unwrap();
-        }
-        Err(e) => panic!("Failed to write OpenAPI spec: {}", e),
+    let content = if output_path.ends_with(".json") {
+        openapi.to_json().unwrap()
+    } else {
+        openapi.to_yaml().unwrap()
     };
+
+    fs::write(output_path, content).expect("Failed to write OpenAPI spec");
+    println!("OpenAPI spec successfully generated at: {}", output_path);
 }

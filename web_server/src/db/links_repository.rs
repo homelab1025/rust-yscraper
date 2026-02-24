@@ -34,6 +34,7 @@ pub struct DbUrlRow {
     pub url: String,
     pub date_added: chrono::DateTime<chrono::Utc>,
     pub comment_count: i32,
+    pub picked_comment_count: i32,
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]
@@ -47,4 +48,5 @@ pub struct ScheduledUrl {
     // for how many days to refresh comments
     pub days_limit: i32,
     pub comment_count: i32,
+    pub picked_comment_count: i32,
 }

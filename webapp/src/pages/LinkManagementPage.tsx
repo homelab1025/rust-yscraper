@@ -24,7 +24,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import CommentIcon from '@mui/icons-material/Comment';
 import { AddLink } from "../components/AddLink.tsx";
-import { CrateApiLinksApi, type LinkDto } from "../api-client";
+import { CrateApiLinksApi, type LinkDto, CommentState } from "../api-client";
 import { apiConfig } from "../api-config";
 
 const linksApi = new CrateApiLinksApi(apiConfig);
@@ -124,14 +124,22 @@ export default function LinkManagementPage(): React.JSX.Element {
                                         </a>
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
-                                    <TableCell>{link.comment_count}</TableCell>
+                                    <TableCell>{link.picked_comment_count} / {link.total_comment_count}</TableCell>
                                     <TableCell>{'Scraped'}</TableCell>
                                     <TableCell>
                                         <IconButton
                                             component={Link}
-                                            to={`/comments?url_id=${link.id}`}
-                                            aria-label="see comments"
-                                            color="primary"
+                                            to={`/comments?url_id=${link.id}&state=${CommentState.Picked}`}
+                                            aria-label="see picked comments"
+                                            color="success"
+                                        >
+                                            <CommentIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            component={Link}
+                                            to={`/comments?url_id=${link.id}&state=${CommentState.Discarded}`}
+                                            aria-label="see discarded comments"
+                                            color="default"
                                         >
                                             <CommentIcon />
                                         </IconButton>

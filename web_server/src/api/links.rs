@@ -33,7 +33,8 @@ pub struct LinkDto {
     pub id: i64,
     pub url: String,
     pub date_added: String,
-    pub comment_count: u32,
+    pub total_comment_count: u32,
+    pub picked_comment_count: u32,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -185,7 +186,8 @@ pub async fn list_links(
             id: row.id,
             url: row.url,
             date_added: row.date_added.to_rfc3339(),
-            comment_count: row.comment_count as u32,
+            total_comment_count: row.comment_count as u32,
+            picked_comment_count: row.picked_comment_count as u32,
         })
         .collect();
 
@@ -253,7 +255,11 @@ mod tests {
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
-        async fn count_comments(&self, _url_id: i64) -> Result<u32, sqlx::Error> {
+        async fn count_comments(
+            &self,
+            _url_id: i64,
+            _state: Option<i32>,
+        ) -> Result<u32, sqlx::Error> {
             Ok(0)
         }
         async fn page_comments(
@@ -261,6 +267,7 @@ mod tests {
             _offset: i64,
             _count: i64,
             _url_id: i64,
+            _state: Option<i32>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(vec![])
         }
@@ -270,6 +277,9 @@ mod tests {
             _url_id: i64,
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
+        }
+        async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
+            Ok(())
         }
     }
 
@@ -358,12 +368,14 @@ mod tests {
                 url: "https://example.com/1".to_string(),
                 date_added: time_url1,
                 comment_count: 5,
+                picked_comment_count: 2,
             },
             DbUrlRow {
                 id: 2,
                 url: "https://example.com/2".to_string(),
                 date_added: time_url2,
                 comment_count: 10,
+                picked_comment_count: 5,
             },
         ];
         let state = make_state(Ok(rows.clone()), Ok(0), ScheduleOutcome::Scheduled);
@@ -376,13 +388,15 @@ mod tests {
             id: 1,
             url: "https://example.com/1".to_string(),
             date_added: time_url1.to_rfc3339(),
-            comment_count: 5
+            total_comment_count: 5,
+            picked_comment_count: 2,
         }));
         assert!(links.contains(&LinkDto {
             id: 2,
             url: "https://example.com/2".to_string(),
             date_added: time_url2.to_rfc3339(),
-            comment_count: 10
+            total_comment_count: 10,
+            picked_comment_count: 5,
         }));
     }
 

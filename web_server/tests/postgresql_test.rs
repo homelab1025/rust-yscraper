@@ -6,6 +6,8 @@ use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{GenericImage, ImageExt};
 use testcontainers_modules::postgres::Postgres;
+use web_server::CommentRecord;
+use web_server::db::comments_repository::CommentsRepository;
 use web_server::db::links_repository::LinksRepository;
 use web_server::db::postgresql::PgCommentsRepository;
 
@@ -212,4 +214,80 @@ async fn test_delete_link_with_comments() {
         .await
         .unwrap();
     assert_eq!(comments_count, 0);
+}
+
+#[tokio::test]
+async fn test_upsert_comments_selective_update() {
+    let (pool, _container) = setup_db().await;
+    let repo = PgCommentsRepository::new(pool.clone());
+
+    let url_id = 200;
+    let comment_id = 500;
+
+    // 1. Setup a link
+    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, $3, $4, $5)")
+        .bind(url_id)
+        .bind("http://example.com/upsert_test")
+        .bind(Utc::now())
+        .bind(24)
+        .bind(7)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    // 2. Initial insert via upsert_comments
+    let initial_comments = vec![CommentRecord {
+        id: comment_id,
+        author: "original_author".to_string(),
+        date: "2026-01-01".to_string(),
+        text: "original_text".to_string(),
+        tags: vec![],
+        state: web_server::CommentState::Picked, // state = 1
+    }];
+
+    repo.upsert_comments(&initial_comments, url_id)
+        .await
+        .unwrap();
+
+    // 3. Verify initial state
+    let row: (String, String, i32) =
+        sqlx::query_as("SELECT author, text, state FROM comments WHERE id = $1")
+            .bind(comment_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
+    assert_eq!(row.0, "original_author");
+    assert_eq!(row.1, "original_text");
+    assert_eq!(row.2, 1);
+
+    // 4. Upsert with NEW text but different fields (author, date, state)
+    // The requirement is that ONLY text should be updated.
+    let updated_comments = vec![CommentRecord {
+        id: comment_id,
+        author: "NEW_author_should_be_ignored".to_string(),
+        date: "2026-99-99".to_string(),
+        text: "UPDATED_text".to_string(),
+        tags: vec!["ignored_tag".to_string()],
+        state: web_server::CommentState::Discarded, // state = 2, should be ignored
+    }];
+
+    repo.upsert_comments(&updated_comments, url_id)
+        .await
+        .unwrap();
+
+    // 5. Verify that ONLY text changed
+    let row: (String, String, i32) =
+        sqlx::query_as("SELECT author, text, state FROM comments WHERE id = $1")
+            .bind(comment_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
+    assert_eq!(
+        row.0, "original_author",
+        "Author should not have been updated"
+    );
+    assert_eq!(row.1, "UPDATED_text", "Text should have been updated");
+    assert_eq!(row.2, 1, "State should not have been updated");
 }

@@ -4,7 +4,7 @@ use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
 use async_trait::async_trait;
 use chrono::Utc;
 use log::debug;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, QueryBuilder};
 
 pub struct PgCommentsRepository {
     pool: Pool<Postgres>,
@@ -18,9 +18,16 @@ impl PgCommentsRepository {
 
 #[async_trait]
 impl CommentsRepository for PgCommentsRepository {
-    async fn count_comments(&self, url_id: i64) -> Result<u32, sqlx::Error> {
-        sqlx::query_scalar::<_, i32>("SELECT comment_count FROM urls WHERE id = $1")
-            .bind(url_id)
+    async fn count_comments(&self, url_id: i64, state: Option<i32>) -> Result<u32, sqlx::Error> {
+        let mut qb: QueryBuilder<Postgres> =
+            QueryBuilder::new("SELECT COUNT(*) FROM comments WHERE url_id = ");
+        qb.push_bind(url_id);
+        if state.is_some() {
+            qb.push(" AND state = ");
+            qb.push_bind(state.unwrap());
+        }
+
+        qb.build_query_scalar::<i64>()
             .fetch_one(&self.pool)
             .await
             .map(|c| c as u32)
@@ -31,21 +38,26 @@ impl CommentsRepository for PgCommentsRepository {
         offset: i64,
         count: i64,
         url_id: i64,
+        state: Option<i32>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
-        sqlx::query_as::<_, DbCommentRow>(
-            r#"
-            SELECT id, author, date, text, url_id
-            FROM comments
-            WHERE url_id = $1
-            ORDER BY date DESC, id DESC
-            LIMIT $2 OFFSET $3
-            "#,
-        )
-        .bind(url_id)
-        .bind(count)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await
+        let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
+            "SELECT id, author, date, text, url_id, state FROM comments WHERE url_id = ",
+        );
+        qb.push_bind(url_id);
+
+        if let Some(s) = state {
+            qb.push(" AND state = ");
+            qb.push_bind(s);
+        }
+
+        qb.push(" ORDER BY date DESC, id DESC LIMIT ");
+        qb.push_bind(count);
+        qb.push(" OFFSET ");
+        qb.push_bind(offset);
+
+        qb.build_query_as::<DbCommentRow>()
+            .fetch_all(&self.pool)
+            .await
     }
 
     async fn upsert_comments(
@@ -53,9 +65,9 @@ impl CommentsRepository for PgCommentsRepository {
         comments: &[CommentRecord],
         url_id: i64,
     ) -> Result<usize, sqlx::Error> {
-        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text, url_id=EXCLUDED.url_id";
+        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id, state)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text";
 
         let mut inserted = 0usize;
         for comment in comments {
@@ -65,11 +77,40 @@ impl CommentsRepository for PgCommentsRepository {
                 .bind(&comment.date)
                 .bind(&comment.text)
                 .bind(url_id)
+                .bind(comment.state as i32)
                 .execute(&self.pool)
                 .await?;
             inserted += result.rows_affected() as usize;
         }
         Ok(inserted)
+    }
+
+    async fn update_comment_state(&self, id: i64, state: i32) -> Result<(), sqlx::Error> {
+        let mut tx = self.pool.begin().await?;
+
+        // Update comment state
+        sqlx::query("UPDATE comments SET state = $1 WHERE id = $2")
+            .bind(state)
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        // Update counts for the affected URL
+        // TODO: this needs to be improved as it lowers performance
+        sqlx::query(
+            r#"
+            UPDATE urls 
+            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = (SELECT url_id FROM comments WHERE id = $1)),
+                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = (SELECT url_id FROM comments WHERE id = $1) AND state = 1)
+            WHERE id = (SELECT url_id FROM comments WHERE id = $1)
+            "#,
+        )
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
     }
 }
 
@@ -77,7 +118,7 @@ impl CommentsRepository for PgCommentsRepository {
 impl LinksRepository for PgCommentsRepository {
     async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
         sqlx::query_as::<_, DbUrlRow>(
-            "SELECT id, url, date_added, comment_count FROM urls ORDER BY date_added DESC",
+            "SELECT id, url, date_added, comment_count, picked_comment_count FROM urls ORDER BY date_added DESC",
         )
         .fetch_all(&self.pool)
         .await
@@ -128,8 +169,8 @@ impl LinksRepository for PgCommentsRepository {
         // Note: Only update URL field on conflict to preserve original scheduling values
         sqlx::query(
             r#"
-            INSERT INTO urls (id, url, date_added, frequency_hours, days_limit, comment_count)
-            VALUES ($1, $2, $3, $4, $5, 0)
+            INSERT INTO urls (id, url, date_added, frequency_hours, days_limit, comment_count, picked_comment_count)
+            VALUES ($1, $2, $3, $4, $5, 0, 0)
             ON CONFLICT (id) DO UPDATE SET
                 url = EXCLUDED.url
             "#,
@@ -150,7 +191,7 @@ impl LinksRepository for PgCommentsRepository {
 
         sqlx::query_as::<_, ScheduledUrl>(
             r#"
-            SELECT id, url, last_scraped, frequency_hours, days_limit, comment_count
+            SELECT id, url, last_scraped, frequency_hours, days_limit, comment_count, picked_comment_count
             FROM urls
             WHERE (date_added + INTERVAL '1 day' * days_limit) >= $1 AND
                   (
@@ -179,7 +220,8 @@ impl LinksRepository for PgCommentsRepository {
         sqlx::query(
             r#"
             UPDATE urls 
-            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1)
+            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1),
+                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1 AND state = 1)
             WHERE id = $1
             "#,
         )

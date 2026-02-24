@@ -7,11 +7,41 @@ pub mod scrape_task;
 pub mod task_queue;
 pub mod utils;
 
-#[derive(Debug, Default, Clone)]
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum CommentState {
+    New = 0,
+    Picked = 1,
+    Discarded = 2,
+}
+
+impl Default for CommentState {
+    fn default() -> Self {
+        Self::New
+    }
+}
+
+impl From<i32> for CommentState {
+    fn from(v: i32) -> Self {
+        match v {
+            1 => Self::Picked,
+            2 => Self::Discarded,
+            _ => Self::New,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CommentRecord {
     pub id: i64,
     pub author: String,
     pub date: String,
     pub text: String,
+    #[serde(default)]
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub state: CommentState,
 }

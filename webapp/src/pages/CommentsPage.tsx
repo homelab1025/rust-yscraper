@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
     Alert,
@@ -15,7 +15,7 @@ import {
     TableRow,
     Typography,
 } from '@mui/material';
-import { CrateApiCommentsApi, type CommentDto } from '../api-client';
+import { CrateApiCommentsApi, type CommentDto, CommentState } from '../api-client';
 import { apiConfig } from '../api-config';
 import CommentRow from '../components/CommentRow';
 
@@ -23,10 +23,13 @@ const commentsApi = new CrateApiCommentsApi(apiConfig);
 const PAGE_SIZE = 50;
 const KEY_NAV_DOWN = 'j';
 const KEY_NAV_UP = 'k';
+const KEY_PICK = 'p';
+const KEY_DISCARD = 'd';
 
 export default function CommentsPage(): React.JSX.Element {
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
+    const filterState = (searchParams.get('state') as CommentState | null) || undefined;
 
     const [comments, setComments] = useState<CommentDto[]>([]);
     const [total, setTotal] = useState(0);
@@ -38,11 +41,31 @@ export default function CommentsPage(): React.JSX.Element {
     const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
     const directionRef = useRef<'down' | 'up'>('down');
 
+    const updateState = useCallback(async (commentId: number, state: CommentState) => {
+        try {
+            await commentsApi.updateCommentState(commentId, { state });
+            // If we are filtering, remove the comment from the list
+            if (filterState !== undefined) {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+                setTotal(t => t - 1);
+                // Adjust selection if needed
+                if (selectedIndex >= comments.length - 1 && selectedIndex > 0) {
+                    setSelectedIndex(i => i - 1);
+                }
+            } else {
+                // Update the state in the local list
+                setComments(prev => prev.map(c => c.id === commentId ? { ...c, state } : c));
+            }
+        } catch (err) {
+            console.error('Failed to update comment state', err);
+        }
+    }, [filterState, selectedIndex, comments.length]);
+
     useEffect(() => {
         const fetchComments = async () => {
             try {
                 setLoading(true);
-                const response = await commentsApi.listComments(page * PAGE_SIZE, PAGE_SIZE, urlId);
+                const response = await commentsApi.listComments(urlId!, page * PAGE_SIZE, PAGE_SIZE, filterState);
                 setComments(response.data.items);
                 setTotal(response.data.total);
                 setError(null);
@@ -55,7 +78,7 @@ export default function CommentsPage(): React.JSX.Element {
         };
 
         fetchComments();
-    }, [page, urlId]);
+    }, [page, urlId, filterState]);
 
     // After a page change triggered by keyboard nav, snap selection to first or last row.
     useEffect(() => {
@@ -71,7 +94,7 @@ export default function CommentsPage(): React.JSX.Element {
             directionRef.current === 'down'
                 ? (rowRefs.current[selectedIndex + 1] ?? rowRefs.current[selectedIndex])
                 : rowRefs.current[selectedIndex];
-        
+
         if (scrollTarget) {
             // When at the top row and navigating up, scroll the entire page to top
             if (selectedIndex === 0 && directionRef.current === 'up') {
@@ -107,12 +130,16 @@ export default function CommentsPage(): React.JSX.Element {
                     pendingSelectRef.current = 'last';
                     setPage(p => p - 1);
                 }
+            } else if (e.key === KEY_PICK) {
+                updateState(comments[selectedIndex].id, CommentState.Picked);
+            } else if (e.key === KEY_DISCARD) {
+                updateState(comments[selectedIndex].id, CommentState.Discarded);
             }
         };
 
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [loading, comments, selectedIndex, page, total]);
+    }, [loading, comments, selectedIndex, page, total, updateState]);
 
     return (
         <Container>
@@ -152,6 +179,7 @@ export default function CommentsPage(): React.JSX.Element {
                                     ref={(el) => { rowRefs.current[i] = el; }}
                                     comment={c}
                                     selected={i === selectedIndex}
+                                    onUpdateState={updateState}
                                 />
                             ))
                         )}

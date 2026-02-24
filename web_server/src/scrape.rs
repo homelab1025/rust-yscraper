@@ -149,6 +149,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
             date,
             text,
             tags: vec![],
+            state: crate::CommentState::New,
         });
     }
 
