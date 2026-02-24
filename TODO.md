@@ -1,4 +1,6 @@
 ## TODO
+
+- the comment gets a new attribute named "state" which reflects whether the comment was picked or discarded. This can be encoded in a number in the application code. The user can pick or discard a comment based on the 
 - ideas could be grouped in clusters based on functional areas/domains
 - create a web interface using reactjs with the following features:
   - (page) list the comments that have been scraped and provide the possibility to filter them.
@@ -6,10 +8,9 @@
     - the discard and keep actions should be done using the keyboard (no mouse needed) for quick action
     - show a confirmation of whether the action was KEEP or DISCARD and allow the user to change it
   - (page) list comments that are selected as kept. These are potential project ideas to try out new technologies.
-## TEMP
-the comment gets a new attribute named "state" which reflects whether the comment was picked or discarded. This can be encoded in a number in the application code. The user can pick or discard a comment based on the 
 
 ## DONE
+
 - refresh the comments (scrape again) over time with a limit of X days, specified as `days_limit` in ScrapeRequest
 - webapp
   - (page) list the links that have been submitted for scraping
