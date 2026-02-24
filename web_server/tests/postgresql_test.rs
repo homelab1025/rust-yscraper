@@ -139,3 +139,77 @@ async fn test_get_urls_due_for_refresh() {
     assert_eq!(due_urls[1].url, url3);
     assert!(due_urls[1].last_scraped.is_some());
 }
+
+#[tokio::test]
+async fn test_delete_link_with_comments() {
+    let (pool, _container) = setup_db().await;
+    let repo = PgCommentsRepository::new(pool.clone());
+
+    let now = Utc::now();
+    let id = 100;
+    let url = "http://example.com/delete_test";
+
+    // 1. Insert a link
+    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, $3, $4, $5)")
+        .bind(id)
+        .bind(url)
+        .bind(now)
+        .bind(24)
+        .bind(7)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    // 2. Insert comments for that link
+    sqlx::query(
+        "INSERT INTO comments (id, author, date, text, url_id) VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(1)
+    .bind("author1")
+    .bind("2026-01-01T00:00:00Z")
+    .bind("comment 1")
+    .bind(id)
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    sqlx::query(
+        "INSERT INTO comments (id, author, date, text, url_id) VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(2)
+    .bind("author2")
+    .bind("2026-01-02T00:00:00Z")
+    .bind("comment 2")
+    .bind(id)
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    // 3. Verify they exist
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM comments WHERE url_id = $1")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 2);
+
+    // 4. Delete the link
+    let affected = repo.delete_link(id).await.unwrap();
+    assert_eq!(affected, 1);
+
+    // 5. Verify the link is gone
+    let link_exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM urls WHERE id = $1)")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(!link_exists);
+
+    // 6. Verify comments are gone
+    let comments_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM comments WHERE url_id = $1")
+        .bind(id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(comments_count, 0);
+}

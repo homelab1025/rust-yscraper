@@ -3,7 +3,7 @@ use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
 use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
 use async_trait::async_trait;
 use chrono::Utc;
-use log::{debug, warn};
+use log::debug;
 use sqlx::{Pool, Postgres};
 
 pub struct PgCommentsRepository {
@@ -86,17 +86,7 @@ impl LinksRepository for PgCommentsRepository {
     async fn delete_link(&self, id: i64) -> Result<u64, sqlx::Error> {
         let mut tx = self.pool.begin().await?;
 
-        let deleted_links = sqlx::query("DELETE FROM urls WHERE id = $1")
-            .bind(id)
-            .execute(&mut *tx)
-            .await?;
-
-        debug!(
-            "Found {} link to delete for id {}",
-            deleted_links.rows_affected(),
-            id
-        );
-
+        debug!("Deleting comments for link id {}", id);
         let delete_comments = sqlx::query("DELETE FROM comments WHERE url_id = $1")
             .bind(id)
             .execute(&mut *tx)
@@ -108,12 +98,17 @@ impl LinksRepository for PgCommentsRepository {
             "Found {} comments to delete for link id {}",
             removed_comments, id
         );
-        if removed_comments > 0 && deleted_links.rows_affected() == 0 {
-            warn!(
-                "There were {} comments for link id {} but no link was found. This should not happen.",
-                removed_comments, id
-            );
-        }
+
+        let deleted_links = sqlx::query("DELETE FROM urls WHERE id = $1")
+            .bind(id)
+            .execute(&mut *tx)
+            .await?;
+
+        debug!(
+            "Found {} link to delete for id {}",
+            deleted_links.rows_affected(),
+            id
+        );
 
         tx.commit().await?;
 

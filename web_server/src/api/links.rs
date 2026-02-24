@@ -6,7 +6,7 @@ use crate::task_queue::TaskScheduler;
 use axum::Json;
 use axum::extract::{FromRef, Path, State};
 use axum::http::StatusCode;
-use log::{error, info};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
