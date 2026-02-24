@@ -67,14 +67,6 @@ impl BackgroundScheduler {
                 Ok(true) => {
                     info!("Scheduled refresh for URL ID: {}", item_id);
                     scheduled_count += 1;
-
-                    // Update last_scraped timestamp to prevent immediate re-scheduling
-                    if let Err(e) = self.repo.update_last_scraped(item_id).await {
-                        error!(
-                            "Failed to update last_scraped for URL ID {}: {}",
-                            item_id, e
-                        );
-                    }
                 }
                 Ok(false) => {
                     info!("Refresh for URL ID {} already scheduled", item_id);
