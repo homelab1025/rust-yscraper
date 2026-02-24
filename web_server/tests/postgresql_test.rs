@@ -17,7 +17,6 @@ async fn setup_db() -> (PgPool, testcontainers::ContainerAsync<Postgres>) {
         .with_password("postgres")
         .with_db_name("postgres")
         .with_network("bridge")
-        .with_container_name("postgres_db_test")
         .with_log_consumer(|log: &testcontainers::core::logs::LogFrame| {
             print!("{}", String::from_utf8_lossy(log.bytes()));
         })
