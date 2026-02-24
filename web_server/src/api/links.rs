@@ -207,6 +207,7 @@ pub async fn delete_link(
     State(state): State<LinksAppState>,
     Path(id): Path<i64>,
 ) -> Result<(), (StatusCode, Json<ApiError>)> {
+    debug!("delete_link called with {}", id);
     match state.repo.delete_link(id).await {
         Ok(n) => {
             if n == 0 {
