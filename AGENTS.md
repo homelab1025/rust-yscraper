@@ -63,6 +63,15 @@ cargo run -p api_gen -- openapi.yaml
 # Spin up the dependencies
 docker-compose up
 
+# Start the full development stack in tmux (detached)
+tmux new-session -d -s dev && \
+tmux rename-window -t dev:0 'dev-stack' && \
+tmux send-keys -t dev:0.0 'docker-compose up' C-m && \
+tmux split-window -h -t dev:0 && \
+tmux send-keys -t dev:0.1 'sleep 5 && cargo run -p web_server' C-m && \
+tmux split-window -v -t dev:0.1 && \
+tmux send-keys -t dev:0.2 'cd webapp && npm run dev' C-m
+
 # Frontend dev server
 cd webapp && npm install && npm run dev   # http://localhost:5173
 ```
