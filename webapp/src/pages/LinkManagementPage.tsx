@@ -129,6 +129,14 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     <TableCell>
                                         <IconButton
                                             component={Link}
+                                            to={`/comments?url_id=${link.id}&state=${CommentState.New}`}
+                                            aria-label="see new comments"
+                                            color="primary"
+                                        >
+                                            <CommentIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            component={Link}
                                             to={`/comments?url_id=${link.id}&state=${CommentState.Picked}`}
                                             aria-label="see picked comments"
                                             color="success"
