@@ -60,9 +60,8 @@ cargo llvm-cov --html
 # Generate OpenAPI YAML
 cargo run -p api_gen -- openapi.yaml
 
-# Spin up Postgres + run Liquibase migrations
-docker compose up -d postgres
-docker compose up --no-deps liquibase
+# Spin up the dependencies
+docker-compose up
 
 # Frontend dev server
 cd webapp && npm install && npm run dev   # http://localhost:5173
