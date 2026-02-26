@@ -41,7 +41,7 @@ impl CommentsRepository for PgCommentsRepository {
         state: Option<i32>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
         let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-            "SELECT id, author, date, text, url_id, state FROM comments WHERE url_id = ",
+            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments WHERE url_id = ",
         );
         qb.push_bind(url_id);
 
@@ -65,9 +65,9 @@ impl CommentsRepository for PgCommentsRepository {
         comments: &[CommentRecord],
         url_id: i64,
     ) -> Result<usize, sqlx::Error> {
-        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id, state)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text";
+        let sql_insert = "INSERT INTO comments (id, author, date, text, url_id, state, subcomment_count)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text, subcomment_count=EXCLUDED.subcomment_count";
 
         let mut inserted = 0usize;
         for comment in comments {
@@ -78,6 +78,7 @@ impl CommentsRepository for PgCommentsRepository {
                 .bind(&comment.text)
                 .bind(url_id)
                 .bind(comment.state as i32)
+                .bind(comment.subcomment_count)
                 .execute(&self.pool)
                 .await?;
             inserted += result.rows_affected() as usize;

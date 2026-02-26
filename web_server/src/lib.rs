@@ -44,4 +44,6 @@ pub struct CommentRecord {
     pub tags: Vec<String>,
     #[serde(default)]
     pub state: CommentState,
+    #[serde(default)]
+    pub subcomment_count: i32,
 }

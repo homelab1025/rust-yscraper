@@ -9,10 +9,15 @@
     **Summary:** Created a new Liquibase migration to add a `subcomment_count` column to the `comments` table. This column is an integer, defaults to 0, and is non-nullable.
     - `db/changelog/005_add_subcomment_count.sql`
     - `db/changelog/db.changelog-master.yaml`
-2.  - [ ] Task: Update Backend Entities and Repository.
-    - [ ] Update `Comment` struct in `web_server/src/db/comments_repository.rs` to include `subcomment_count`.
-    - [ ] Update `CommentsRepository` trait methods if necessary.
-    - [ ] Update `PgCommentsRepository` in `web_server/src/db/postgresql.rs` to handle the new column in SQL queries (select/insert/update).
+2.  - [x] Task: Update Backend Entities and Repository.
+    - [x] Update `CommentRecord` struct in `web_server/src/lib.rs` to include `subcomment_count`.
+    - [x] Update `DbCommentRow` struct in `web_server/src/db/comments_repository.rs` to include `subcomment_count`.
+    - [x] Update `PgCommentsRepository` in `web_server/src/db/postgresql.rs` to handle the new column in SQL queries (select/insert/update).
+
+    **Summary:** Updated the `CommentRecord` and `DbCommentRow` structs to include the `subcomment_count` field. Modified `PgCommentsRepository` to fetch and store the `subcomment_count` in the database.
+    - `web_server/src/lib.rs`
+    - `web_server/src/db/comments_repository.rs`
+    - `web_server/src/db/postgresql.rs`
 3.  - [ ] Task: Update Scraping Logic.
     - [ ] Modify `web_server/src/scrape.rs` to extract the `n` attribute from elements with classes `.togg.clicky`.
     - [ ] Ensure it defaults to `0` if not found.

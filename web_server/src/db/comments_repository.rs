@@ -34,4 +34,5 @@ pub struct DbCommentRow {
     pub text: String,
     pub url_id: i64,
     pub state: i32,
+    pub subcomment_count: i32,
 }
