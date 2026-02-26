@@ -34,9 +34,12 @@
 
 ## Phase 2: API and Client Regeneration
 
-1.  - [ ] Task: Update API Handlers and OpenAPI Documentation.
-    - [ ] Ensure `subcomment_count` is correctly returned in the JSON response in `web_server/src/api/comments.rs`.
-    - [ ] Verify `utoipa` annotations on the `Comment` struct.
+1.  - [x] Task: Update API Handlers and OpenAPI Documentation.
+    - [x] Ensure `subcomment_count` is correctly returned in the JSON response in `web_server/src/api/comments.rs`.
+    - [x] Verify `utoipa` annotations on the `Comment` struct.
+
+    **Summary:** Verified that `CommentDto` in `web_server/src/api/comments.rs` includes `subcomment_count` and is correctly annotated with `utoipa::ToSchema`. The `list_comments` handler now returns this field.
+    - `web_server/src/api/comments.rs`
 2.  - [ ] Task: Regenerate API Client.
     - [ ] Run `cargo run -p api_gen -- openapi.yaml` to generate the updated OpenAPI spec.
     - [ ] Run `npm run generate-api` in the `webapp` directory to update the TypeScript client.
