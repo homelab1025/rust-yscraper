@@ -104,7 +104,7 @@ pub async fn list_comments(
     // page items ordered by date desc; fallback id desc for ties
     let rows = match state
         .repo
-        .page_comments(offset, count, url_id, state_int)
+        .page_comments(offset, count, url_id, state_int, None, None)
         .await
     {
         Ok(r) => r,
@@ -249,14 +249,15 @@ mod tests {
             }
         }
 
-        async fn page_comments(
-            &self,
-            _offset: i64,
-            _count: i64,
-            _url_id: i64,
-            state: Option<i32>,
-        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
-            *self.last_filter_state.lock().await = state;
+            async fn page_comments(
+                &self,
+                _offset: i64,
+                _count: i64,
+                _url_id: i64,
+                state: Option<i32>,
+                _sort_by: Option<crate::SortBy>,
+                _sort_order: Option<crate::SortOrder>,
+            ) -> Result<Vec<DbCommentRow>, sqlx::Error> {            *self.last_filter_state.lock().await = state;
             match &*self.page_ok.lock().await {
                 Some(rows) => Ok(rows.clone()),
                 None => Err(sqlx::Error::RowNotFound),

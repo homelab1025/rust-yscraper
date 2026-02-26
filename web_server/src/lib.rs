@@ -19,6 +19,22 @@ pub enum CommentState {
     Discarded = 2,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SortBy {
+    #[default]
+    Date,
+    SubcommentCount,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SortOrder {
+    Asc,
+    #[default]
+    Desc,
+}
+
 impl From<i32> for CommentState {
     fn from(v: i32) -> Self {
         match v {

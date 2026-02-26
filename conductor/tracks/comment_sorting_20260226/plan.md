@@ -5,11 +5,11 @@ This plan covers the end-to-end implementation of sorting functionality for comm
 ## Phase 1: Backend - Repository Layer (TDD)
 Focus: Implementing the sorting logic at the database query level with full test coverage.
 
-- [ ] Task: Create `web_server/tests/sorting_test.rs` to define expected sorting behavior.
-- [ ] Task: Update `CommentsRepository` trait in `web_server/src/db/comments_repository.rs` to include sorting parameters in `page_comments`.
-- [ ] Task: Implement sorting logic in `PgCommentsRepository::page_comments` in `web_server/src/db/postgresql.rs`.
-- [ ] Task: Verify that all repository tests pass, including the new sorting tests.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Backend - Repository Layer' (Protocol in workflow.md)
+- [x] Task: Create `web_server/tests/sorting_test.rs` to define expected sorting behavior.
+- [x] Task: Update `CommentsRepository` trait in `web_server/src/db/comments_repository.rs` to include sorting parameters in `page_comments`.
+- [x] Task: Implement sorting logic in `PgCommentsRepository::page_comments` in `web_server/src/db/postgresql.rs`.
+- [x] Task: Verify that all repository tests pass, including the new sorting tests.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Backend - Repository Layer' (Protocol in workflow.md)
 
 ## Phase 2: Backend - API Layer
 Focus: Exposing the sorting functionality through the REST API.

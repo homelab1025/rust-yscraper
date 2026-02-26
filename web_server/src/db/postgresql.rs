@@ -1,6 +1,8 @@
-use crate::CommentRecord;
+use crate::SortBy::{Date, SubcommentCount};
+use crate::SortOrder::Asc;
 use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
 use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+use crate::{CommentRecord, SortOrder};
 use async_trait::async_trait;
 use chrono::Utc;
 use log::debug;
@@ -39,6 +41,8 @@ impl CommentsRepository for PgCommentsRepository {
         count: i64,
         url_id: i64,
         state: Option<i32>,
+        sort_by: Option<crate::SortBy>,
+        sort_order: Option<SortOrder>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
         let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
             "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments WHERE url_id = ",
@@ -50,7 +54,22 @@ impl CommentsRepository for PgCommentsRepository {
             qb.push_bind(s);
         }
 
-        qb.push(" ORDER BY date DESC, id DESC LIMIT ");
+        let sort_col = match sort_by.unwrap_or_default() {
+            Date => "date",
+            SubcommentCount => "subcomment_count",
+        };
+
+        let order_str = match sort_order.unwrap_or_default() {
+            Asc => "ASC",
+            SortOrder::Desc => "DESC",
+        };
+
+        qb.push(" ORDER BY ");
+        qb.push(sort_col);
+        qb.push(" ");
+        qb.push(order_str);
+        // Tie-break with id DESC
+        qb.push(", id DESC LIMIT ");
         qb.push_bind(count);
         qb.push(" OFFSET ");
         qb.push_bind(offset);

@@ -6,13 +6,15 @@ pub trait CommentsRepository: Send + Sync {
     /// Total number of comments for a specific url_id, optionally filtered by state.
     async fn count_comments(&self, url_id: i64, state: Option<i32>) -> Result<u32, sqlx::Error>;
 
-    /// Returns a page of comments ordered by date desc, id desc, filtered by url_id and optionally state.
+    /// Returns a page of comments filtered by url_id and optionally state, with configurable sorting.
     async fn page_comments(
         &self,
         offset: i64,
         count: i64,
         url_id: i64,
         state: Option<i32>,
+        sort_by: Option<crate::SortBy>,
+        sort_order: Option<crate::SortOrder>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error>;
 
     /// Insert or update a batch of comments for a given url_id.

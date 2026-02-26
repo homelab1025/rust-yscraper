@@ -163,6 +163,8 @@ mod tests_task_hashing {
             _count: i64,
             _url_id: i64,
             _state: Option<i32>,
+            _sort_by: Option<crate::SortBy>,
+            _sort_order: Option<crate::SortOrder>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             Ok(Vec::new())
         }
