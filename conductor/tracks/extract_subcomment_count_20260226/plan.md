@@ -32,7 +32,7 @@
     - `web_server/tests/fixtures/hn_subcomments.html`
 5.  - [x] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
 
-## Phase 2: API and Client Regeneration
+## Phase 2: API and Client Regeneration [checkpoint: 01fc7520385b0feaa17de510bb1e064bcacc12f9]
 
 1.  - [x] Task: Update API Handlers and OpenAPI Documentation.
     - [x] Ensure `subcomment_count` is correctly returned in the JSON response in `web_server/src/api/comments.rs`.
@@ -48,7 +48,7 @@
     - `openapi.yaml`
     - `webapp/openapi.yaml`
     - `webapp/src/api-client/` (multiple files)
-3.  - [~] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
+3.  - [x] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Implementation
 
