@@ -30,7 +30,7 @@
     **Summary:** Added a unit test `get_comments_extracts_subcomment_count` to `web_server/src/scrape.rs` and a new HTML fixture `web_server/tests/fixtures/hn_subcomments.html`. Verified that the subcomment count is correctly extracted and defaults to 0 when missing.
     - `web_server/src/scrape.rs`
     - `web_server/tests/fixtures/hn_subcomments.html`
-5.  - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
+5.  - [~] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
 
 ## Phase 2: API and Client Regeneration
 
