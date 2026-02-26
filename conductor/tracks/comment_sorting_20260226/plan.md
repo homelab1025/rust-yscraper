@@ -2,7 +2,7 @@
 
 This plan covers the end-to-end implementation of sorting functionality for comments, allowing users to sort by date and subcomment count in both ascending and descending orders.
 
-## Phase 1: Backend - Repository Layer (TDD)
+## Phase 1: Backend - Repository Layer (TDD) [checkpoint: 7eba456a596c1918d9239d29db4d8e15ad7a45d8]
 Focus: Implementing the sorting logic at the database query level with full test coverage.
 
 - [x] Task: Create `web_server/tests/sorting_test.rs` to define expected sorting behavior.
