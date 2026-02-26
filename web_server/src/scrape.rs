@@ -88,6 +88,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
     let age_sel = Selector::parse("span.age")?;
     let age_link_sel = Selector::parse("span.age a")?;
     let text_sel = Selector::parse(".comment")?;
+    let subcomments_sel = Selector::parse(".togg.clicky")?;
 
     let mut parsed_comments = Vec::new();
 
@@ -139,6 +140,13 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
             .map(|t| t.text().collect::<String>())
             .unwrap_or_else(|| "".to_string());
 
+        let subcomment_count = tr
+            .select(&subcomments_sel)
+            .next()
+            .and_then(|a| a.value().attr("n"))
+            .and_then(|n| n.parse::<i32>().ok())
+            .unwrap_or(0);
+
         if author.is_empty() && text.trim().is_empty() {
             continue;
         }
@@ -150,6 +158,7 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
             text,
             tags: vec![],
             state: crate::CommentState::New,
+            subcomment_count,
         });
     }
 

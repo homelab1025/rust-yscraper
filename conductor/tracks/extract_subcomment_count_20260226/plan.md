@@ -18,9 +18,12 @@
     - `web_server/src/lib.rs`
     - `web_server/src/db/comments_repository.rs`
     - `web_server/src/db/postgresql.rs`
-3.  - [ ] Task: Update Scraping Logic.
-    - [ ] Modify `web_server/src/scrape.rs` to extract the `n` attribute from elements with classes `.togg.clicky`.
-    - [ ] Ensure it defaults to `0` if not found.
+3.  - [x] Task: Update Scraping Logic.
+    - [x] Modify `web_server/src/scrape.rs` to extract the `n` attribute from elements with classes `.togg.clicky`.
+    - [x] Ensure it defaults to `0` if not found.
+
+    **Summary:** Updated the `parse_root_comments` function in `web_server/src/scrape.rs` to extract the `n` attribute from the `.togg.clicky` element, which represents the number of subcomments.
+    - `web_server/src/scrape.rs`
 4.  - [ ] Task: Write Tests for Scraping Logic.
     - [ ] Add unit tests in `web_server/src/scrape.rs` using HTML fixtures (some existing, maybe create a new one) to verify subcomment extraction.
 5.  - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
