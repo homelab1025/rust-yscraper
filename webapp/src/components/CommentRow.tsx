@@ -29,6 +29,7 @@ const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
         >
             <TableCell>{comment.text}</TableCell>
             <TableCell>{comment.user}</TableCell>
+            <TableCell>{comment.subcomment_count}</TableCell>
             <TableCell>{comment.date} ({CommentStateLabels[comment.state]})</TableCell>
             <TableCell>
                 <Button

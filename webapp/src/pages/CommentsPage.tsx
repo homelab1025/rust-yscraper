@@ -155,6 +155,7 @@ export default function CommentsPage(): React.JSX.Element {
                         <TableRow>
                             <TableCell>Comment</TableCell>
                             <TableCell>Author</TableCell>
+                            <TableCell>Subcomments</TableCell>
                             <TableCell>Date</TableCell>
                             <TableCell>Actions</TableCell>
                         </TableRow>
@@ -162,13 +163,13 @@ export default function CommentsPage(): React.JSX.Element {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
                         ) : comments.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     No comments found.
                                 </TableCell>
                             </TableRow>

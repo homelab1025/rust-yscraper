@@ -52,9 +52,13 @@
 
 ## Phase 3: Frontend Implementation
 
-1.  - [ ] Task: Update Frontend to display Subcomments.
-    - [ ] Modify `webapp/src/pages/CommentsPage.tsx` to add a new "Subcomments" column after the "Author" column.
-    - [ ] Update `webapp/src/components/CommentRow.tsx` (if it exists) to display the new data.
+1.  - [x] Task: Update Frontend to display Subcomments.
+    - [x] Modify `webapp/src/pages/CommentsPage.tsx` to add a new "Subcomments" column after the "Author" column.
+    - [x] Update `webapp/src/components/CommentRow.tsx` (if it exists) to display the new data.
+
+    **Summary:** Updated `CommentsPage.tsx` to include a "Subcomments" header and adjusted the `colSpan`. Updated `CommentRow.tsx` to display the `subcomment_count` value in a new `TableCell` after the author's name.
+    - `webapp/src/pages/CommentsPage.tsx`
+    - `webapp/src/components/CommentRow.tsx`
 2.  - [ ] Task: Verify Frontend with Local Dev Stack.
     - [ ] Run the full stack and verify that scraped comments show the subcomment count in the UI.
 3.  - [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Implementation' (Protocol in workflow.md)
