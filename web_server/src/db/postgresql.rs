@@ -1,8 +1,6 @@
-use crate::SortBy::{Date, SubcommentCount};
-use crate::SortOrder::Asc;
 use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
 use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
-use crate::{CommentRecord, SortOrder};
+use crate::{CommentRecord, SortBy, SortOrder};
 use async_trait::async_trait;
 use chrono::Utc;
 use log::debug;
@@ -55,12 +53,12 @@ impl CommentsRepository for PgCommentsRepository {
         }
 
         let sort_col = match sort_by.unwrap_or_default() {
-            Date => "date",
-            SubcommentCount => "subcomment_count",
+            SortBy::Date => "date",
+            SortBy::SubcommentCount => "subcomment_count",
         };
 
         let order_str = match sort_order.unwrap_or_default() {
-            Asc => "ASC",
+            SortOrder::Asc => "ASC",
             SortOrder::Desc => "DESC",
         };
 

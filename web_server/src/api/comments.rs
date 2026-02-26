@@ -203,87 +203,87 @@ mod tests {
     use tokio::sync::mpsc::error::TrySendError;
     use tower::util::ServiceExt;
 
-        #[derive(Debug, Default)]
-        struct MockedRepo {
-            // None -> simulate error; Some(v) -> return Ok(v)
-            count_ok: AsyncMutex<Option<i64>>,
-            // None -> simulate error; Some(rows) -> return Ok(clone)
-            page_ok: AsyncMutex<Option<Vec<DbCommentRow>>>,
-            // Records the last state passed to count/page
-            last_filter_state: AsyncMutex<Option<i32>>,
-            // Records the last sorting params passed to page
-            last_sort_by: AsyncMutex<Option<crate::SortBy>>,
-            last_sort_order: AsyncMutex<Option<crate::SortOrder>>,
-            // Records the last state passed to update
-            last_update_state: AsyncMutex<Option<i32>>,
-        }
-    
-        impl MockedRepo {
-            fn with_ok(count: i64, rows: Vec<DbCommentRow>) -> Self {
-                Self {
-                    count_ok: AsyncMutex::new(Some(count)),
-                    page_ok: AsyncMutex::new(Some(rows)),
-                    last_filter_state: AsyncMutex::new(None),
-                    last_sort_by: AsyncMutex::new(None),
-                    last_sort_order: AsyncMutex::new(None),
-                    last_update_state: AsyncMutex::new(None),
-                }
-            }
-    
-            fn with_count_err() -> Self {
-                Self {
-                    count_ok: AsyncMutex::new(None),
-                    page_ok: AsyncMutex::new(Some(vec![])),
-                    last_filter_state: AsyncMutex::new(None),
-                    last_sort_by: AsyncMutex::new(None),
-                    last_sort_order: AsyncMutex::new(None),
-                    last_update_state: AsyncMutex::new(None),
-                }
-            }
-    
-            fn with_page_err(total: i64) -> Self {
-                Self {
-                    count_ok: AsyncMutex::new(Some(total)),
-                    page_ok: AsyncMutex::new(None),
-                    last_filter_state: AsyncMutex::new(None),
-                    last_sort_by: AsyncMutex::new(None),
-                    last_sort_order: AsyncMutex::new(None),
-                    last_update_state: AsyncMutex::new(None),
-                }
+    #[derive(Debug, Default)]
+    struct MockedRepo {
+        // None -> simulate error; Some(v) -> return Ok(v)
+        count_ok: AsyncMutex<Option<i64>>,
+        // None -> simulate error; Some(rows) -> return Ok(clone)
+        page_ok: AsyncMutex<Option<Vec<DbCommentRow>>>,
+        // Records the last state passed to count/page
+        last_filter_state: AsyncMutex<Option<i32>>,
+        // Records the last sorting params passed to page
+        last_sort_by: AsyncMutex<Option<crate::SortBy>>,
+        last_sort_order: AsyncMutex<Option<crate::SortOrder>>,
+        // Records the last state passed to update
+        last_update_state: AsyncMutex<Option<i32>>,
+    }
+
+    impl MockedRepo {
+        fn with_ok(count: i64, rows: Vec<DbCommentRow>) -> Self {
+            Self {
+                count_ok: AsyncMutex::new(Some(count)),
+                page_ok: AsyncMutex::new(Some(rows)),
+                last_filter_state: AsyncMutex::new(None),
+                last_sort_by: AsyncMutex::new(None),
+                last_sort_order: AsyncMutex::new(None),
+                last_update_state: AsyncMutex::new(None),
             }
         }
-    
-        #[async_trait]
-        impl CommentsRepository for MockedRepo {
-            async fn count_comments(
-                &self,
-                _url_id: i64,
-                state: Option<i32>,
-            ) -> Result<u32, sqlx::Error> {
-                *self.last_filter_state.lock().await = state;
-                match *self.count_ok.lock().await {
-                    Some(v) => Ok(v as u32),
-                    None => Err(sqlx::Error::RowNotFound),
-                }
+
+        fn with_count_err() -> Self {
+            Self {
+                count_ok: AsyncMutex::new(None),
+                page_ok: AsyncMutex::new(Some(vec![])),
+                last_filter_state: AsyncMutex::new(None),
+                last_sort_by: AsyncMutex::new(None),
+                last_sort_order: AsyncMutex::new(None),
+                last_update_state: AsyncMutex::new(None),
             }
-    
-            async fn page_comments(
-                &self,
-                _offset: i64,
-                _count: i64,
-                _url_id: i64,
-                state: Option<i32>,
-                sort_by: Option<crate::SortBy>,
-                sort_order: Option<crate::SortOrder>,
-            ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
-                *self.last_filter_state.lock().await = state;
-                *self.last_sort_by.lock().await = sort_by;
-                *self.last_sort_order.lock().await = sort_order;
-                match &*self.page_ok.lock().await {
-                    Some(rows) => Ok(rows.clone()),
-                    None => Err(sqlx::Error::RowNotFound),
-                }
+        }
+
+        fn with_page_err(total: i64) -> Self {
+            Self {
+                count_ok: AsyncMutex::new(Some(total)),
+                page_ok: AsyncMutex::new(None),
+                last_filter_state: AsyncMutex::new(None),
+                last_sort_by: AsyncMutex::new(None),
+                last_sort_order: AsyncMutex::new(None),
+                last_update_state: AsyncMutex::new(None),
             }
+        }
+    }
+
+    #[async_trait]
+    impl CommentsRepository for MockedRepo {
+        async fn count_comments(
+            &self,
+            _url_id: i64,
+            state: Option<i32>,
+        ) -> Result<u32, sqlx::Error> {
+            *self.last_filter_state.lock().await = state;
+            match *self.count_ok.lock().await {
+                Some(v) => Ok(v as u32),
+                None => Err(sqlx::Error::RowNotFound),
+            }
+        }
+
+        async fn page_comments(
+            &self,
+            _offset: i64,
+            _count: i64,
+            _url_id: i64,
+            state: Option<i32>,
+            sort_by: Option<crate::SortBy>,
+            sort_order: Option<crate::SortOrder>,
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            *self.last_filter_state.lock().await = state;
+            *self.last_sort_by.lock().await = sort_by;
+            *self.last_sort_order.lock().await = sort_order;
+            match &*self.page_ok.lock().await {
+                Some(rows) => Ok(rows.clone()),
+                None => Err(sqlx::Error::RowNotFound),
+            }
+        }
 
         async fn upsert_comments(
             &self,
