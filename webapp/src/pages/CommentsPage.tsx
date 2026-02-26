@@ -13,6 +13,7 @@ import {
     TableHead,
     TablePagination,
     TableRow,
+    TableSortLabel,
     Typography,
 } from '@mui/material';
 import { CrateApiCommentsApi, type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
@@ -44,9 +45,12 @@ export default function CommentsPage(): React.JSX.Element {
     const directionRef = useRef<'down' | 'up'>('down');
 
     const handleRequestSort = (property: SortBy) => {
-        const isAsc = sortBy === property && sortOrder === SortOrder.Asc;
-        setSortOrder(isAsc ? SortOrder.Desc : SortOrder.Asc);
-        setSortBy(property);
+        if (sortBy === property) {
+            setSortOrder(sortOrder === SortOrder.Desc ? SortOrder.Asc : SortOrder.Desc);
+        } else {
+            setSortBy(property);
+            setSortOrder(SortOrder.Desc);
+        }
         setPage(0);
         setSelectedIndex(0);
     };
@@ -165,8 +169,24 @@ export default function CommentsPage(): React.JSX.Element {
                         <TableRow>
                             <TableCell>Comment</TableCell>
                             <TableCell>Author</TableCell>
-                            <TableCell>Subcomments</TableCell>
-                            <TableCell>Date</TableCell>
+                            <TableCell sortDirection={sortBy === SortBy.SubcommentCount ? sortOrder : false}>
+                                <TableSortLabel
+                                    active={sortBy === SortBy.SubcommentCount}
+                                    direction={sortBy === SortBy.SubcommentCount ? sortOrder : 'desc'}
+                                    onClick={() => handleRequestSort(SortBy.SubcommentCount)}
+                                >
+                                    Subcomments
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell sortDirection={sortBy === SortBy.Date ? sortOrder : false}>
+                                <TableSortLabel
+                                    active={sortBy === SortBy.Date}
+                                    direction={sortBy === SortBy.Date ? sortOrder : 'desc'}
+                                    onClick={() => handleRequestSort(SortBy.Date)}
+                                >
+                                    Date
+                                </TableSortLabel>
+                            </TableCell>
                             <TableCell>Actions</TableCell>
                         </TableRow>
                     </TableHead>

@@ -95,7 +95,7 @@ impl ExecutableTask for ScrapeTask {
     async fn execute(&self) -> Result<(), ScrapeTaskError> {
         info!("Executing Scrape TASK.");
 
-        info!("/scrape called; starting scraping for {}", self.url);
+        info!("Started task for scraping for {}", self.url);
         let comments_retrieval = get_comments(&self.url).await;
         match comments_retrieval {
             Ok(comments) => {
