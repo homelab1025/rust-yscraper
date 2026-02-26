@@ -44,10 +44,11 @@
     - [x] Run `cargo run -p api_gen -- openapi.yaml` to generate the updated OpenAPI spec.
     - [x] Run `npm run generate-api` in the `webapp` directory to update the TypeScript client.
 
-    **Summary:** Regenerated the `openapi.yaml` file and the TypeScript API client in `webapp/src/api-client`. The new client now includes the `subcomment_count` field in `CommentDto`.
+    **Summary:** Regenerated the `openapi.yaml` file, copied it to `webapp/openapi.yaml`, and ran `npm run generate-api` in the `webapp` directory. The new client now correctly includes the `subcomment_count` field in `CommentDto`.
     - `openapi.yaml`
+    - `webapp/openapi.yaml`
     - `webapp/src/api-client/` (multiple files)
-3.  - [ ] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
+3.  - [~] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Implementation
 
