@@ -73,7 +73,7 @@ All tasks follow a strict lifecycle:
     -   **Action:** Propose a functionality-focused commit message that summarizes the phase's value to the user.
     -   **Action:** Include the individual task summaries in the commit message body.
     -   **Action:** Request final approval for the commit.
-    -   **Action:** Perform the commit after approval.
+    -   **Action:** Never perform the commit without approval from me.
 
 7.  **Record Phase Checkpoint SHA:**
     -   **Step 7.1: Get Commit Hash:** Obtain the hash of the checkpoint commit.
