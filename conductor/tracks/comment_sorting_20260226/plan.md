@@ -11,7 +11,7 @@ Focus: Implementing the sorting logic at the database query level with full test
 - [x] Task: Verify that all repository tests pass, including the new sorting tests.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Backend - Repository Layer' (Protocol in workflow.md)
 
-## Phase 2: Backend - API Layer
+## Phase 2: Backend - API Layer [checkpoint: 5146ca645cb465203d083b3b02ead1c9971a63bd]
 Focus: Exposing the sorting functionality through the REST API.
 
 - [x] Task: Update `CommentsFilter` struct in `web_server/src/api/comments.rs` to include `sort_by` and `order` parameters.
