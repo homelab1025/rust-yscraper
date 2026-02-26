@@ -1,0 +1,8 @@
+{
+  "track_id": "extract_subcomment_count_20260226",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-26T14:30:00Z",
+  "updated_at": "2026-02-26T14:30:00Z",
+  "description": "Each of the comments on a hacker news page has subcomments and the number of those comments appears in the link that has classes "togg" and "clicky", under attribute "n". We are going to use that value to express engagement with that particular comment. This will be stored in the database with the comment and also be displayed in the comments page in a separate column."
+}
