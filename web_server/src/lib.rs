@@ -10,18 +10,13 @@ pub mod utils;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CommentState {
+    #[default]
     New = 0,
     Picked = 1,
     Discarded = 2,
-}
-
-impl Default for CommentState {
-    fn default() -> Self {
-        Self::New
-    }
 }
 
 impl From<i32> for CommentState {

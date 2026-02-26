@@ -22,9 +22,9 @@ impl CommentsRepository for PgCommentsRepository {
         let mut qb: QueryBuilder<Postgres> =
             QueryBuilder::new("SELECT COUNT(*) FROM comments WHERE url_id = ");
         qb.push_bind(url_id);
-        if state.is_some() {
+        if let Some(s) = state {
             qb.push(" AND state = ");
-            qb.push_bind(state.unwrap());
+            qb.push_bind(s);
         }
 
         qb.build_query_scalar::<i64>()
