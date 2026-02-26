@@ -21,7 +21,7 @@ Focus: Exposing the sorting functionality through the REST API.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Backend - API Layer' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend - API Layer' (Protocol in workflow.md)
 
-## Phase 3: Frontend - Data Fetching & State
+## Phase 3: Frontend - Data Fetching & State [checkpoint: 49c21d9fbff2ea55ce6fe85a5a5443d291d8d5be]
 Focus: Updating the frontend to handle sort state and fetch sorted data.
 
 - [x] Task: Update API fetching logic in `webapp/src/pages/CommentsPage.tsx` to include `sort_by` and `order` in the request.
