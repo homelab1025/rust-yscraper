@@ -1,6 +1,6 @@
 # Implementation Plan: Extract and Display Subcomment Count
 
-## Phase 1: Database and Backend Core
+## Phase 1: Database and Backend Core [checkpoint: 1171cc938b7c570643311fe93000f140f8faf5ed]
 
 1.  - [x] Task: Create Liquibase migration to add `subcomment_count` to `comments` table.
     - [x] Create `db/changelog/005_add_subcomment_count.sql`.
@@ -30,7 +30,7 @@
     **Summary:** Added a unit test `get_comments_extracts_subcomment_count` to `web_server/src/scrape.rs` and a new HTML fixture `web_server/tests/fixtures/hn_subcomments.html`. Verified that the subcomment count is correctly extracted and defaults to 0 when missing.
     - `web_server/src/scrape.rs`
     - `web_server/tests/fixtures/hn_subcomments.html`
-5.  - [~] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
+5.  - [x] Task: Conductor - User Manual Verification 'Phase 1: Database and Backend Core' (Protocol in workflow.md)
 
 ## Phase 2: API and Client Regeneration
 
