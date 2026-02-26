@@ -37,3 +37,6 @@ Focus: Making the UI interactive and providing visual feedback for sorting.
 - [x] Task: Ensure active column is highlighted and shows the correct direction icon.
 - [x] Task: Final verification of the end-to-end flow: clicking headers refreshes the list with correct sorting.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Frontend - UI Implementation' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 3058fbe
