@@ -24,10 +24,10 @@ Focus: Exposing the sorting functionality through the REST API.
 ## Phase 3: Frontend - Data Fetching & State
 Focus: Updating the frontend to handle sort state and fetch sorted data.
 
-- [ ] Task: Update API fetching logic in `webapp/src/pages/CommentsPage.tsx` to include `sort_by` and `order` in the request.
-- [ ] Task: Define state for `sortColumn` and `sortDirection` in `CommentsPage.tsx`.
-- [ ] Task: Implement the sorting toggle logic (DESC -> ASC -> DESC, default to DESC on new column).
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend - Data Fetching & State' (Protocol in workflow.md)
+- [x] Task: Update API fetching logic in `webapp/src/pages/CommentsPage.tsx` to include `sort_by` and `order` in the request.
+- [x] Task: Define state for `sortColumn` and `sortDirection` in `CommentsPage.tsx`.
+- [x] Task: Implement the sorting toggle logic (DESC -> ASC -> DESC, default to DESC on new column).
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend - Data Fetching & State' (Protocol in workflow.md)
 
 ## Phase 4: Frontend - UI Implementation
 Focus: Making the UI interactive and providing visual feedback for sorting.

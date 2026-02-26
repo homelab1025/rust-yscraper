@@ -15,7 +15,7 @@ import {
     TableRow,
     Typography,
 } from '@mui/material';
-import { CrateApiCommentsApi, type CommentDto, CommentState } from '../api-client';
+import { CrateApiCommentsApi, type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
 import { apiConfig } from '../api-config';
 import CommentRow from '../components/CommentRow';
 
@@ -37,9 +37,19 @@ export default function CommentsPage(): React.JSX.Element {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [sortBy, setSortBy] = useState<SortBy>(SortBy.Date);
+    const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
     const pendingSelectRef = useRef<'first' | 'last' | null>(null);
     const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
     const directionRef = useRef<'down' | 'up'>('down');
+
+    const handleRequestSort = (property: SortBy) => {
+        const isAsc = sortBy === property && sortOrder === SortOrder.Asc;
+        setSortOrder(isAsc ? SortOrder.Desc : SortOrder.Asc);
+        setSortBy(property);
+        setPage(0);
+        setSelectedIndex(0);
+    };
 
     const updateState = useCallback(async (commentId: number, state: CommentState) => {
         try {
@@ -65,7 +75,7 @@ export default function CommentsPage(): React.JSX.Element {
         const fetchComments = async () => {
             try {
                 setLoading(true);
-                const response = await commentsApi.listComments(urlId!, page * PAGE_SIZE, PAGE_SIZE, filterState);
+                const response = await commentsApi.listComments(urlId!, page * PAGE_SIZE, PAGE_SIZE, filterState, sortBy, sortOrder);
                 setComments(response.data.items);
                 setTotal(response.data.total);
                 setError(null);
@@ -78,7 +88,7 @@ export default function CommentsPage(): React.JSX.Element {
         };
 
         fetchComments();
-    }, [page, urlId, filterState]);
+    }, [page, urlId, filterState, sortBy, sortOrder]);
 
     // After a page change triggered by keyboard nav, snap selection to first or last row.
     useEffect(() => {
