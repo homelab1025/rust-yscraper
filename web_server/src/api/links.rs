@@ -311,6 +311,14 @@ mod tests {
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
+        async fn update_thread_metadata(
+            &self,
+            _url_id: i64,
+            _month: Option<i32>,
+            _year: Option<i32>,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     #[derive(Clone, Copy, Debug)]
@@ -371,6 +379,8 @@ mod tests {
                 date_added: time_url1,
                 comment_count: 5,
                 picked_comment_count: 2,
+                thread_month: None,
+                thread_year: None,
             },
             DbUrlRow {
                 id: 2,
@@ -378,6 +388,8 @@ mod tests {
                 date_added: time_url2,
                 comment_count: 10,
                 picked_comment_count: 5,
+                thread_month: None,
+                thread_year: None,
             },
         ];
         let state = make_state(Ok(rows.clone()), Ok(0), ScheduleOutcome::Scheduled);

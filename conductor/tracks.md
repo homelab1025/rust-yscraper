@@ -7,5 +7,5 @@
 
 ---
 
-- [ ] **Track: Extract month and year from the thread title and display it in the links table.**
+- [~] **Track: Extract month and year from the thread title and display it in the links table.**
 *Link: [./tracks/extract_month_year_20260226/](./tracks/extract_month_year_20260226/)*

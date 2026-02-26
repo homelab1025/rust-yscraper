@@ -136,7 +136,7 @@ impl CommentsRepository for PgCommentsRepository {
 impl LinksRepository for PgCommentsRepository {
     async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
         sqlx::query_as::<_, DbUrlRow>(
-            "SELECT id, url, date_added, comment_count, picked_comment_count FROM urls ORDER BY date_added DESC",
+            "SELECT id, url, date_added, comment_count, picked_comment_count, thread_month, thread_year FROM urls ORDER BY date_added DESC",
         )
         .fetch_all(&self.pool)
         .await
@@ -209,7 +209,7 @@ impl LinksRepository for PgCommentsRepository {
 
         sqlx::query_as::<_, ScheduledUrl>(
             r#"
-            SELECT id, url, last_scraped, frequency_hours, days_limit, comment_count, picked_comment_count
+            SELECT id, url, last_scraped, frequency_hours, days_limit, comment_count, picked_comment_count, thread_month, thread_year
             FROM urls
             WHERE (date_added + INTERVAL '1 day' * days_limit) >= $1 AND
                   (
@@ -246,6 +246,21 @@ impl LinksRepository for PgCommentsRepository {
         .bind(url_id)
         .execute(&self.pool)
         .await?;
+        Ok(())
+    }
+
+    async fn update_thread_metadata(
+        &self,
+        url_id: i64,
+        month: Option<i32>,
+        year: Option<i32>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE urls SET thread_month = $1, thread_year = $2 WHERE id = $3")
+            .bind(month)
+            .bind(year)
+            .bind(url_id)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 }

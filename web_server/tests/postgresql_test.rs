@@ -134,6 +134,8 @@ async fn test_get_urls_due_for_refresh() {
     assert_eq!(due_urls[0].id, id1);
     assert_eq!(due_urls[0].url, url1);
     assert!(due_urls[0].last_scraped.is_none());
+    assert!(due_urls[0].thread_month.is_none());
+    assert!(due_urls[0].thread_year.is_none());
 
     // Check Case 3
     assert_eq!(due_urls[1].id, id3);
@@ -150,13 +152,15 @@ async fn test_delete_link_with_comments() {
     let id = 100;
     let url = "http://example.com/delete_test";
 
-    // 1. Insert a link
-    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, $3, $4, $5)")
+    // 1. Insert a link with metadata
+    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit, thread_month, thread_year) VALUES ($1, $2, $3, $4, $5, $6, $7)")
         .bind(id)
         .bind(url)
         .bind(now)
         .bind(24)
         .bind(7)
+        .bind(1)
+        .bind(2026)
         .execute(&pool)
         .await
         .unwrap();
@@ -293,4 +297,46 @@ async fn test_upsert_comments_selective_update() {
     assert_eq!(row.1, "UPDATED_text", "Text should have been updated");
     assert_eq!(row.2, 1, "State should not have been updated");
     assert_eq!(row.3, 10, "subcomment_count SHOULD have been updated");
+}
+
+#[tokio::test]
+async fn test_update_thread_metadata() {
+    let (pool, _container) = setup_db().await;
+    let repo = PgCommentsRepository::new(pool.clone());
+
+    let url_id = 300;
+    let url = "http://example.com/metadata_test";
+
+    // 1. Setup a link
+    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, $3, $4, $5)")
+        .bind(url_id)
+        .bind(url)
+        .bind(Utc::now())
+        .bind(24)
+        .bind(7)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    // 2. Initial update
+    repo.update_thread_metadata(url_id, Some(2), Some(2026))
+        .await
+        .unwrap();
+
+    // 3. Verify
+    let links = repo.list_links().await.unwrap();
+    let link = links.iter().find(|l| l.id == url_id).unwrap();
+    assert_eq!(link.thread_month, Some(2));
+    assert_eq!(link.thread_year, Some(2026));
+
+    // 4. Update to NULL (e.g. if extraction fails on re-scrape)
+    repo.update_thread_metadata(url_id, None, None)
+        .await
+        .unwrap();
+
+    // 5. Verify NULL
+    let links = repo.list_links().await.unwrap();
+    let link = links.iter().find(|l| l.id == url_id).unwrap();
+    assert_eq!(link.thread_month, None);
+    assert_eq!(link.thread_year, None);
 }

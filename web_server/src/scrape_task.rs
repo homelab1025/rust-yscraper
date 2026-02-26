@@ -213,6 +213,15 @@ mod tests_task_hashing {
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
+
+        async fn update_thread_metadata(
+            &self,
+            _url_id: i64,
+            _month: Option<i32>,
+            _year: Option<i32>,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     fn new_task(url: &str, url_id: i64) -> ScrapeTask {

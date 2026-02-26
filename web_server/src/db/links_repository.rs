@@ -26,6 +26,14 @@ pub trait LinksRepository: Send + Sync {
 
     /// Update comment_count for a URL based on comments in the DB
     async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error>;
+
+    /// Update thread metadata (month and year) for a URL
+    async fn update_thread_metadata(
+        &self,
+        url_id: i64,
+        month: Option<i32>,
+        year: Option<i32>,
+    ) -> Result<(), sqlx::Error>;
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]
@@ -35,6 +43,8 @@ pub struct DbUrlRow {
     pub date_added: chrono::DateTime<chrono::Utc>,
     pub comment_count: i32,
     pub picked_comment_count: i32,
+    pub thread_month: Option<i32>,
+    pub thread_year: Option<i32>,
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]
@@ -49,4 +59,6 @@ pub struct ScheduledUrl {
     pub days_limit: i32,
     pub comment_count: i32,
     pub picked_comment_count: i32,
+    pub thread_month: Option<i32>,
+    pub thread_year: Option<i32>,
 }

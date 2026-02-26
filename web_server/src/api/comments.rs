@@ -319,6 +319,14 @@ mod tests {
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
+        async fn update_thread_metadata(
+            &self,
+            _url_id: i64,
+            _month: Option<i32>,
+            _year: Option<i32>,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
     }
 
     fn make_test_config() -> crate::config::AppConfig {
