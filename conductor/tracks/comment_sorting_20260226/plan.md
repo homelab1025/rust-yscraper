@@ -29,7 +29,7 @@ Focus: Updating the frontend to handle sort state and fetch sorted data.
 - [x] Task: Implement the sorting toggle logic (DESC -> ASC -> DESC, default to DESC on new column).
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend - Data Fetching & State' (Protocol in workflow.md)
 
-## Phase 4: Frontend - UI Implementation
+## Phase 4: Frontend - UI Implementation [checkpoint: 0b7c32d35300b8780cc2f9d2019462b1e7aff9cc]
 Focus: Making the UI interactive and providing visual feedback for sorting.
 
 - [x] Task: Update table headers in `CommentsPage.tsx` to be clickable.
