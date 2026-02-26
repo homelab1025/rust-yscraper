@@ -19,6 +19,7 @@ A specialized web scraping and monitoring tool designed to track and archive com
 ## Key Features
 - **Background Monitoring**: Automatically refresh tracked threads at configurable intervals to capture new updates.
 - **Management UI**: A centralized interface to add new threads, manage tracking settings, and browse archived comments.
+- **Engagement Tracking**: Capture and display the number of subcomments for each comment, providing insight into community engagement within threads.
 - **Data Persistence**: Robust storage of comment metadata and content using PostgreSQL, ensuring no data loss.
 
 ## Success Metrics
