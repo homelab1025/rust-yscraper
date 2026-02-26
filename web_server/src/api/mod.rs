@@ -5,6 +5,7 @@ pub mod links;
 pub mod ping;
 
 use crate::CommentState;
+use crate::{SortBy, SortOrder};
 use crate::api::comments::{CommentDto, CommentsPage, UpdateStateRequest};
 use crate::api::common::{ApiError, ApiErrorCode};
 use crate::api::links::{LinkDto, ScrapeRequest, ScrapeResponse, ScrapeState};
@@ -28,6 +29,8 @@ use utoipa::OpenApi;
             CommentsPage,
             UpdateStateRequest,
             CommentState,
+            SortBy,
+            SortOrder,
             ScrapeRequest,
             ScrapeResponse,
             ScrapeState,

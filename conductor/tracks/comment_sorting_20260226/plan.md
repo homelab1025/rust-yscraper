@@ -14,10 +14,11 @@ Focus: Implementing the sorting logic at the database query level with full test
 ## Phase 2: Backend - API Layer
 Focus: Exposing the sorting functionality through the REST API.
 
-- [ ] Task: Update `CommentsFilter` struct in `web_server/src/api/comments.rs` to include `sort_by` and `order` parameters.
-- [ ] Task: Update `list_comments` handler in `web_server/src/api/comments.rs` to pass sorting parameters to the repository.
-- [ ] Task: Update OpenAPI documentation in `web_server/src/api/comments.rs`.
-- [ ] Task: Add integration tests for sorting in `web_server/src/api/comments.rs` (MockedRepo).
+- [x] Task: Update `CommentsFilter` struct in `web_server/src/api/comments.rs` to include `sort_by` and `order` parameters.
+- [x] Task: Update `list_comments` handler in `web_server/src/api/comments.rs` to pass sorting parameters to the repository.
+- [x] Task: Update OpenAPI documentation in `web_server/src/api/comments.rs`.
+- [x] Task: Add integration tests for sorting in `web_server/src/api/comments.rs` (MockedRepo).
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Backend - API Layer' (Protocol in workflow.md)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Backend - API Layer' (Protocol in workflow.md)
 
 ## Phase 3: Frontend - Data Fetching & State
