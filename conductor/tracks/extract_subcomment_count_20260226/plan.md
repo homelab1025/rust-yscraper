@@ -2,9 +2,13 @@
 
 ## Phase 1: Database and Backend Core
 
-1.  - [ ] Task: Create Liquibase migration to add `subcomment_count` to `comments` table.
-    - [ ] Create `db/changelog/005_add_subcomment_count.sql`.
-    - [ ] Update `db/changelog/db.changelog-master.yaml`.
+1.  - [x] Task: Create Liquibase migration to add `subcomment_count` to `comments` table.
+    - [x] Create `db/changelog/005_add_subcomment_count.sql`.
+    - [x] Update `db/changelog/db.changelog-master.yaml`.
+
+    **Summary:** Created a new Liquibase migration to add a `subcomment_count` column to the `comments` table. This column is an integer, defaults to 0, and is non-nullable.
+    - `db/changelog/005_add_subcomment_count.sql`
+    - `db/changelog/db.changelog-master.yaml`
 2.  - [ ] Task: Update Backend Entities and Repository.
     - [ ] Update `Comment` struct in `web_server/src/db/comments_repository.rs` to include `subcomment_count`.
     - [ ] Update `CommentsRepository` trait methods if necessary.
