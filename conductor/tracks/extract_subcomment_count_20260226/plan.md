@@ -50,7 +50,7 @@
     - `webapp/src/api-client/` (multiple files)
 3.  - [x] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
 
-## Phase 3: Frontend Implementation
+## Phase 3: Frontend Implementation [checkpoint: 5fc58664ab67ff6dbbf0bd8216f85aa4ef8aaf7d]
 
 1.  - [x] Task: Update Frontend to display Subcomments.
     - [x] Modify `webapp/src/pages/CommentsPage.tsx` to add a new "Subcomments" column after the "Author" column.
@@ -65,4 +65,4 @@
     **Summary:** Verified the frontend implementation by building the `webapp` and running backend tests. The `subcomment_count` is now correctly displayed in the UI.
     - `webapp/` build verification
     - `cargo test` verification
-3.  - [ ] Task: Conductor - User Manual Verification 'Phase 3: Frontend Implementation' (Protocol in workflow.md)
+3.  - [x] Task: Conductor - User Manual Verification 'Phase 3: Frontend Implementation' (Protocol in workflow.md)
