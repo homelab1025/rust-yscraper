@@ -1,8 +1,6 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::AppState;
 use crate::db::comments_repository::CommentsRepository;
-use crate::scrape_task::ScrapeTask;
-use crate::task_queue::TaskScheduler;
 use axum::extract::{FromRef, Json, Query, State};
 use axum::http::StatusCode;
 use log::{error, info};
@@ -13,8 +11,6 @@ use utoipa::{IntoParams, ToSchema};
 #[derive(Clone)]
 pub struct CommentsAppState {
     pub repo: Arc<dyn CommentsRepository>,
-    // TODO: actually use this in the scraper
-    pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     pub config: crate::config::AppConfig,
 }
 
@@ -22,7 +18,6 @@ impl FromRef<AppState> for CommentsAppState {
     fn from_ref(input: &AppState) -> Self {
         CommentsAppState {
             repo: input.repo.clone(),
-            task_queue: input.task_queue.clone(),
             config: input.config.clone(),
         }
     }
@@ -194,13 +189,11 @@ mod tests {
     use super::*;
     use crate::db::comments_repository::DbCommentRow;
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
-    use crate::scrape_task::ScrapeTask;
     use async_trait::async_trait;
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
     use std::sync::Arc;
     use tokio::sync::Mutex as AsyncMutex;
-    use tokio::sync::mpsc::error::TrySendError;
     use tower::util::ServiceExt;
 
     #[derive(Debug, Default)]
@@ -328,15 +321,6 @@ mod tests {
         }
     }
 
-    // Minimal dummy scheduler for CommentsAppState
-    struct DummyScheduler;
-    #[async_trait]
-    impl TaskScheduler<ScrapeTask> for DummyScheduler {
-        async fn schedule(&self, _task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
-            Ok(true)
-        }
-    }
-
     fn make_test_config() -> crate::config::AppConfig {
         crate::config::AppConfig {
             server_port: 3000,
@@ -374,7 +358,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(5, rows));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -400,7 +383,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(150, rows));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -423,7 +405,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(0, vec![]));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -452,7 +433,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(3, rows));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -476,7 +456,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(1, vec![row]));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -504,7 +483,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_count_err());
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -528,7 +506,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_page_err(10));
         let state = State(CommentsAppState {
             repo,
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
         let query = Query(CommentsFilter {
@@ -552,7 +529,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(0, vec![]));
         let state = State(CommentsAppState {
             repo: repo.clone(),
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
 
@@ -590,7 +566,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::with_ok(0, vec![]));
         let state = State(CommentsAppState {
             repo: repo.clone(),
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
 
@@ -620,7 +595,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::default());
         let state = State(CommentsAppState {
             repo: repo.clone(),
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         });
 
@@ -647,7 +621,6 @@ mod tests {
         let repo = Arc::new(MockedRepo::default());
         let app_state = CommentsAppState {
             repo: repo.clone(),
-            task_queue: Arc::new(DummyScheduler),
             config: make_test_config(),
         };
 
