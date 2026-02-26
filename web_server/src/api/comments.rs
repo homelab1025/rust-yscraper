@@ -55,6 +55,7 @@ pub struct CommentDto {
     pub url_id: i64,
     pub date: String,
     pub state: crate::CommentState,
+    pub subcomment_count: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
@@ -128,6 +129,7 @@ pub async fn list_comments(
             text: row.text,
             url_id: row.url_id,
             state: row.state.into(),
+            subcomment_count: row.subcomment_count,
         })
         .collect();
 
@@ -340,6 +342,7 @@ mod tests {
             text: text.to_string(),
             url_id,
             state: 0,
+            subcomment_count: 0,
         }
     }
 

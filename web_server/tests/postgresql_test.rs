@@ -242,6 +242,7 @@ async fn test_upsert_comments_selective_update() {
         text: "original_text".to_string(),
         tags: vec![],
         state: web_server::CommentState::Picked, // state = 1
+        subcomment_count: 5,
     }];
 
     repo.upsert_comments(&initial_comments, url_id)
@@ -249,8 +250,8 @@ async fn test_upsert_comments_selective_update() {
         .unwrap();
 
     // 3. Verify initial state
-    let row: (String, String, i32) =
-        sqlx::query_as("SELECT author, text, state FROM comments WHERE id = $1")
+    let row: (String, String, i32, i32) =
+        sqlx::query_as("SELECT author, text, state, subcomment_count FROM comments WHERE id = $1")
             .bind(comment_id)
             .fetch_one(&pool)
             .await
@@ -259,6 +260,7 @@ async fn test_upsert_comments_selective_update() {
     assert_eq!(row.0, "original_author");
     assert_eq!(row.1, "original_text");
     assert_eq!(row.2, 1);
+    assert_eq!(row.3, 5);
 
     // 4. Upsert with NEW text but different fields (author, date, state)
     // The requirement is that ONLY text should be updated.
@@ -269,6 +271,7 @@ async fn test_upsert_comments_selective_update() {
         text: "UPDATED_text".to_string(),
         tags: vec!["ignored_tag".to_string()],
         state: web_server::CommentState::Discarded, // state = 2, should be ignored
+        subcomment_count: 10,
     }];
 
     repo.upsert_comments(&updated_comments, url_id)
@@ -276,8 +279,8 @@ async fn test_upsert_comments_selective_update() {
         .unwrap();
 
     // 5. Verify that ONLY text changed
-    let row: (String, String, i32) =
-        sqlx::query_as("SELECT author, text, state FROM comments WHERE id = $1")
+    let row: (String, String, i32, i32) =
+        sqlx::query_as("SELECT author, text, state, subcomment_count FROM comments WHERE id = $1")
             .bind(comment_id)
             .fetch_one(&pool)
             .await
@@ -289,4 +292,5 @@ async fn test_upsert_comments_selective_update() {
     );
     assert_eq!(row.1, "UPDATED_text", "Text should have been updated");
     assert_eq!(row.2, 1, "State should not have been updated");
+    assert_eq!(row.3, 10, "subcomment_count SHOULD have been updated");
 }

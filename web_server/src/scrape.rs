@@ -200,6 +200,35 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_extracts_subcomment_count() {
+        // Arrange
+        let server = MockServer::start().await;
+        let html = include_str!("../tests/fixtures/hn_subcomments.html");
+        Mock::given(method("GET"))
+            .and(path("/sub"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(html))
+            .mount(&server)
+            .await;
+
+        // Act
+        let url = format!("{}/sub", &server.uri());
+        let result = get_comments(&url).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let comments = result.unwrap();
+        assert_eq!(comments.len(), 2);
+
+        // Alice has n="5"
+        let alice = comments.iter().find(|c| c.author == "alice").unwrap();
+        assert_eq!(alice.subcomment_count, 5);
+
+        // Bob has no togg/clicky, defaults to 0
+        let bob = comments.iter().find(|c| c.author == "bob").unwrap();
+        assert_eq!(bob.subcomment_count, 0);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
     async fn get_comments_returns_err_on_http_500() {
         let server = MockServer::start().await;
         Mock::given(method("GET"))
