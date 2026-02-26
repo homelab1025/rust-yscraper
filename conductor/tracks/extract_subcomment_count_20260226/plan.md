@@ -40,9 +40,13 @@
 
     **Summary:** Verified that `CommentDto` in `web_server/src/api/comments.rs` includes `subcomment_count` and is correctly annotated with `utoipa::ToSchema`. The `list_comments` handler now returns this field.
     - `web_server/src/api/comments.rs`
-2.  - [ ] Task: Regenerate API Client.
-    - [ ] Run `cargo run -p api_gen -- openapi.yaml` to generate the updated OpenAPI spec.
-    - [ ] Run `npm run generate-api` in the `webapp` directory to update the TypeScript client.
+2.  - [x] Task: Regenerate API Client.
+    - [x] Run `cargo run -p api_gen -- openapi.yaml` to generate the updated OpenAPI spec.
+    - [x] Run `npm run generate-api` in the `webapp` directory to update the TypeScript client.
+
+    **Summary:** Regenerated the `openapi.yaml` file and the TypeScript API client in `webapp/src/api-client`. The new client now includes the `subcomment_count` field in `CommentDto`.
+    - `openapi.yaml`
+    - `webapp/src/api-client/` (multiple files)
 3.  - [ ] Task: Conductor - User Manual Verification 'Phase 2: API and Client Regeneration' (Protocol in workflow.md)
 
 ## Phase 3: Frontend Implementation
