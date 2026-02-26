@@ -1,6 +1,6 @@
 # Implementation Plan - Extract Month and Year from Thread Title
 
-## Phase 1: Database & Backend Infrastructure
+## Phase 1: Database & Backend Infrastructure [checkpoint: 00ef5fe970665ca4b66a75af4d077154c1dce2b6]
 - [x] Task: Create Liquibase migration to add `thread_month` and `thread_year` to `urls` table
     - [x] Create `db/changelog/006_add_thread_month_year.sql`.
     - [x] Update `db/changelog/db.changelog-master.yaml`.
