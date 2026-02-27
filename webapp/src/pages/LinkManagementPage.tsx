@@ -132,7 +132,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     <TableCell>{link.id}</TableCell>
                                     <TableCell>
                                         <a href={link.url} target="_blank" rel="noopener noreferrer">
-                                            {formatThreadMetadata((link as any).thread_month, (link as any).thread_year, link.url)}
+                                            {formatThreadMetadata(link.thread_month, link.thread_year, link.url)}
                                         </a>
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>

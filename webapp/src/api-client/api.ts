@@ -69,6 +69,8 @@ export interface LinkDto {
     'date_added': string;
     'id': number;
     'picked_comment_count': number;
+    'thread_month'?: number | null;
+    'thread_year'?: number | null;
     'total_comment_count': number;
     'url': string;
 }

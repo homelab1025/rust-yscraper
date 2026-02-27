@@ -245,7 +245,16 @@ impl LinksRepository for PgCommentsRepository {
         year: Option<i32>,
     ) -> Result<(), sqlx::Error> {
         let now = Utc::now();
-        sqlx::query("UPDATE urls SET last_scraped = $1, thread_month = $2, thread_year = $3 WHERE id = $4")
+        sqlx::query(
+            r#"
+            UPDATE urls 
+            SET last_scraped = $1, 
+                thread_month = $2, 
+                thread_year = $3,
+                comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4)
+            WHERE id = $4
+            "#
+        )
             .bind(now)
             .bind(month)
             .bind(year)
