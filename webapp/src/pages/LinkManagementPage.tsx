@@ -29,6 +29,18 @@ import { apiConfig } from "../api-config";
 
 const linksApi = new CrateApiLinksApi(apiConfig);
 
+const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
+const formatThreadMetadata = (month?: number | null, year?: number | null, fallback?: string) => {
+    if (month && year) {
+        return `${monthNames[month - 1]} ${year}`;
+    }
+    return fallback;
+};
+
 export default function LinkManagementPage(): React.JSX.Element {
     const [links, setLinks] = useState<LinkDto[]>([]);
     const [loading, setLoading] = useState(true);
@@ -120,7 +132,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                                     <TableCell>{link.id}</TableCell>
                                     <TableCell>
                                         <a href={link.url} target="_blank" rel="noopener noreferrer">
-                                            {link.url}
+                                            {formatThreadMetadata((link as any).thread_month, (link as any).thread_year, link.url)}
                                         </a>
                                     </TableCell>
                                     <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>

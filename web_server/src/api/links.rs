@@ -35,6 +35,8 @@ pub struct LinkDto {
     pub date_added: String,
     pub total_comment_count: u32,
     pub picked_comment_count: u32,
+    pub thread_month: Option<i32>,
+    pub thread_year: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -188,6 +190,8 @@ pub async fn list_links(
             date_added: row.date_added.to_rfc3339(),
             total_comment_count: row.comment_count as u32,
             picked_comment_count: row.picked_comment_count as u32,
+            thread_month: row.thread_month,
+            thread_year: row.thread_year,
         })
         .collect();
 
@@ -401,6 +405,8 @@ mod tests {
             date_added: time_url1.to_rfc3339(),
             total_comment_count: 5,
             picked_comment_count: 2,
+            thread_month: None,
+            thread_year: None,
         }));
         assert!(links.contains(&LinkDto {
             id: 2,
@@ -408,6 +414,8 @@ mod tests {
             date_added: time_url2.to_rfc3339(),
             total_comment_count: 10,
             picked_comment_count: 5,
+            thread_month: None,
+            thread_year: None,
         }));
     }
 

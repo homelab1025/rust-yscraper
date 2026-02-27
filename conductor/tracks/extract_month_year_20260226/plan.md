@@ -24,10 +24,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: API & Frontend Integration
-- [ ] Task: Update API Endpoints
-    - [ ] Update `LinkDto` in `web_server/src/api/links.rs`.
-    - [ ] Ensure `list_links` returns the new fields.
-- [ ] Task: Update Frontend Links Table
+- [x] Task: Update API Endpoints
+    - [x] Update `LinkDto` in `web_server/src/api/links.rs`.
+    - [x] Ensure `list_links` returns the new fields.
+    - **Summary**: Updated `LinkDto` to include `thread_month` and `thread_year`. Modified `list_links` to map these fields from the database. Updated API tests.
+- [~] Task: Update Frontend Links Table
     - [ ] Update `webapp/src/pages/LinkManagementPage.tsx` to handle `thread_month` and `thread_year`.
     - [ ] Implement month integer to name mapping.
     - [ ] Update link display logic in the table.
