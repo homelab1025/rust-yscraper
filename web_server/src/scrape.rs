@@ -47,7 +47,13 @@ pub(crate) async fn get_comments(url: &str) -> Result<ScrapeResult, ScrapeError>
 
     // Validate thread title for real HN item pages only
     let title = get_thread_title(&html)?;
-    validate_thread_title_str(&title)?;
+    if !title
+        .to_lowercase()
+        .starts_with(THREAD_PREFIX.to_lowercase().as_str())
+    {
+        warn!("Invalid thread title: {}", title);
+        return Err(InvalidThreadTitle());
+    }
 
     let (thread_month, thread_year) = match extract_month_year(&title) {
         Ok((m, y)) => (Some(m), Some(y)),
@@ -92,25 +98,16 @@ fn get_thread_title(html: &str) -> Result<String, ScrapeError> {
     Err(InvalidThreadTitle())
 }
 
-fn validate_thread_title_str(title: &str) -> Result<(), ScrapeError> {
-    if title
-        .to_lowercase()
-        .starts_with(THREAD_PREFIX.to_lowercase().as_str())
-    {
-        Ok(())
-    } else {
-        warn!("Invalid thread title: {}", title);
-        Err(InvalidThreadTitle())
-    }
-}
-
 pub(crate) fn extract_month_year(title: &str) -> Result<(i32, i32), String> {
     use regex::Regex;
     // Regex to match Month (full name) and Year (4 digits), possibly in parentheses
     let re = Regex::new(r"(?i)(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})").unwrap();
 
     if let Some(caps) = re.captures(title) {
-        let month_str = caps.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let month_str = caps
+            .get(1)
+            .map(|m| m.as_str().to_lowercase())
+            .unwrap_or_default();
         let year_str = caps.get(2).map(|m| m.as_str()).unwrap_or_default();
 
         let month = match month_str.as_str() {
