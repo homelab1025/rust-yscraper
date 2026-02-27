@@ -1,7 +1,7 @@
 use crate::CommentRecord;
 use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
 use crate::utils::extract_item_id_from_url;
-use log::{info, warn};
+use log::{error, info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
 use std::error::Error;
@@ -13,6 +13,13 @@ pub enum ScrapeError {
     HtmlFetchError(reqwest::Error),
     ElementSelectorError(),
     InvalidThreadTitle(),
+}
+
+#[derive(Debug)]
+pub struct ScrapeResult {
+    pub comments: Vec<CommentRecord>,
+    pub thread_month: Option<i32>,
+    pub thread_year: Option<i32>,
 }
 
 impl Error for ScrapeError {}
@@ -29,7 +36,7 @@ impl Display for ScrapeError {
     }
 }
 
-pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, ScrapeError> {
+pub(crate) async fn get_comments(url: &str) -> Result<ScrapeResult, ScrapeError> {
     info!("Fetching URL: {}", url);
     let html = match fetch_html(url).await {
         Ok(h) => h,
@@ -39,12 +46,25 @@ pub(crate) async fn get_comments(url: &str) -> Result<Vec<CommentRecord>, Scrape
     };
 
     // Validate thread title for real HN item pages only
-    validate_thread_title(&html)?;
+    let title = get_thread_title(&html)?;
+    validate_thread_title_str(&title)?;
+
+    let (thread_month, thread_year) = match extract_month_year(&title) {
+        Ok((m, y)) => (Some(m), Some(y)),
+        Err(e) => {
+            error!("Failed to extract month and year from title: {}", e);
+            (None, None)
+        }
+    };
 
     info!("Parsing root comments...");
     let comments = parse_root_comments(&html);
     match comments {
-        Ok(c) => Ok(c),
+        Ok(c) => Ok(ScrapeResult {
+            comments: c,
+            thread_month,
+            thread_year,
+        }),
         Err(_e) => Err(ElementSelectorError()),
     }
 }
@@ -63,21 +83,63 @@ async fn fetch_html(url: &str) -> Result<String, reqwest::Error> {
 
 const THREAD_PREFIX: &str = "Ask HN: What Are You Working On";
 
-fn validate_thread_title(html: &str) -> Result<(), ScrapeError> {
+fn get_thread_title(html: &str) -> Result<String, ScrapeError> {
     let document = Html::parse_document(html);
     let tl_sel = Selector::parse("span.titleline").map_err(|_| ElementSelectorError())?;
     if let Some(span) = document.select(&tl_sel).next() {
-        let title_text = span.text().collect::<String>();
-        if title_text
-            .to_lowercase()
-            .starts_with(THREAD_PREFIX.to_lowercase().as_str())
-        {
-            return Ok(());
-        } else {
-            warn!("Invalid thread title: {}", title_text);
-        }
+        return Ok(span.text().collect::<String>());
     }
     Err(InvalidThreadTitle())
+}
+
+fn validate_thread_title_str(title: &str) -> Result<(), ScrapeError> {
+    if title
+        .to_lowercase()
+        .starts_with(THREAD_PREFIX.to_lowercase().as_str())
+    {
+        Ok(())
+    } else {
+        warn!("Invalid thread title: {}", title);
+        Err(InvalidThreadTitle())
+    }
+}
+
+pub(crate) fn extract_month_year(title: &str) -> Result<(i32, i32), String> {
+    use regex::Regex;
+    // Regex to match Month (full name) and Year (4 digits), possibly in parentheses
+    let re = Regex::new(r"(?i)(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})").unwrap();
+
+    if let Some(caps) = re.captures(title) {
+        let month_str = caps.get(1).map(|m| m.as_str().to_lowercase()).unwrap_or_default();
+        let year_str = caps.get(2).map(|m| m.as_str()).unwrap_or_default();
+
+        let month = match month_str.as_str() {
+            "january" => Some(1),
+            "february" => Some(2),
+            "march" => Some(3),
+            "april" => Some(4),
+            "may" => Some(5),
+            "june" => Some(6),
+            "july" => Some(7),
+            "august" => Some(8),
+            "september" => Some(9),
+            "october" => Some(10),
+            "november" => Some(11),
+            "december" => Some(12),
+            _ => None,
+        };
+
+        let year = year_str.parse::<i32>().ok();
+
+        if let (Some(m), Some(y)) = (month, year) {
+            return Ok((m, y));
+        }
+    }
+
+    Err(format!(
+        "Could not extract month and year from title: '{}'",
+        title
+    ))
 }
 
 fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKind<'_>> {
@@ -167,9 +229,27 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
 
 #[cfg(test)]
 mod tests {
-    use super::get_comments;
+    use super::*;
     use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[test]
+    fn test_extract_month_year() {
+        assert_eq!(
+            extract_month_year("Ask HN: What Are You Working On (February 2026)"),
+            Ok((2, 2026))
+        );
+        assert_eq!(
+            extract_month_year("Ask HN: What Are You Working On (january 2025)"),
+            Ok((1, 2025))
+        );
+        assert_eq!(
+            extract_month_year("Something else December 2024"),
+            Ok((12, 2024))
+        );
+        assert!(extract_month_year("Ask HN: What Are You Working On").is_err());
+        assert!(extract_month_year("Ask HN: What Are You Working On (NotAMonth 2026)").is_err());
+    }
 
     // Use current_thread for faster, deterministic tests
     #[tokio::test(flavor = "current_thread")]
@@ -190,7 +270,8 @@ mod tests {
 
         // Assert
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
-        let comments = result.unwrap();
+        let scrape_result = result.unwrap();
+        let comments = scrape_result.comments;
         assert_eq!(comments.len(), 1, "should only include root comments");
         let c = &comments[0];
         assert_eq!(c.id, 12345);
@@ -216,7 +297,8 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
-        let comments = result.unwrap();
+        let scrape_result = result.unwrap();
+        let comments = scrape_result.comments;
         assert_eq!(comments.len(), 2);
 
         // Alice has n="5"
@@ -267,7 +349,8 @@ mod tests {
 
         // Assert
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
-        let comments = result.unwrap();
+        let scrape_result = result.unwrap();
+        let comments = scrape_result.comments;
         assert_eq!(
             comments.len(),
             1,
@@ -297,7 +380,8 @@ mod tests {
 
         // Assert
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
-        let comments = result.unwrap();
+        let scrape_result = result.unwrap();
+        let comments = scrape_result.comments;
         assert_eq!(
             comments.len(),
             1,
@@ -328,11 +412,11 @@ mod tests {
 
         // Assert: parse succeeds (no selector creation error), but no root comments are found
         assert!(result.is_ok(), "expected Ok, got {:?}", result);
-        let comments = result.unwrap();
+        let scrape_result = result.unwrap();
         assert!(
-            comments.is_empty(),
+            scrape_result.comments.is_empty(),
             "expected empty vector, got {:?}",
-            comments
+            scrape_result.comments
         );
     }
 }

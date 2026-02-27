@@ -305,9 +305,6 @@ mod tests {
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
-        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }

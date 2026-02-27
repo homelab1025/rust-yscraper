@@ -98,7 +98,8 @@ impl ExecutableTask for ScrapeTask {
         info!("Started task for scraping for {}", self.url);
         let comments_retrieval = get_comments(&self.url).await;
         match comments_retrieval {
-            Ok(comments) => {
+            Ok(scrape_result) => {
+                let comments = scrape_result.comments;
                 info!("Parsed {} root comments", comments.len());
 
                 let batches: Vec<Vec<CommentRecord>> =
@@ -116,12 +117,20 @@ impl ExecutableTask for ScrapeTask {
 
                 info!("Scraping complete; {} comments inserted", total_inserted);
 
-                // Update last_scraped timestamp and comment count for scheduling and display
-                if let Err(e) = self.repo.update_last_scraped(self.url_id).await {
-                    error!("Failed to update last_scraped timestamp: {}", e);
-                }
+                // Update metadata and timestamps
                 if let Err(e) = self.repo.update_comment_count(self.url_id).await {
                     error!("Failed to update comment count: {}", e);
+                }
+                if let Err(e) = self
+                    .repo
+                    .update_thread_metadata(
+                        self.url_id,
+                        scrape_result.thread_month,
+                        scrape_result.thread_year,
+                    )
+                    .await
+                {
+                    error!("Failed to update thread metadata: {}", e);
                 }
             }
             Err(error) => {
@@ -143,9 +152,11 @@ mod tests_task_hashing {
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
-    struct MockRepo;
+    struct MockRepo {
+        update_thread_metadata_called: Mutex<Option<(i64, Option<i32>, Option<i32>)>>,
+    }
 
     #[async_trait]
     impl CommentsRepository for MockRepo {
@@ -206,28 +217,30 @@ mod tests_task_hashing {
             Ok(vec![])
         }
 
-        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
-
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }
 
         async fn update_thread_metadata(
             &self,
-            _url_id: i64,
-            _month: Option<i32>,
-            _year: Option<i32>,
+            url_id: i64,
+            month: Option<i32>,
+            year: Option<i32>,
         ) -> Result<(), sqlx::Error> {
+            let mut called = self.update_thread_metadata_called.lock().unwrap();
+            *called = Some((url_id, month, year));
             Ok(())
         }
     }
 
     fn new_task(url: &str, url_id: i64) -> ScrapeTask {
-        let repo: Arc<dyn CombinedRepository> = Arc::new(MockRepo {});
+        let repo: Arc<dyn CombinedRepository> = Arc::new(MockRepo {
+            update_thread_metadata_called: Mutex::new(None),
+        });
         ScrapeTask::new(url.to_string(), url_id, repo)
     }
+
+    // TODO: refactor the ScrapeTask in order to be able to test it
 
     #[test]
     fn hashset_deduplicates_equal_tasks() {

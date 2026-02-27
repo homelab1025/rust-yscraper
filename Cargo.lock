@@ -3978,6 +3978,7 @@ dependencies = [
  "chrono",
  "config",
  "log",
+ "regex",
  "reqwest",
  "scraper",
  "serde",

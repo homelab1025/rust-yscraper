@@ -224,22 +224,11 @@ impl LinksRepository for PgCommentsRepository {
         .await
     }
 
-    async fn update_last_scraped(&self, url_id: i64) -> Result<(), sqlx::Error> {
-        let now = Utc::now();
-        sqlx::query("UPDATE urls SET last_scraped = $1 WHERE id = $2")
-            .bind(now)
-            .bind(url_id)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
-
     async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
             UPDATE urls 
-            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1),
-                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1 AND state = 1)
+            SET picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1 AND state = 1)
             WHERE id = $1
             "#,
         )
@@ -255,7 +244,9 @@ impl LinksRepository for PgCommentsRepository {
         month: Option<i32>,
         year: Option<i32>,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE urls SET thread_month = $1, thread_year = $2 WHERE id = $3")
+        let now = Utc::now();
+        sqlx::query("UPDATE urls SET last_scraped = $1, thread_month = $2, thread_year = $3 WHERE id = $4")
+            .bind(now)
             .bind(month)
             .bind(year)
             .bind(url_id)

@@ -13,13 +13,15 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Scraper Enhancement (TDD)
-- [ ] Task: Implement Month/Year extraction in `web_server/src/scrape.rs`
-    - [ ] Write unit tests for extraction with various title formats.
-    - [ ] Implement regex extraction logic.
-    - [ ] Update `get_comments` (or related flow) to return extracted month/year.
-- [ ] Task: Integrate extraction into Scrape Task
-    - [ ] Update `ScrapeTask` in `web_server/src/scrape_task.rs` to store extracted metadata.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Implement Month/Year extraction in `web_server/src/scrape.rs`
+    - [x] Write unit tests for extraction with various title formats.
+    - [x] Implement regex extraction logic.
+    - [x] Update `get_comments` (or related flow) to return extracted month/year.
+    - **Summary**: Implemented `extract_month_year` using regex. Updated it to return a `Result` and log errors at the ERROR level if extraction fails. Updated `get_comments` to handle the metadata and return `ScrapeResult`. Added comprehensive unit tests.
+- [x] Task: Integrate extraction into Scrape Task
+    - [x] Update `ScrapeTask` in `web_server/src/scrape_task.rs` to store extracted metadata.
+    - **Summary**: Refactored `LinksRepository` by merging `update_last_scraped` into `update_thread_metadata`, which now updates the `last_scraped` timestamp along with the thread month and year in a single query. Maintained `update_comment_count` as a separate method that only updates `picked_comment_count`. Updated `ScrapeTask::execute` to use these methods after a successful scrape.
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: API & Frontend Integration
 - [ ] Task: Update API Endpoints

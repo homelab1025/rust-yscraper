@@ -162,10 +162,6 @@ mod tests {
             Ok(self.urls.lock().unwrap().clone())
         }
 
-        async fn update_last_scraped(&self, _url_id: i64) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
-
         async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
             Ok(())
         }

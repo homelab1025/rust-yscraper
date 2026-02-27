@@ -21,13 +21,10 @@ pub trait LinksRepository: Send + Sync {
     /// Get URLs that are due for refresh based on scheduling
     async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error>;
 
-    /// Update last_scraped timestamp for a URL
-    async fn update_last_scraped(&self, url_id: i64) -> Result<(), sqlx::Error>;
-
-    /// Update comment_count for a URL based on comments in the DB
+    /// Update picked_comment_count for a URL based on comments in the DB
     async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error>;
 
-    /// Update thread metadata (month and year) for a URL
+    /// Update thread metadata (month, year, and last_scraped) for a URL
     async fn update_thread_metadata(
         &self,
         url_id: i64,
