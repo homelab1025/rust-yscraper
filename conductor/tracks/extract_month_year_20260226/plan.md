@@ -12,7 +12,7 @@
     - **Summary**: Updated `DbUrlRow` and `ScheduledUrl` structs to include `thread_month` and `thread_year`. Added and implemented `update_thread_metadata` in `LinksRepository` and `PgCommentsRepository`. Updated relevant SQL queries to include the new columns.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
-## Phase 2: Scraper Enhancement (TDD)
+## Phase 2: Scraper Enhancement (TDD) [checkpoint: 7e9a60c9f4f8fddff86b8ba8eda1bf81869ab764]
 - [x] Task: Implement Month/Year extraction in `web_server/src/scrape.rs`
     - [x] Write unit tests for extraction with various title formats.
     - [x] Implement regex extraction logic.
