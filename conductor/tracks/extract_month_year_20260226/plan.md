@@ -23,13 +23,14 @@
     - **Summary**: Refactored `LinksRepository` by merging `update_last_scraped` into `update_thread_metadata`, which now updates the `last_scraped` timestamp along with the thread month and year in a single query. Maintained `update_comment_count` as a separate method that only updates `picked_comment_count`. Updated `ScrapeTask::execute` to use these methods after a successful scrape.
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
-## Phase 3: API & Frontend Integration
+## Phase 3: API & Frontend Integration [checkpoint: f478189ca883b0ed4826c5b85980561c2b543f63]
 - [x] Task: Update API Endpoints
     - [x] Update `LinkDto` in `web_server/src/api/links.rs`.
     - [x] Ensure `list_links` returns the new fields.
     - **Summary**: Updated `LinkDto` to include `thread_month` and `thread_year`. Modified `list_links` to map these fields from the database. Updated API tests.
-- [~] Task: Update Frontend Links Table
-    - [ ] Update `webapp/src/pages/LinkManagementPage.tsx` to handle `thread_month` and `thread_year`.
-    - [ ] Implement month integer to name mapping.
-    - [ ] Update link display logic in the table.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+- [x] Task: Update Frontend Links Table
+    - [x] Update `webapp/src/pages/LinkManagementPage.tsx` to handle `thread_month` and `thread_year`.
+    - [x] Implement month integer to name mapping.
+    - [x] Update link display logic in the table.
+    - **Summary**: Updated `LinkManagementPage.tsx` to display "Month Year" as link text when metadata is available. Implemented `formatThreadMetadata` helper. Used type casting to bypass temporary generated type limitations.
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
