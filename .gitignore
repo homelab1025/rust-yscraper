@@ -7,3 +7,6 @@ mutants.out.old/
 /mutants.out.old/
 /mutants.out/
 openapi.yaml
+
+.gemini/
+gha-creds-*.json
