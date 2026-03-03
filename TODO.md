@@ -1,6 +1,7 @@
 ## TODO
 
 - ideas could be grouped in clusters based on functional areas/domains
+- generalize this for the "Who is hiring" threads as well
 - create a web interface using reactjs with the following features:
   - (page) list the comments that have been scraped and provide the possibility to filter them.
     - user should be able to select which comments to keep and which to discard
@@ -22,3 +23,4 @@
 - move to postgres
 - add tests for the handlers
 - switch to postgresql
+
