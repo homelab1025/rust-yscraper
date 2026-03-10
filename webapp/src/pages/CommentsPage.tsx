@@ -16,11 +16,9 @@ import {
     TableSortLabel,
     Typography,
 } from '@mui/material';
-import { CrateApiCommentsApi, type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
-import { apiConfig } from '../api-config';
+import { type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
+import { useServices } from '../contexts/ServicesContext';
 import CommentRow from '../components/CommentRow';
-
-const commentsApi = new CrateApiCommentsApi(apiConfig);
 const PAGE_SIZE = 50;
 const KEY_NAV_DOWN = 'j';
 const KEY_NAV_UP = 'k';
@@ -28,6 +26,7 @@ const KEY_PICK = 'p';
 const KEY_DISCARD = 'd';
 
 export default function CommentsPage(): React.JSX.Element {
+    const { commentsApi } = useServices();
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
     const filterState = (searchParams.get('state') as CommentState | null) || undefined;
