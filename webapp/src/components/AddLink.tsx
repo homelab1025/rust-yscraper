@@ -1,16 +1,14 @@
 import { Alert, Box, Button, CircularProgress, Paper, TextField, Typography } from "@mui/material";
 import * as React from "react";
 import { useState } from "react";
-import { CrateApiLinksApi } from "../api-client";
-import { apiConfig } from "../api-config";
-
-const linksApi = new CrateApiLinksApi(apiConfig);
+import { useServices } from "../contexts/ServicesContext";
 
 interface AddLinkProps {
     onSuccess?: () => void;
 }
 
 export function AddLink({ onSuccess }: AddLinkProps) {
+    const { linksApi } = useServices();
     const [newLinkId, setNewLinkId] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);

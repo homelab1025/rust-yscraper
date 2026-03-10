@@ -24,10 +24,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import CommentIcon from '@mui/icons-material/Comment';
 import { AddLink } from "../components/AddLink.tsx";
-import { CrateApiLinksApi, type LinkDto, CommentState } from "../api-client";
-import { apiConfig } from "../api-config";
-
-const linksApi = new CrateApiLinksApi(apiConfig);
+import { type LinkDto, CommentState } from "../api-client";
+import { useServices } from "../contexts/ServicesContext";
 
 const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -42,6 +40,7 @@ const formatThreadMetadata = (month?: number | null, year?: number | null, fallb
 };
 
 export default function LinkManagementPage(): React.JSX.Element {
+    const { linksApi } = useServices();
     const [links, setLinks] = useState<LinkDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

@@ -4,6 +4,7 @@ import Navigation from './components/Navigation';
 import LinkManagementPage from './pages/LinkManagementPage';
 import CommentsPage from './pages/CommentsPage';
 import AboutPage from './pages/AboutPage';
+import { ServicesProvider } from './contexts/ServicesContext';
 
 const theme = createTheme({
   palette: {
@@ -16,20 +17,22 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Navigation />
-        <Container component="main" sx={{ py: 4 }}>
-          <Routes>
-            <Route path="/links" element={<LinkManagementPage />} />
-            <Route path="/comments" element={<CommentsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/" element={<Navigate to="/links" replace />} />
-          </Routes>
-        </Container>
-      </Router>
-    </ThemeProvider>
+    <ServicesProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <Navigation />
+          <Container component="main" sx={{ py: 4 }}>
+            <Routes>
+              <Route path="/links" element={<LinkManagementPage />} />
+              <Route path="/comments" element={<CommentsPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/" element={<Navigate to="/links" replace />} />
+            </Routes>
+          </Container>
+        </Router>
+      </ThemeProvider>
+    </ServicesProvider>
   );
 }
 
