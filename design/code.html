@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>What HN is Working On - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="layout-container flex flex-col h-screen overflow-hidden">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 z-10">
+<div class="flex items-center gap-3">
+<div class="bg-primary p-1.5 rounded text-white flex items-center justify-center">
+<span class="material-symbols-outlined !text-xl">terminal</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">What HN is working on</h2>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-80 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex flex-col gap-6 overflow-y-auto"><div class="mb-6 flex flex-col gap-2 border-b border-slate-100 dark:border-slate-800 pb-6">
+<a class="text-slate-600 dark:text-slate-300 text-sm font-semibold hover:text-primary transition-colors flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined !text-lg">link</span>
+        LINKS
+    </a>
+<a class="text-slate-600 dark:text-slate-300 text-sm font-semibold hover:text-primary transition-colors flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined !text-lg">info</span>
+        ABOUT
+    </a>
+</div>
+<div>
+<h3 class="text-slate-900 dark:text-white text-sm font-bold uppercase tracking-wider mb-4">Add New Link</h3>
+<div class="flex flex-col gap-4">
+<label class="flex flex-col gap-2">
+<span class="text-slate-600 dark:text-slate-400 text-xs font-medium uppercase">Item ID</span>
+<input class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm p-3" placeholder="Enter HN Item ID" type="text"/>
+</label>
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined !text-sm">add</span>
+<span>ADD</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-8">
+<div class="max-w-6xl mx-auto flex flex-col gap-8">
+<!-- Summary Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<div class="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-2">
+<span class="material-symbols-outlined !text-lg">comment</span>
+<span class="text-xs font-semibold uppercase tracking-wide">Reviewed Comments</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<div class="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
+<span class="material-symbols-outlined !text-lg">check_circle</span>
+<span class="text-xs font-semibold uppercase tracking-wide">Picked Ideas</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white">0</p>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col gap-1">
+<div class="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-2">
+<span class="material-symbols-outlined !text-lg">cancel</span>
+<span class="text-xs font-semibold uppercase tracking-wide">Discarded Ideas</span>
+</div>
+<p class="text-4xl font-black text-slate-900 dark:text-white">0</p>
+</div>
+</div>
+<!-- Task Control Center Table -->
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Task Control Center</h2>
+<div class="flex gap-2">
+<span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Live Update
+                                </span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50">
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">ID</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Month</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date Added</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Comments (Count/Total)</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-200">#3849201</td>
+<td class="px-6 py-4 text-sm">
+<a class="text-primary hover:underline font-semibold" href="#">December 2025</a>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Dec 1, 2025</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+<span class="font-bold text-slate-900 dark:text-white">42</span> / 120
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                                In Progress
+                                            </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center justify-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors" title="Schedule Refresh">
+<span class="material-symbols-outlined !text-xl">schedule</span>
+</button>
+<button class="text-slate-400 hover:text-emerald-500 transition-colors" title="View Picked">
+<span class="material-symbols-outlined !text-xl">check_circle</span>
+</button>
+<button class="text-slate-400 hover:text-rose-500 transition-colors" title="View Dropped">
+<span class="material-symbols-outlined !text-xl">cancel</span>
+</button>
+<button class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="View Remaining">
+<span class="material-symbols-outlined !text-xl">format_list_bulleted</span>
+</button>
+<button class="text-slate-400 hover:text-red-600 transition-colors" title="Delete">
+<span class="material-symbols-outlined !text-xl">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-200">#3841105</td>
+<td class="px-6 py-4 text-sm">
+<a class="text-primary hover:underline font-semibold" href="#">November 2025</a>
+</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">Nov 2, 2025</td>
+<td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+<span class="font-bold text-slate-900 dark:text-white">105</span> / 105
+                                        </td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                Completed
+                                            </span>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center justify-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors" title="Schedule Refresh">
+<span class="material-symbols-outlined !text-xl">schedule</span>
+</button>
+<button class="text-slate-400 hover:text-emerald-500 transition-colors" title="View Picked">
+<span class="material-symbols-outlined !text-xl">check_circle</span>
+</button>
+<button class="text-slate-400 hover:text-rose-500 transition-colors" title="View Dropped">
+<span class="material-symbols-outlined !text-xl">cancel</span>
+</button>
+<button class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="View Remaining">
+<span class="material-symbols-outlined !text-xl">format_list_bulleted</span>
+</button>
+<button class="text-slate-400 hover:text-red-600 transition-colors" title="Delete">
+<span class="material-symbols-outlined !text-xl">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500">
+<span>Showing 2 active item tracking nodes</span>
+<div class="flex gap-4">
+<button class="hover:text-primary transition-colors">Previous</button>
+<button class="hover:text-primary transition-colors">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

@@ -9,6 +9,7 @@ context: |
   Tech stack: documented in contributing/tech-stack.md
   Code style: Documented in contributing/code_styleguides
   Commit messages are focused on functionality and avoid listing file changes.
+  LSP: Use language server protocol tools whenever possible for reading and editing code.
 
 #     Tech stack: TypeScript, React, Node.js
 #     We use conventional commits
