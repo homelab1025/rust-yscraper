@@ -1,6 +1,6 @@
 use crate::CommentRecord;
 use crate::scrape::ScrapeError::{ElementSelectorError, HtmlFetchError, InvalidThreadTitle};
-use crate::utils::extract_item_id_from_url;
+use crate::utils::{extract_item_id_from_url, ExtractIdError};
 use log::{error, info, warn};
 use scraper::error::SelectorErrorKind;
 use scraper::{Html, Selector};
@@ -166,15 +166,19 @@ fn parse_root_comments(html: &str) -> Result<Vec<CommentRecord>, SelectorErrorKi
         }
 
         // Extract comment id from the age link (e.g., <span class="age"><a href="item?id=<COMMENT_ID>">...</a>)
-        let id_opt = tr
+        let id_result = tr
             .select(&age_link_sel)
             .next()
             .and_then(|a| a.value().attr("href"))
-            .and_then(extract_item_id_from_url);
+            .map(extract_item_id_from_url);
 
-        let id = match id_opt {
-            Some(v) => v,
-            None => {
+        let id = match id_result {
+            Some(Ok(v)) => v,
+            Some(Err(ExtractIdError::NegativeId(n))) => {
+                warn!("Skipping a root comment with a negative reply id: {}", n);
+                continue;
+            }
+            Some(Err(ExtractIdError::NotFound)) | None => {
                 warn!("Skipping a root comment without a parsable reply id");
                 continue;
             }
