@@ -8,4 +8,46 @@ pub fn extract_item_id_from_url(url: &str) -> Option<i64> {
     None
 }
 
-// TODO: add tests for the extract function
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_id_simple() {
+        assert_eq!(extract_item_id_from_url("https://example.com/item?id=42"), Some(42));
+    }
+
+    #[test]
+    fn test_extract_id_with_multiple_params() {
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item?foo=bar&id=99&baz=qux"),
+            Some(99)
+        );
+    }
+
+    #[test]
+    fn test_extract_id_no_query_string() {
+        assert_eq!(extract_item_id_from_url("https://example.com/item"), None);
+    }
+
+    #[test]
+    fn test_extract_id_missing_id_param() {
+        assert_eq!(extract_item_id_from_url("https://example.com/item?foo=bar"), None);
+    }
+
+    #[test]
+    fn test_extract_id_invalid_value() {
+        assert_eq!(extract_item_id_from_url("https://example.com/item?id=notanumber"), None);
+    }
+
+    #[test]
+    fn test_extract_id_negative() {
+        assert_eq!(extract_item_id_from_url("https://example.com/item?id=-7"), Some(-7));
+    }
+
+    #[test]
+    fn test_extract_id_first_param() {
+        assert_eq!(extract_item_id_from_url("https://example.com/?id=123&other=456"), Some(123));
+    }
+}
