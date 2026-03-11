@@ -2,7 +2,10 @@ pub fn extract_item_id_from_url(url: &str) -> Option<i64> {
     let qs = url.split('?').nth(1)?;
     for part in qs.split('&') {
         if let Some(n) = part.strip_prefix("id=").and_then(|v| v.parse::<i64>().ok()) {
-            return Some(n);
+            // TODO: return an error for negative id
+            if n >= 0 {
+                return Some(n);
+            }
         }
     }
     None
@@ -43,7 +46,7 @@ mod tests {
 
     #[test]
     fn test_extract_id_negative() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item?id=-7"), Some(-7));
+        assert_eq!(extract_item_id_from_url("https://example.com/item?id=-7"), None);
     }
 
     #[test]
