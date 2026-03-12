@@ -1,29 +1,21 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import {
-    Alert,
-    CircularProgress,
-    Container,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TablePagination,
-    TableRow,
-    TableSortLabel,
-    Typography,
-} from '@mui/material';
+import { Link, useSearchParams } from 'react-router-dom';
 import { type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
 import { useServices } from '../contexts/ServicesContext';
 import CommentRow from '../components/CommentRow';
+
 const PAGE_SIZE = 50;
 const KEY_NAV_DOWN = 'j';
 const KEY_NAV_UP = 'k';
 const KEY_PICK = 'p';
 const KEY_DISCARD = 'd';
+
+function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
+    if (!active) return <span className="material-symbols-outlined !text-base text-slate-400">unfold_more</span>;
+    if (order === SortOrder.Asc) return <span className="material-symbols-outlined !text-base text-primary">expand_less</span>;
+    return <span className="material-symbols-outlined !text-base text-primary">expand_more</span>;
+}
 
 export default function CommentsPage(): React.JSX.Element {
     const { commentsApi } = useServices();
@@ -57,16 +49,13 @@ export default function CommentsPage(): React.JSX.Element {
     const updateState = useCallback(async (commentId: number, state: CommentState) => {
         try {
             await commentsApi.updateCommentState(commentId, { state });
-            // If we are filtering, remove the comment from the list
             if (filterState !== undefined) {
                 setComments(prev => prev.filter(c => c.id !== commentId));
                 setTotal(t => t - 1);
-                // Adjust selection if needed
                 if (selectedIndex >= comments.length - 1 && selectedIndex > 0) {
                     setSelectedIndex(i => i - 1);
                 }
             } else {
-                // Update the state in the local list
                 setComments(prev => prev.map(c => c.id === commentId ? { ...c, state } : c));
             }
         } catch (err) {
@@ -89,11 +78,9 @@ export default function CommentsPage(): React.JSX.Element {
                 setLoading(false);
             }
         };
-
         fetchComments();
     }, [page, urlId, filterState, sortBy, sortOrder]);
 
-    // After a page change triggered by keyboard nav, snap selection to first or last row.
     useEffect(() => {
         if (loading || pendingSelectRef.current === null) return;
         if (pendingSelectRef.current === 'first') setSelectedIndex(0);
@@ -101,7 +88,6 @@ export default function CommentsPage(): React.JSX.Element {
         pendingSelectRef.current = null;
     }, [loading, comments]);
 
-    // Scroll so the selected row (and one below it when going down) stays visible.
     useEffect(() => {
         const scrollTarget =
             directionRef.current === 'down'
@@ -109,7 +95,6 @@ export default function CommentsPage(): React.JSX.Element {
                 : rowRefs.current[selectedIndex];
 
         if (scrollTarget) {
-            // When at the top row and navigating up, scroll the entire page to top
             if (selectedIndex === 0 && directionRef.current === 'up') {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
@@ -154,77 +139,116 @@ export default function CommentsPage(): React.JSX.Element {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [loading, comments, selectedIndex, page, total, updateState]);
 
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    const showFrom = total === 0 ? 0 : page * PAGE_SIZE + 1;
+    const showTo = Math.min((page + 1) * PAGE_SIZE, total);
+
     return (
-        <Container>
-            <Typography variant="h4" gutterBottom>
-                Comments
-            </Typography>
+        <div className="max-w-6xl mx-auto flex flex-col gap-6">
+            {/* Back link */}
+            <Link to="/links" className="flex items-center gap-1 text-sm text-slate-500 hover:text-primary transition-colors w-fit">
+                <span className="material-symbols-outlined !text-base">arrow_back</span>
+                Links
+            </Link>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                </div>
+            )}
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Comment</TableCell>
-                            <TableCell>Author</TableCell>
-                            <TableCell sortDirection={sortBy === SortBy.SubcommentCount ? sortOrder : false}>
-                                <TableSortLabel
-                                    active={sortBy === SortBy.SubcommentCount}
-                                    direction={sortBy === SortBy.SubcommentCount ? sortOrder : 'desc'}
-                                    onClick={() => handleRequestSort(SortBy.SubcommentCount)}
-                                >
-                                    Subcomments
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell sortDirection={sortBy === SortBy.Date ? sortOrder : false}>
-                                <TableSortLabel
-                                    active={sortBy === SortBy.Date}
-                                    direction={sortBy === SortBy.Date ? sortOrder : 'desc'}
-                                    onClick={() => handleRequestSort(SortBy.Date)}
-                                >
-                                    Date
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center">
-                                    <CircularProgress />
-                                </TableCell>
-                            </TableRow>
-                        ) : comments.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center">
-                                    No comments found.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            comments.map((c, i) => (
-                                <CommentRow
-                                    key={c.id}
-                                    ref={(el) => { rowRefs.current[i] = el; }}
-                                    comment={c}
-                                    selected={i === selectedIndex}
-                                    onUpdateState={updateState}
-                                />
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-200">
+                    <h2 className="text-slate-900 text-xl font-bold tracking-tight">Comments</h2>
+                </div>
 
-            <TablePagination
-                component="div"
-                count={total}
-                page={page}
-                rowsPerPage={PAGE_SIZE}
-                rowsPerPageOptions={[PAGE_SIZE]}
-                onPageChange={(_e, newPage) => setPage(newPage)}
-            />
-        </Container>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50">
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comment</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Author</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <button
+                                        onClick={() => handleRequestSort(SortBy.SubcommentCount)}
+                                        className="flex items-center gap-1 hover:text-slate-900 transition-colors"
+                                    >
+                                        Subcomments
+                                        <SortIcon active={sortBy === SortBy.SubcommentCount} order={sortOrder} />
+                                    </button>
+                                </th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <button
+                                        onClick={() => handleRequestSort(SortBy.Date)}
+                                        className="flex items-center gap-1 hover:text-slate-900 transition-colors"
+                                    >
+                                        Date
+                                        <SortIcon active={sortBy === SortBy.Date} order={sortOrder} />
+                                    </button>
+                                </th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        <span className="material-symbols-outlined animate-spin !text-3xl">refresh</span>
+                                    </td>
+                                </tr>
+                            ) : comments.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-sm">
+                                        No comments found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                comments.map((c, i) => (
+                                    <CommentRow
+                                        key={c.id}
+                                        ref={(el) => { rowRefs.current[i] = el; }}
+                                        comment={c}
+                                        selected={i === selectedIndex}
+                                        onUpdateState={updateState}
+                                    />
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Custom pagination footer */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+                    <span>
+                        {total > 0 ? `Showing ${showFrom}–${showTo} of ${total} comments` : 'No comments'}
+                    </span>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => setPage(p => p - 1)}
+                            disabled={page === 0}
+                            className="hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => setPage(p => p + 1)}
+                            disabled={page >= totalPages - 1}
+                            className="hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Keyboard hint bar */}
+            <div className="text-center text-xs text-slate-400 pb-4">
+                <kbd className="font-mono">j</kbd>/<kbd className="font-mono">k</kbd> navigate
+                {' · '}
+                <kbd className="font-mono">p</kbd> pick
+                {' · '}
+                <kbd className="font-mono">d</kbd> discard
+            </div>
+        </div>
     );
 }

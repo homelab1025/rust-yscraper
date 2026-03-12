@@ -1,31 +1,10 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-    Alert,
-    Button,
-    CircularProgress,
-    Container,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    IconButton,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CommentIcon from '@mui/icons-material/Comment';
-import { AddLink } from "../components/AddLink.tsx";
-import { type LinkDto, CommentState } from "../api-client";
-import { useServices } from "../contexts/ServicesContext";
+import SummaryStats from '../components/SummaryStats';
+import StatusBadge from '../components/StatusBadge';
+import { type LinkDto, CommentState } from '../api-client';
+import { useServices } from '../contexts/ServicesContext';
 
 const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -39,13 +18,15 @@ const formatThreadMetadata = (month?: number | null, year?: number | null, fallb
     return fallback;
 };
 
+const isCompleted = (link: LinkDto) =>
+    link.total_comment_count > 0 && link.picked_comment_count >= link.total_comment_count;
+
 export default function LinkManagementPage(): React.JSX.Element {
     const { linksApi } = useServices();
     const [links, setLinks] = useState<LinkDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [linkToDelete, setLinkToDelete] = useState<number | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
     const fetchLinks = async () => {
         try {
@@ -61,143 +42,153 @@ export default function LinkManagementPage(): React.JSX.Element {
         }
     };
 
-    const handleDelete = (id: number) => {
-        setLinkToDelete(id);
-        setDeleteDialogOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (linkToDelete === null) return;
-
+    const handleDelete = async (id: number) => {
         try {
-            await linksApi.deleteLink(linkToDelete);
+            await linksApi.deleteLink(id);
             await fetchLinks();
         } catch (err) {
             setError('Failed to delete link');
             console.error(err);
         } finally {
-            setDeleteDialogOpen(false);
-            setLinkToDelete(null);
+            setDeleteConfirm(null);
         }
-    };
-
-    const handleCloseDeleteDialog = () => {
-        setDeleteDialogOpen(false);
-        setLinkToDelete(null);
     };
 
     useEffect(() => {
         fetchLinks();
     }, []);
 
+    const totalPicked = links.reduce((sum, l) => sum + (l.picked_comment_count ?? 0), 0);
+    const totalReviewed = totalPicked;
+
     return (
-        <Container>
-            <Typography variant="h4" gutterBottom>
-                Link Management
-            </Typography>
+        <div className="max-w-6xl mx-auto flex flex-col gap-8">
+            <SummaryStats reviewed={totalReviewed} picked={totalPicked} discarded={0} />
 
-            <AddLink onSuccess={fetchLinks} />
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
+                </div>
+            )}
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
+                    <h2 className="text-slate-900 text-xl font-bold tracking-tight">Task Control Center</h2>
+                    <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                        Live Update
+                    </span>
+                </div>
 
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>URL</TableCell>
-                            <TableCell>Date Added</TableCell>
-                            <TableCell>Comments</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={6} align="center">
-                                    <CircularProgress />
-                                </TableCell>
-                            </TableRow>
-                        ) : links.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} align="center">
-                                    No links found.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            links.map((link) => (
-                                <TableRow key={link.id}>
-                                    <TableCell>{link.id}</TableCell>
-                                    <TableCell>
-                                        <a href={link.url} target="_blank" rel="noopener noreferrer">
-                                            {formatThreadMetadata(link.thread_month, link.thread_year, link.url)}
-                                        </a>
-                                    </TableCell>
-                                    <TableCell>{new Date(link.date_added).toLocaleString()}</TableCell>
-                                    <TableCell>{link.picked_comment_count} / {link.total_comment_count}</TableCell>
-                                    <TableCell>{'Scraped'}</TableCell>
-                                    <TableCell>
-                                        <IconButton
-                                            component={Link}
-                                            to={`/comments?url_id=${link.id}&state=${CommentState.New}`}
-                                            aria-label="see new comments"
-                                            color="primary"
-                                        >
-                                            <CommentIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            component={Link}
-                                            to={`/comments?url_id=${link.id}&state=${CommentState.Picked}`}
-                                            aria-label="see picked comments"
-                                            color="success"
-                                        >
-                                            <CommentIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            component={Link}
-                                            to={`/comments?url_id=${link.id}&state=${CommentState.Discarded}`}
-                                            aria-label="see discarded comments"
-                                            color="default"
-                                        >
-                                            <CommentIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            aria-label="delete"
-                                            color="error"
-                                            onClick={() => handleDelete(link.id)}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50">
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Month</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Date Added</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comments (Picked / Total)</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
+                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                                        <span className="material-symbols-outlined animate-spin !text-3xl">refresh</span>
+                                    </td>
+                                </tr>
+                            ) : links.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 text-sm">
+                                        No links found. Add a Hacker News item ID in the sidebar.
+                                    </td>
+                                </tr>
+                            ) : (
+                                links.map((link) => (
+                                    <tr key={link.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-900">#{link.id}</td>
+                                        <td className="px-6 py-4 text-sm">
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:underline font-semibold"
+                                            >
+                                                {formatThreadMetadata(link.thread_month, link.thread_year, link.url)}
+                                            </a>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            {new Date(link.date_added).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            <span className="font-bold text-slate-900">{link.picked_comment_count}</span>
+                                            {' '}/ {link.total_comment_count}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <StatusBadge completed={isCompleted(link)} />
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center gap-3">
+                                                <Link
+                                                    to={`/comments?url_id=${link.id}&state=${CommentState.New}`}
+                                                    className="text-slate-400 hover:text-slate-900 transition-colors"
+                                                    title="View Remaining"
+                                                >
+                                                    <span className="material-symbols-outlined !text-xl">format_list_bulleted</span>
+                                                </Link>
+                                                <Link
+                                                    to={`/comments?url_id=${link.id}&state=${CommentState.Picked}`}
+                                                    className="text-slate-400 hover:text-emerald-500 transition-colors"
+                                                    title="View Picked"
+                                                >
+                                                    <span className="material-symbols-outlined !text-xl">check_circle</span>
+                                                </Link>
+                                                <Link
+                                                    to={`/comments?url_id=${link.id}&state=${CommentState.Discarded}`}
+                                                    className="text-slate-400 hover:text-rose-500 transition-colors"
+                                                    title="View Discarded"
+                                                >
+                                                    <span className="material-symbols-outlined !text-xl">cancel</span>
+                                                </Link>
+                                                {deleteConfirm === link.id ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleDelete(link.id)}
+                                                            className="text-xs text-red-600 font-semibold hover:text-red-700"
+                                                        >
+                                                            Confirm
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteConfirm(null)}
+                                                            className="text-xs text-slate-500 hover:text-slate-700"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setDeleteConfirm(link.id)}
+                                                        className="text-slate-400 hover:text-red-600 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <span className="material-symbols-outlined !text-xl">delete</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-            <Dialog
-                open={deleteDialogOpen}
-                onClose={handleCloseDeleteDialog}
-                aria-labelledby="delete-dialog-title"
-                aria-describedby="delete-dialog-description"
-            >
-                <DialogTitle id="delete-dialog-title">
-                    {"Confirm Delete"}
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="delete-dialog-description">
-                        Are you sure you want to delete this link? This action cannot be undone.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+                    <span>Showing {links.length} active item tracking node{links.length !== 1 ? 's' : ''}</span>
+                </div>
+            </div>
+        </div>
     );
 }
