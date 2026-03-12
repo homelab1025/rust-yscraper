@@ -1,9 +1,15 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { type CommentDto, CommentState, SortBy, SortOrder } from '../api-client';
+import { type CommentDto, type LinkDto, CommentState, SortBy, SortOrder } from '../api-client';
 import { useServices } from '../contexts/ServicesContext';
+
 import CommentRow from '../components/CommentRow';
+
+const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
 
 const PAGE_SIZE = 50;
 const KEY_NAV_DOWN = 'j';
@@ -18,11 +24,12 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
 }
 
 export default function CommentsPage(): React.JSX.Element {
-    const { commentsApi } = useServices();
+    const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
     const filterState = (searchParams.get('state') as CommentState | null) || undefined;
 
+    const [link, setLink] = useState<LinkDto | null>(null);
     const [comments, setComments] = useState<CommentDto[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(0);
@@ -62,6 +69,14 @@ export default function CommentsPage(): React.JSX.Element {
             console.error('Failed to update comment state', err);
         }
     }, [filterState, selectedIndex, comments.length]);
+
+    useEffect(() => {
+        if (!urlId) return;
+        linksApi.listLinks().then(r => {
+            const found = r.data.find(l => l.id === urlId) ?? null;
+            setLink(found);
+        }).catch(() => {});
+    }, [urlId]);
 
     useEffect(() => {
         const fetchComments = async () => {
@@ -159,7 +174,11 @@ export default function CommentsPage(): React.JSX.Element {
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-200">
-                    <h2 className="text-slate-900 text-xl font-bold tracking-tight">Comments</h2>
+                    <h2 className="text-slate-900 text-xl font-bold tracking-tight">
+                        Comments{link?.thread_month && link?.thread_year
+                            ? ` — ${monthNames[link.thread_month - 1]} ${link.thread_year}`
+                            : ''}
+                    </h2>
                 </div>
 
                 <div className="overflow-x-auto">

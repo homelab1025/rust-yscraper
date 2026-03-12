@@ -35,6 +35,7 @@ pub struct LinkDto {
     pub date_added: String,
     pub total_comment_count: u32,
     pub picked_comment_count: u32,
+    // TODO: add discarded comment count (same principle as picked_comment_count)
     pub thread_month: Option<i32>,
     pub thread_year: Option<i32>,
 }
@@ -82,6 +83,8 @@ pub enum ScrapeState {
 pub struct ScrapeResponse {
     pub state: ScrapeState,
 }
+
+// TODO: add handler for triggering a re-scraping of a link, based on the id
 
 /// Triggers scraping and inserts results into the database.
 /// Trigger a scrape task for a specific Hacker News item
