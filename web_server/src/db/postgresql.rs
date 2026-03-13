@@ -113,14 +113,24 @@ impl CommentsRepository for PgCommentsRepository {
             .execute(&mut *tx)
             .await?;
 
-        // Update counts for the affected URL
-        // TODO: this needs to be improved as it lowers performance
+        // Update counts for the affected URL in a single scan using a CTE
         sqlx::query(
             r#"
-            UPDATE urls 
-            SET comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = (SELECT url_id FROM comments WHERE id = $1)),
-                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = (SELECT url_id FROM comments WHERE id = $1) AND state = 1)
-            WHERE id = (SELECT url_id FROM comments WHERE id = $1)
+            WITH comment_info AS (
+                SELECT
+                    c.url_id,
+                    COUNT(*)                             AS total_count,
+                    COUNT(*) FILTER (WHERE c.state = 1)  AS picked_count
+                FROM comments c
+                WHERE c.url_id = (SELECT url_id FROM comments WHERE id = $1)
+                GROUP BY c.url_id
+            )
+            UPDATE urls
+            SET
+                comment_count        = comment_info.total_count,
+                picked_comment_count = comment_info.picked_count
+            FROM comment_info
+            WHERE urls.id = comment_info.url_id
             "#,
         )
         .bind(id)
