@@ -23,6 +23,7 @@ use web_server::background_scheduler::BackgroundScheduler;
 use web_server::config::AppConfig;
 use web_server::db::CombinedRepository;
 use web_server::db::postgresql::PgCommentsRepository;
+use web_server::scrape::{CommentScraper, DefaultScraper, ReqwestHttpClient};
 use web_server::scrape_task::ScrapeTask;
 use web_server::task_queue::{TaskDedupQueue, TaskScheduler};
 
@@ -74,11 +75,12 @@ fn main() {
 
         let comments_repo = Arc::new(PgCommentsRepository::new(db_pool.clone()));
         let task_queue = Arc::new(TaskDedupQueue::new(4));
+        let scraper: Arc<dyn CommentScraper> = Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
 
         // Start background scheduler
-        start_background_scheduler(comments_repo.clone(), task_queue.clone()).await;
+        start_background_scheduler(comments_repo.clone(), task_queue.clone(), scraper.clone()).await;
 
-        let app_state = build_app_state(comments_repo, task_queue, cfg.clone());
+        let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 
         // Build router
         let app = Router::new()
@@ -111,6 +113,7 @@ fn main() {
 fn build_app_state(
     comments_repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    scraper: Arc<dyn CommentScraper>,
     config: AppConfig,
 ) -> AppState {
     let real_time_provider = Arc::new(RealSystemTime {});
@@ -119,6 +122,7 @@ fn build_app_state(
         repo: comments_repo,
         time_provider: real_time_provider,
         task_queue,
+        scraper,
         config,
     }
 }
@@ -126,10 +130,12 @@ fn build_app_state(
 async fn start_background_scheduler(
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    scraper: Arc<dyn CommentScraper>,
 ) {
     let bg_scheduler = BackgroundScheduler::new(
         repo.clone(),
         task_queue.clone(),
+        scraper,
         Duration::from_secs(60), // Check every minute
     );
 

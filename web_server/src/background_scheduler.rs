@@ -1,4 +1,5 @@
 use crate::db::CombinedRepository;
+use crate::scrape::CommentScraper;
 use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
 use log::{error, info};
@@ -8,6 +9,7 @@ use std::time::Duration;
 pub struct BackgroundScheduler {
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    scraper: Arc<dyn CommentScraper>,
     check_interval: Duration,
 }
 
@@ -15,11 +17,13 @@ impl BackgroundScheduler {
     pub fn new(
         repo: Arc<dyn CombinedRepository>,
         task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+        scraper: Arc<dyn CommentScraper>,
         check_interval: Duration,
     ) -> Self {
         Self {
             repo,
             task_queue,
+            scraper,
             check_interval,
         }
     }
@@ -60,7 +64,7 @@ impl BackgroundScheduler {
             let item_id = url_row.id;
 
             // Create scrape task
-            let scrape_task = ScrapeTask::new(target_url, item_id, self.repo.clone());
+            let scrape_task = ScrapeTask::new(target_url, item_id, self.repo.clone(), self.scraper.clone());
 
             // Schedule the task
             match self.task_queue.schedule(scrape_task).await {
@@ -86,10 +90,20 @@ mod tests {
     use super::*;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::scrape::{ScrapeError, ScrapeResult};
     use async_trait::async_trait;
     use chrono::Utc;
     use std::sync::{Arc, Mutex};
     use tokio::sync::mpsc::error::TrySendError;
+
+    struct NoOpScraper;
+
+    #[async_trait]
+    impl CommentScraper for NoOpScraper {
+        async fn get_comments(&self, _url: &str) -> Result<ScrapeResult, ScrapeError> {
+            unimplemented!()
+        }
+    }
 
     struct MockRepo {
         urls: Mutex<Vec<ScheduledUrl>>,
@@ -219,7 +233,7 @@ mod tests {
         let scheduler = Arc::new(MockScheduler::new());
 
         let bg_scheduler =
-            BackgroundScheduler::new(repo.clone(), scheduler.clone(), Duration::from_secs(60));
+            BackgroundScheduler::new(repo.clone(), scheduler.clone(), Arc::new(NoOpScraper), Duration::from_secs(60));
 
         // Run one check cycle
         let scheduled = bg_scheduler.check_and_schedule_due_urls().await.unwrap();

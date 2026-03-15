@@ -1,6 +1,6 @@
 use crate::CommentRecord;
 use crate::db::CombinedRepository;
-use crate::scrape::{ScrapeError, get_comments};
+use crate::scrape::{CommentScraper, ScrapeError};
 use crate::task_queue::ExecutableTask;
 use async_trait::async_trait;
 use log::{error, info};
@@ -14,6 +14,7 @@ pub struct ScrapeTask {
     url: String,
     url_id: i64,
     repo: Arc<dyn CombinedRepository>,
+    scraper: Arc<dyn CommentScraper>,
 }
 
 impl std::fmt::Debug for ScrapeTask {
@@ -22,16 +23,23 @@ impl std::fmt::Debug for ScrapeTask {
             .field("url", &self.url)
             .field("url_id", &self.url_id)
             .field("repo", &"<CombinedRepository>")
+            .field("scraper", &"<Scraper>")
             .finish()
     }
 }
 
 impl ScrapeTask {
-    pub fn new(url: String, url_id: i64, comments_repo: Arc<dyn CombinedRepository>) -> Self {
+    pub fn new(
+        url: String,
+        url_id: i64,
+        comments_repo: Arc<dyn CombinedRepository>,
+        scraper: Arc<dyn CommentScraper>,
+    ) -> Self {
         ScrapeTask {
             url,
             url_id,
-            repo: comments_repo.clone(),
+            repo: comments_repo,
+            scraper,
         }
     }
 
@@ -96,7 +104,7 @@ impl ExecutableTask for ScrapeTask {
         info!("Executing Scrape TASK.");
 
         info!("Started task for scraping for {}", self.url);
-        let comments_retrieval = get_comments(&self.url).await;
+        let comments_retrieval = self.scraper.get_comments(&self.url).await;
         match comments_retrieval {
             Ok(scrape_result) => {
                 let comments = scrape_result.comments;
@@ -149,10 +157,20 @@ mod tests_task_hashing {
     use crate::db::CombinedRepository;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::scrape::{CommentScraper, ScrapeError, ScrapeResult};
     use async_trait::async_trait;
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
     use std::sync::{Arc, Mutex};
+
+    struct NoOpScraper;
+
+    #[async_trait]
+    impl CommentScraper for NoOpScraper {
+        async fn get_comments(&self, _url: &str) -> Result<ScrapeResult, ScrapeError> {
+            unimplemented!()
+        }
+    }
 
     struct MockRepo {
         update_thread_metadata_called: Mutex<Option<(i64, Option<i32>, Option<i32>)>>,
@@ -237,10 +255,8 @@ mod tests_task_hashing {
         let repo: Arc<dyn CombinedRepository> = Arc::new(MockRepo {
             update_thread_metadata_called: Mutex::new(None),
         });
-        ScrapeTask::new(url.to_string(), url_id, repo)
+        ScrapeTask::new(url.to_string(), url_id, repo, Arc::new(NoOpScraper))
     }
-
-    // TODO: refactor the ScrapeTask in order to be able to test it
 
     #[test]
     fn hashset_deduplicates_equal_tasks() {
@@ -388,5 +404,432 @@ mod tests_task_hashing {
             hash1, hash2,
             "Different URL but same url_id should have different hashes"
         );
+    }
+}
+
+#[cfg(test)]
+mod tests_execute {
+    use super::{ScrapeTask, ScrapeTaskError};
+    use crate::db::CombinedRepository;
+    use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
+    use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::scrape::{CommentScraper, ScrapeError, ScrapeResult};
+    use crate::task_queue::ExecutableTask;
+    use crate::{CommentRecord, CommentState};
+    use async_trait::async_trait;
+    use std::sync::{Arc, Mutex};
+
+    struct MockScraper(Mutex<Option<Result<ScrapeResult, ScrapeError>>>);
+
+    impl MockScraper {
+        fn returning(r: Result<ScrapeResult, ScrapeError>) -> Self {
+            MockScraper(Mutex::new(Some(r)))
+        }
+    }
+
+    #[async_trait]
+    impl CommentScraper for MockScraper {
+        async fn get_comments(&self, _url: &str) -> Result<ScrapeResult, ScrapeError> {
+            self.0.lock().unwrap().take().unwrap()
+        }
+    }
+
+    struct MockRepo {
+        upsert_calls: Mutex<Vec<(Vec<CommentRecord>, i64)>>,
+        update_comment_count_calls: Mutex<Vec<i64>>,
+        update_thread_metadata_called: Mutex<Option<(i64, Option<i32>, Option<i32>)>>,
+        upsert_error: Option<String>,
+        update_count_error: Option<String>,
+        update_metadata_error: Option<String>,
+    }
+
+    impl MockRepo {
+        fn new() -> Self {
+            MockRepo {
+                upsert_calls: Mutex::new(vec![]),
+                update_comment_count_calls: Mutex::new(vec![]),
+                update_thread_metadata_called: Mutex::new(None),
+                upsert_error: None,
+                update_count_error: None,
+                update_metadata_error: None,
+            }
+        }
+    }
+
+    #[async_trait]
+    impl CommentsRepository for MockRepo {
+        async fn count_comments(
+            &self,
+            _url_id: i64,
+            _state: Option<i32>,
+        ) -> Result<u32, sqlx::Error> {
+            Ok(0)
+        }
+
+        async fn page_comments(
+            &self,
+            _offset: i64,
+            _count: i64,
+            _url_id: i64,
+            _state: Option<i32>,
+            _sort_by: Option<crate::SortBy>,
+            _sort_order: Option<crate::SortOrder>,
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            Ok(Vec::new())
+        }
+
+        async fn upsert_comments(
+            &self,
+            comments: &[CommentRecord],
+            url_id: i64,
+        ) -> Result<usize, sqlx::Error> {
+            if let Some(msg) = &self.upsert_error {
+                return Err(sqlx::Error::Protocol(msg.clone()));
+            }
+            let n = comments.len();
+            self.upsert_calls
+                .lock()
+                .unwrap()
+                .push((comments.to_vec(), url_id));
+            Ok(n)
+        }
+
+        async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl LinksRepository for MockRepo {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            Ok(0)
+        }
+
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error> {
+            if let Some(msg) = &self.update_count_error {
+                return Err(sqlx::Error::Protocol(msg.clone()));
+            }
+            self.update_comment_count_calls.lock().unwrap().push(url_id);
+            Ok(())
+        }
+
+        async fn update_thread_metadata(
+            &self,
+            url_id: i64,
+            month: Option<i32>,
+            year: Option<i32>,
+        ) -> Result<(), sqlx::Error> {
+            if let Some(msg) = &self.update_metadata_error {
+                return Err(sqlx::Error::Protocol(msg.clone()));
+            }
+            let mut called = self.update_thread_metadata_called.lock().unwrap();
+            *called = Some((url_id, month, year));
+            Ok(())
+        }
+    }
+
+    fn make_comment(id: i64) -> CommentRecord {
+        CommentRecord {
+            id,
+            author: format!("user{}", id),
+            date: "2025-01-01".to_string(),
+            text: "some text".to_string(),
+            tags: vec![],
+            state: CommentState::New,
+            subcomment_count: 0,
+        }
+    }
+
+    fn make_scrape_result(comments: Vec<CommentRecord>) -> ScrapeResult {
+        ScrapeResult {
+            comments,
+            thread_month: Some(1),
+            thread_year: Some(2025),
+        }
+    }
+
+    fn make_task(
+        scraper: Arc<dyn CommentScraper>,
+        repo: Arc<dyn CombinedRepository>,
+    ) -> ScrapeTask {
+        ScrapeTask::new("https://example.com/item/1".to_string(), 42, repo, scraper)
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_happy_path_returns_ok() {
+        let comments = vec![make_comment(1), make_comment(2), make_comment(3)];
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(comments))));
+        let repo = Arc::new(MockRepo::new());
+        let repo_ref = Arc::clone(&repo);
+        let task = make_task(scraper, repo);
+
+        let result = task.execute().await;
+
+        assert!(result.is_ok());
+        assert_eq!(repo_ref.upsert_calls.lock().unwrap().len(), 1);
+        assert_eq!(repo_ref.update_comment_count_calls.lock().unwrap().len(), 1);
+        assert!(
+            repo_ref
+                .update_thread_metadata_called
+                .lock()
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_batches_11_comments_into_two_upsert_calls() {
+        let comments: Vec<CommentRecord> = (1..=11).map(make_comment).collect();
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(comments))));
+        let repo = Arc::new(MockRepo::new());
+        let repo_ref = Arc::clone(&repo);
+        let task = make_task(scraper, repo);
+
+        task.execute().await.unwrap();
+
+        let calls = repo_ref.upsert_calls.lock().unwrap();
+        assert_eq!(calls.len(), 2, "expected 2 batches (10 + 1)");
+        assert_eq!(calls[0].0.len(), 10);
+        assert_eq!(calls[1].0.len(), 1);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_zero_comments_still_updates_count_and_metadata() {
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(vec![]))));
+        let repo = Arc::new(MockRepo::new());
+        let repo_ref = Arc::clone(&repo);
+        let task = make_task(scraper, repo);
+
+        task.execute().await.unwrap();
+
+        assert_eq!(repo_ref.upsert_calls.lock().unwrap().len(), 0);
+        assert_eq!(repo_ref.update_comment_count_calls.lock().unwrap().len(), 1);
+        assert!(
+            repo_ref
+                .update_thread_metadata_called
+                .lock()
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_scrape_error_returns_err() {
+        let scraper = Arc::new(MockScraper::returning(Err(
+            ScrapeError::ElementSelectorError(),
+        )));
+        let repo = Arc::new(MockRepo::new());
+        let repo_ref = Arc::clone(&repo);
+        let task = make_task(scraper, repo);
+
+        let result = task.execute().await;
+
+        assert!(matches!(result, Err(ScrapeTaskError::ScrapingError(_))));
+        assert_eq!(repo_ref.upsert_calls.lock().unwrap().len(), 0);
+        assert_eq!(repo_ref.update_comment_count_calls.lock().unwrap().len(), 0);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_upsert_error_still_returns_ok() {
+        let comments = vec![make_comment(1)];
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(comments))));
+        let repo = Arc::new(MockRepo {
+            upsert_error: Some("db down".to_string()),
+            ..MockRepo::new()
+        });
+        let task = make_task(scraper, repo);
+
+        let result = task.execute().await;
+
+        assert!(result.is_ok(), "upsert errors are soft failures");
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_update_count_error_still_returns_ok() {
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(vec![]))));
+        let repo = Arc::new(MockRepo {
+            update_count_error: Some("db down".to_string()),
+            ..MockRepo::new()
+        });
+        let task = make_task(scraper, repo);
+
+        let result = task.execute().await;
+
+        assert!(
+            result.is_ok(),
+            "update_comment_count errors are soft failures"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn execute_update_metadata_error_still_returns_ok() {
+        let scraper = Arc::new(MockScraper::returning(Ok(make_scrape_result(vec![]))));
+        let repo = Arc::new(MockRepo {
+            update_metadata_error: Some("db down".to_string()),
+            ..MockRepo::new()
+        });
+        let task = make_task(scraper, repo);
+
+        let result = task.execute().await;
+
+        assert!(
+            result.is_ok(),
+            "update_thread_metadata errors are soft failures"
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests_constructor {
+    use super::ScrapeTask;
+    use crate::db::CombinedRepository;
+    use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
+    use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::scrape::{CommentScraper, ScrapeError, ScrapeResult};
+    use async_trait::async_trait;
+    use std::sync::Arc;
+
+    struct NoOpScraper;
+
+    #[async_trait]
+    impl CommentScraper for NoOpScraper {
+        async fn get_comments(&self, _url: &str) -> Result<ScrapeResult, ScrapeError> {
+            unimplemented!()
+        }
+    }
+
+    fn no_op_scraper() -> Arc<dyn CommentScraper> {
+        Arc::new(NoOpScraper)
+    }
+
+    struct MockRepo;
+
+    #[async_trait]
+    impl CommentsRepository for MockRepo {
+        async fn count_comments(
+            &self,
+            _url_id: i64,
+            _state: Option<i32>,
+        ) -> Result<u32, sqlx::Error> {
+            Ok(0)
+        }
+
+        async fn page_comments(
+            &self,
+            _offset: i64,
+            _count: i64,
+            _url_id: i64,
+            _state: Option<i32>,
+            _sort_by: Option<crate::SortBy>,
+            _sort_order: Option<crate::SortOrder>,
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            Ok(Vec::new())
+        }
+
+        async fn upsert_comments(
+            &self,
+            _comments: &[crate::CommentRecord],
+            _url_id: i64,
+        ) -> Result<usize, sqlx::Error> {
+            Ok(0)
+        }
+
+        async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl LinksRepository for MockRepo {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            Ok(0)
+        }
+
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
+            Ok(vec![])
+        }
+
+        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+
+        async fn update_thread_metadata(
+            &self,
+            _url_id: i64,
+            _month: Option<i32>,
+            _year: Option<i32>,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+    }
+
+    fn new_repo() -> Arc<dyn CombinedRepository> {
+        Arc::new(MockRepo)
+    }
+
+    #[test]
+    fn new_stores_url_and_url_id() {
+        let task = ScrapeTask::new(
+            "https://example.com/item/42".to_string(),
+            42,
+            new_repo(),
+            no_op_scraper(),
+        );
+        assert_eq!(task.url(), "https://example.com/item/42");
+        assert_eq!(task.url_id(), 42);
+    }
+
+    #[test]
+    fn new_url_id_boundary_zero() {
+        let task = ScrapeTask::new(
+            "https://example.com/item/0".to_string(),
+            0,
+            new_repo(),
+            no_op_scraper(),
+        );
+        assert_eq!(task.url_id(), 0);
+    }
+
+    #[test]
+    fn new_url_id_negative() {
+        let task = ScrapeTask::new(
+            "https://example.com/item/-1".to_string(),
+            -1,
+            new_repo(),
+            no_op_scraper(),
+        );
+        assert_eq!(task.url_id(), -1);
     }
 }

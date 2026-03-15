@@ -45,7 +45,7 @@ impl From<i32> for CommentState {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct CommentRecord {
     pub id: i64,
     pub author: String,

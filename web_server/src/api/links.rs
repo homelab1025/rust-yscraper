@@ -1,6 +1,7 @@
 use crate::api::app_state::AppState;
 use crate::api::common::{ApiError, ApiErrorCode};
 use crate::db::CombinedRepository;
+use crate::scrape::CommentScraper;
 use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
 use axum::Json;
@@ -15,6 +16,7 @@ use utoipa::ToSchema;
 pub struct LinksAppState {
     pub repo: Arc<dyn CombinedRepository>,
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
+    pub scraper: Arc<dyn CommentScraper>,
     pub config: crate::config::AppConfig,
 }
 
@@ -23,6 +25,7 @@ impl FromRef<AppState> for LinksAppState {
         LinksAppState {
             repo: input.repo.clone(),
             task_queue: input.task_queue.clone(),
+            scraper: input.scraper.clone(),
             config: input.config.clone(),
         }
     }
@@ -131,7 +134,7 @@ pub async fn scrape_link(
 
     // REFACTOR: we need to rethink what gets passed to the scrape task and unify this with the background scheduler.
     // Always schedule the initial scrape
-    let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone());
+    let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone(), state.scraper.clone());
     let schedule_res = state.task_queue.schedule(scrape_task).await;
 
     match schedule_res {
@@ -250,10 +253,20 @@ mod tests {
     use super::*;
     use crate::db::comments_repository::{CommentsRepository, DbCommentRow};
     use crate::db::links_repository::{DbUrlRow, LinksRepository, ScheduledUrl};
+    use crate::scrape::{ScrapeError, ScrapeResult};
     use async_trait::async_trait;
     use chrono::Utc;
     use sqlx::Error;
     use tokio::sync::mpsc::error::TrySendError;
+
+    struct NoOpScraper;
+
+    #[async_trait]
+    impl CommentScraper for NoOpScraper {
+        async fn get_comments(&self, _url: &str) -> Result<ScrapeResult, ScrapeError> {
+            unimplemented!()
+        }
+    }
 
     struct MockRepo {
         links: Result<Vec<DbUrlRow>, String>,
@@ -368,6 +381,7 @@ mod tests {
             task_queue: Arc::new(StubScheduler {
                 outcome: schedule_outcome,
             }),
+            scraper: Arc::new(NoOpScraper),
             config,
         }
     }
