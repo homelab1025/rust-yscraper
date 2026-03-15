@@ -152,6 +152,10 @@ mod tests {
         async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
             Ok(())
         }
+
+        async fn get_comment(&self, _id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
+            Ok(None)
+        }
     }
 
     #[async_trait]

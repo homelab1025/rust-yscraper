@@ -1,8 +1,4 @@
 use ::config::Config;
-use axum::{
-    Router,
-    routing::{delete, get, patch, post},
-};
 use config::{Environment, File, FileFormat};
 use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
@@ -16,9 +12,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use web_server::api::ApiDoc;
 use web_server::api::app_state::AppState;
-use web_server::api::comments::{list_comments, update_comment_state};
-use web_server::api::links::{delete_link, list_links, scrape_link};
-use web_server::api::ping::{RealSystemTime, ping};
+use web_server::api::ping::RealSystemTime;
 use web_server::background_scheduler::BackgroundScheduler;
 use web_server::config::AppConfig;
 use web_server::db::CombinedRepository;
@@ -83,15 +77,8 @@ fn main() {
         let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 
         // Build router
-        let app = Router::new()
+        let app = web_server::build_router(app_state)
             .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-            .route("/ping", get(ping))
-            .route("/scrape", post(scrape_link))
-            .route("/comments", get(list_comments))
-            .route("/comments/{id}/state", patch(update_comment_state))
-            .route("/links", get(list_links))
-            .route("/links/{id}", delete(delete_link))
-            .with_state(app_state)
             .layer(
                 CorsLayer::new()
                     .allow_origin(Any)
