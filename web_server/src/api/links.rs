@@ -89,6 +89,8 @@ pub struct ScrapeResponse {
 
 // TODO: add handler for triggering a re-scraping of a link, based on the id
 
+// TODO: integration tests — mock the HTTP client (NOT wiremock, but mock implementation of the trait) so the real HN website is not scraped
+
 /// Triggers scraping and inserts results into the database.
 /// Trigger a scrape task for a specific Hacker News item
 #[utoipa::path(
@@ -134,7 +136,12 @@ pub async fn scrape_link(
 
     // REFACTOR: we need to rethink what gets passed to the scrape task and unify this with the background scheduler.
     // Always schedule the initial scrape
-    let scrape_task = ScrapeTask::new(target_url, item_id, state.repo.clone(), state.scraper.clone());
+    let scrape_task = ScrapeTask::new(
+        target_url,
+        item_id,
+        state.repo.clone(),
+        state.scraper.clone(),
+    );
     let schedule_res = state.task_queue.schedule(scrape_task).await;
 
     match schedule_res {
@@ -304,6 +311,10 @@ mod tests {
         }
         async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
             Ok(())
+        }
+
+        async fn get_comment(&self, _id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
+            Ok(None)
         }
     }
 

@@ -17,6 +17,7 @@ use utoipa::OpenApi;
     paths(
         crate::api::ping::ping,
         crate::api::comments::list_comments,
+        crate::api::comments::get_comment,
         crate::api::comments::update_comment_state,
         crate::api::links::scrape_link,
         crate::api::links::list_links,

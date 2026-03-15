@@ -29,6 +29,9 @@ pub trait CommentsRepository: Send + Sync {
 
     /// Update the state of a specific comment.
     async fn update_comment_state(&self, id: i64, state: i32) -> Result<(), sqlx::Error>;
+
+    /// Fetch a single comment by its ID.
+    async fn get_comment(&self, id: i64) -> Result<Option<DbCommentRow>, sqlx::Error>;
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]

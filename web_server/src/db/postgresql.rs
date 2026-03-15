@@ -165,6 +165,15 @@ impl CommentsRepository for PgCommentsRepository {
         tx.commit().await?;
         Ok(())
     }
+
+    async fn get_comment(&self, id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
+        sqlx::query_as::<_, DbCommentRow>(
+            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+    }
 }
 
 #[async_trait]

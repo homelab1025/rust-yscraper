@@ -7,8 +7,27 @@ pub mod scrape_task;
 pub mod task_queue;
 pub mod utils;
 
+use axum::Router;
+use axum::routing::{delete, get, patch, post};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+use api::app_state::AppState;
+use api::comments::{get_comment, list_comments, update_comment_state};
+use api::links::{delete_link, list_links, scrape_link};
+use api::ping::ping;
+
+pub fn build_router(state: AppState) -> Router {
+    Router::new()
+        .route("/ping", get(ping))
+        .route("/scrape", post(scrape_link))
+        .route("/comments", get(list_comments))
+        .route("/comments/{id}", get(get_comment))
+        .route("/comments/{id}/state", patch(update_comment_state))
+        .route("/links", get(list_links))
+        .route("/links/{id}", delete(delete_link))
+        .with_state(state)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

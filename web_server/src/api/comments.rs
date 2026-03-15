@@ -1,9 +1,9 @@
 use super::common::{ApiError, ApiErrorCode};
 use crate::api::app_state::AppState;
 use crate::db::comments_repository::CommentsRepository;
-use axum::extract::{FromRef, Json, Query, State};
+use axum::extract::{FromRef, Json, Path, Query, State};
 use axum::http::StatusCode;
-use log::{error, info};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
@@ -139,6 +139,54 @@ pub async fn list_comments(
 
     let body = CommentsPage { total, items };
     Ok(Json(body))
+}
+
+/// Get a single comment by ID
+#[utoipa::path(
+    get,
+    path = "/comments/{id}",
+    responses(
+        (status = 200, description = "Comment found", body = CommentDto),
+        (status = 404, description = "Comment not found", body = ApiError),
+        (status = 500, description = "Database error", body = ApiError)
+    ),
+    params(
+        ("id" = i64, Path, description = "Comment ID"),
+    )
+)]
+pub async fn get_comment(
+    State(state): State<CommentsAppState>,
+    Path(id): Path<i64>,
+) -> Result<Json<CommentDto>, (StatusCode, Json<ApiError>)> {
+    debug!("get_comment called for id {}", id);
+    match state.repo.get_comment(id).await {
+        Ok(Some(row)) => Ok(Json(CommentDto {
+            id: row.id,
+            user: row.author,
+            date: row.date,
+            text: row.text,
+            url_id: row.url_id,
+            state: row.state.into(),
+            subcomment_count: row.subcomment_count,
+        })),
+        Ok(None) => Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                code: ApiErrorCode::NotFound,
+                msg: format!("comment {} not found", id),
+            }),
+        )),
+        Err(e) => {
+            error!("Failed to get comment {}: {}", id, e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::DatabaseError,
+                    msg: "failed to get comment".to_string(),
+                }),
+            ))
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -292,6 +340,10 @@ mod tests {
         async fn update_comment_state(&self, _id: i64, state: i32) -> Result<(), sqlx::Error> {
             *self.last_update_state.lock().await = Some(state);
             Ok(())
+        }
+
+        async fn get_comment(&self, _id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
+            Ok(None)
         }
     }
 

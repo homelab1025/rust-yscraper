@@ -1,71 +1,14 @@
+mod common;
+
 use chrono::{Duration, Utc};
-use sqlx::PgPool;
-use std::env;
-//
-use testcontainers::core::WaitFor;
-use testcontainers::runners::AsyncRunner;
-use testcontainers::{GenericImage, ImageExt};
-use testcontainers_modules::postgres::Postgres;
 use web_server::CommentRecord;
 use web_server::db::comments_repository::CommentsRepository;
 use web_server::db::links_repository::LinksRepository;
 use web_server::db::postgresql::PgCommentsRepository;
 
-async fn setup_db() -> (PgPool, testcontainers::ContainerAsync<Postgres>) {
-    let container = Postgres::default()
-        .with_user("postgres")
-        .with_password("postgres")
-        .with_db_name("postgres")
-        .with_network("bridge")
-        .with_log_consumer(|log: &testcontainers::core::logs::LogFrame| {
-            print!("{}", String::from_utf8_lossy(log.bytes()));
-        })
-        .start()
-        .await
-        .unwrap();
-
-    let host = container.get_host().await.unwrap();
-    let port = container.get_host_port_ipv4(5432).await.unwrap();
-
-    // Get the internal bridge IP of the Postgres container for Liquibase to connect to.
-    let postgres_ip = container.get_bridge_ip_address().await.unwrap();
-    let jdbc_url = format!("jdbc:postgresql://{}:5432/postgres", postgres_ip);
-
-    let project_root = env::current_dir().unwrap().parent().unwrap().to_path_buf();
-    let db_path = project_root.join("db");
-    let db_path_str = db_path.to_str().unwrap();
-
-    let liquibase = GenericImage::new("liquibase/liquibase", "4.23")
-        .with_network("bridge")
-        .with_mount(testcontainers::core::Mount::bind_mount(
-            db_path_str,
-            "/liquibase/db",
-        ))
-        .with_log_consumer(|log: &testcontainers::core::logs::LogFrame| {
-            print!("{}", String::from_utf8_lossy(log.bytes()));
-        })
-        .with_cmd([
-            "--changelog-file=db/changelog/db.changelog-master.yaml",
-            &format!("--url={}", jdbc_url),
-            "--username=postgres",
-            "--password=postgres",
-            "update",
-        ])
-        .with_ready_conditions(vec![WaitFor::message_on_stdout("UPDATE SUMMARY")]);
-
-    let _liquibase_container = AsyncRunner::start(liquibase).await.unwrap();
-
-    let conn_str = format!("postgres://postgres:postgres@{}:{}/postgres", host, port);
-    let pool = PgPool::connect(&conn_str)
-        .await
-        .expect("Failed to connect to Postgres");
-
-    (pool, container)
-}
-
 #[tokio::test]
 async fn test_get_urls_due_for_refresh() {
-    let (pool, _container) = setup_db().await;
+    let (pool, _container) = common::setup_db().await;
     let repo = PgCommentsRepository::new(pool.clone());
 
     let now = Utc::now();
@@ -145,7 +88,7 @@ async fn test_get_urls_due_for_refresh() {
 
 #[tokio::test]
 async fn test_delete_link_with_comments() {
-    let (pool, _container) = setup_db().await;
+    let (pool, _container) = common::setup_db().await;
     let repo = PgCommentsRepository::new(pool.clone());
 
     let now = Utc::now();
@@ -221,7 +164,7 @@ async fn test_delete_link_with_comments() {
 
 #[tokio::test]
 async fn test_upsert_comments_selective_update() {
-    let (pool, _container) = setup_db().await;
+    let (pool, _container) = common::setup_db().await;
     let repo = PgCommentsRepository::new(pool.clone());
 
     let url_id = 200;
@@ -301,7 +244,7 @@ async fn test_upsert_comments_selective_update() {
 
 #[tokio::test]
 async fn test_upsert_comments_updates_thread_metadata() {
-    let (pool, _container) = setup_db().await;
+    let (pool, _container) = common::setup_db().await;
     let repo = PgCommentsRepository::new(pool.clone());
 
     let url_id = 300i64;
