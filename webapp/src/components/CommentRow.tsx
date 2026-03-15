@@ -4,11 +4,12 @@ import { type CommentDto, CommentState } from '../api-client';
 interface CommentRowProps {
     comment: CommentDto;
     selected?: boolean;
+    expanded?: boolean;
     onUpdateState: (commentId: number, state: CommentState) => void;
 }
 
 const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
-    ({ comment, selected, onUpdateState }, ref) => {
+    ({ comment, selected, expanded, onUpdateState }, ref) => {
         const rowClass = [
             'transition-colors',
             comment.state === CommentState.Picked
@@ -22,7 +23,7 @@ const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
         return (
             <tr ref={ref} className={rowClass}>
                 <td className="px-6 py-4 text-sm text-slate-900 max-w-md">
-                    <p className="line-clamp-3">{comment.text}</p>
+                    <p className={expanded ? undefined : 'line-clamp-3'}>{comment.text}</p>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{comment.user}</td>
                 <td className="px-6 py-4 text-sm text-slate-600 text-center">{comment.subcomment_count}</td>
