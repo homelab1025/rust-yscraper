@@ -81,12 +81,17 @@ impl CommentsRepository for PgCommentsRepository {
         &self,
         comments: &[CommentRecord],
         url_id: i64,
+        thread_month: Option<i32>,
+        thread_year: Option<i32>,
     ) -> Result<usize, sqlx::Error> {
         let sql_insert = "INSERT INTO comments (id, author, date, text, url_id, state, subcomment_count)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (id) DO UPDATE SET text=EXCLUDED.text, subcomment_count=EXCLUDED.subcomment_count";
 
+        let now = Utc::now();
+        let mut tx = self.pool.begin().await?;
         let mut inserted = 0usize;
+
         for comment in comments {
             let result = sqlx::query(sql_insert)
                 .bind(comment.id)
@@ -96,10 +101,30 @@ impl CommentsRepository for PgCommentsRepository {
                 .bind(url_id)
                 .bind(comment.state as i32)
                 .bind(comment.subcomment_count)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
             inserted += result.rows_affected() as usize;
         }
+
+        sqlx::query(
+            r#"
+            UPDATE urls
+            SET last_scraped = $1,
+                thread_month = $2,
+                thread_year = $3,
+                comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4),
+                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4 AND state = 1)
+            WHERE id = $4
+            "#,
+        )
+        .bind(now)
+        .bind(thread_month)
+        .bind(thread_year)
+        .bind(url_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(inserted)
     }
 
@@ -234,43 +259,4 @@ impl LinksRepository for PgCommentsRepository {
         .await
     }
 
-    async fn update_comment_count(&self, url_id: i64) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            UPDATE urls 
-            SET picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $1 AND state = 1)
-            WHERE id = $1
-            "#,
-        )
-        .bind(url_id)
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    async fn update_thread_metadata(
-        &self,
-        url_id: i64,
-        month: Option<i32>,
-        year: Option<i32>,
-    ) -> Result<(), sqlx::Error> {
-        let now = Utc::now();
-        sqlx::query(
-            r#"
-            UPDATE urls 
-            SET last_scraped = $1, 
-                thread_month = $2, 
-                thread_year = $3,
-                comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4)
-            WHERE id = $4
-            "#
-        )
-            .bind(now)
-            .bind(month)
-            .bind(year)
-            .bind(url_id)
-            .execute(&self.pool)
-            .await?;
-        Ok(())
-    }
 }

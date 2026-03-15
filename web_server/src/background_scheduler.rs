@@ -143,6 +143,8 @@ mod tests {
             &self,
             _comments: &[crate::CommentRecord],
             _url_id: i64,
+            _thread_month: Option<i32>,
+            _thread_year: Option<i32>,
         ) -> Result<usize, sqlx::Error> {
             Ok(0)
         }
@@ -176,18 +178,6 @@ mod tests {
             Ok(self.urls.lock().unwrap().clone())
         }
 
-        async fn update_comment_count(&self, _url_id: i64) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
-
-        async fn update_thread_metadata(
-            &self,
-            _url_id: i64,
-            _month: Option<i32>,
-            _year: Option<i32>,
-        ) -> Result<(), sqlx::Error> {
-            Ok(())
-        }
     }
 
     struct MockScheduler {

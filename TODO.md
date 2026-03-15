@@ -1,5 +1,6 @@
 ## TODO
 
+- write tests for the execute function of the ScrapeTask struct (from the trait). Consider: comments returns an error, comments is empty, repo fails to store -> should return error, but it doesn't right now.
 - ideas could be grouped in clusters based on functional areas/domains
 - generalize this for the "Who is hiring" threads as well
 - create a web interface using reactjs with the following features:
@@ -23,4 +24,3 @@
 - move to postgres
 - add tests for the handlers
 - switch to postgresql
-
