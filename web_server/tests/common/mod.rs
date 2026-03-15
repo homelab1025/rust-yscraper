@@ -6,6 +6,7 @@ use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{GenericImage, ImageExt};
 use testcontainers_modules::postgres::Postgres;
+use tokio::sync::Mutex;
 use tokio::sync::mpsc::error::TrySendError;
 use web_server::api::app_state::AppState;
 use web_server::api::ping::RealSystemTime;
@@ -24,6 +25,22 @@ impl TaskScheduler<ScrapeTask> for StubScheduler {
     }
 }
 
+pub struct RecordingScheduler {
+    pub scheduled: Arc<Mutex<Vec<(i64, String)>>>,
+    pub outcome: bool,
+}
+
+#[async_trait]
+impl TaskScheduler<ScrapeTask> for RecordingScheduler {
+    async fn schedule(&self, task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
+        self.scheduled
+            .lock()
+            .await
+            .push((task.url_id(), task.url().to_string()));
+        Ok(self.outcome)
+    }
+}
+
 pub struct NoOpScraper;
 
 #[async_trait]
@@ -38,10 +55,14 @@ impl CommentScraper for NoOpScraper {
 }
 
 pub fn make_test_app_state(pool: PgPool) -> AppState {
+    make_test_app_state_with_scheduler(pool, Arc::new(StubScheduler))
+}
+
+pub fn make_test_app_state_with_scheduler(pool: PgPool, scheduler: Arc<dyn TaskScheduler<ScrapeTask>>) -> AppState {
     AppState {
         repo: Arc::new(PgCommentsRepository::new(pool)),
         time_provider: Arc::new(RealSystemTime {}),
-        task_queue: Arc::new(StubScheduler),
+        task_queue: scheduler,
         scraper: Arc::new(NoOpScraper),
         config: AppConfig {
             server_port: 3000,
