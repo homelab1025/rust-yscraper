@@ -17,11 +17,14 @@ pub trait CommentsRepository: Send + Sync {
         sort_order: Option<crate::SortOrder>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error>;
 
-    /// Insert or update a batch of comments for a given url_id.
+    /// Insert or update a batch of comments for a given url_id, and atomically
+    /// update the URL's counts and thread metadata.
     async fn upsert_comments(
         &self,
         comments: &[CommentRecord],
         url_id: i64,
+        thread_month: Option<i32>,
+        thread_year: Option<i32>,
     ) -> Result<usize, sqlx::Error>;
 
     /// Update the state of a specific comment.

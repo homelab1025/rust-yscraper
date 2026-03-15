@@ -249,7 +249,7 @@ async fn test_upsert_comments_selective_update() {
         subcomment_count: 5,
     }];
 
-    repo.upsert_comments(&initial_comments, url_id)
+    repo.upsert_comments(&initial_comments, url_id, Some(1), Some(2026))
         .await
         .unwrap();
 
@@ -278,7 +278,7 @@ async fn test_upsert_comments_selective_update() {
         subcomment_count: 10,
     }];
 
-    repo.upsert_comments(&updated_comments, url_id)
+    repo.upsert_comments(&updated_comments, url_id, Some(1), Some(2026))
         .await
         .unwrap();
 
@@ -300,11 +300,11 @@ async fn test_upsert_comments_selective_update() {
 }
 
 #[tokio::test]
-async fn test_update_thread_metadata() {
+async fn test_upsert_comments_updates_thread_metadata() {
     let (pool, _container) = setup_db().await;
     let repo = PgCommentsRepository::new(pool.clone());
 
-    let url_id = 300;
+    let url_id = 300i64;
     let url = "http://example.com/metadata_test";
 
     // 1. Setup a link
@@ -318,8 +318,8 @@ async fn test_update_thread_metadata() {
         .await
         .unwrap();
 
-    // 2. Initial update
-    repo.update_thread_metadata(url_id, Some(2), Some(2026))
+    // 2. Upsert with thread metadata
+    repo.upsert_comments(&[], url_id, Some(2), Some(2026))
         .await
         .unwrap();
 
@@ -329,8 +329,8 @@ async fn test_update_thread_metadata() {
     assert_eq!(link.thread_month, Some(2));
     assert_eq!(link.thread_year, Some(2026));
 
-    // 4. Update to NULL (e.g. if extraction fails on re-scrape)
-    repo.update_thread_metadata(url_id, None, None)
+    // 4. Upsert with NULL metadata (e.g. if extraction fails on re-scrape)
+    repo.upsert_comments(&[], url_id, None, None)
         .await
         .unwrap();
 
