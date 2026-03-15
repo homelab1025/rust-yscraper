@@ -16,6 +16,8 @@ const KEY_NAV_DOWN = 'j';
 const KEY_NAV_UP = 'k';
 const KEY_PICK = 'p';
 const KEY_DISCARD = 'd';
+const KEY_EXPAND = 'l';
+const KEY_COLLAPSE = 'h';
 
 function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
     if (!active) return <span className="material-symbols-outlined !text-base text-slate-400">unfold_more</span>;
@@ -36,6 +38,7 @@ export default function CommentsPage(): React.JSX.Element {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [expanded, setExpanded] = useState(false);
     const [sortBy, setSortBy] = useState<SortBy>(SortBy.Date);
     const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.Desc);
     const pendingSelectRef = useRef<'first' | 'last' | null>(null);
@@ -126,6 +129,7 @@ export default function CommentsPage(): React.JSX.Element {
 
             if (e.key === KEY_NAV_DOWN) {
                 directionRef.current = 'down';
+                setExpanded(false);
                 if (selectedIndex < comments.length - 1) {
                     setSelectedIndex(i => i + 1);
                 } else {
@@ -137,6 +141,7 @@ export default function CommentsPage(): React.JSX.Element {
                 }
             } else if (e.key === KEY_NAV_UP) {
                 directionRef.current = 'up';
+                setExpanded(false);
                 if (selectedIndex > 0) {
                     setSelectedIndex(i => i - 1);
                 } else if (page > 0) {
@@ -147,6 +152,10 @@ export default function CommentsPage(): React.JSX.Element {
                 updateState(comments[selectedIndex].id, CommentState.Picked);
             } else if (e.key === KEY_DISCARD) {
                 updateState(comments[selectedIndex].id, CommentState.Discarded);
+            } else if (e.key === KEY_EXPAND) {
+                setExpanded(true);
+            } else if (e.key === KEY_COLLAPSE) {
+                setExpanded(false);
             }
         };
 
@@ -228,6 +237,7 @@ export default function CommentsPage(): React.JSX.Element {
                                         ref={(el) => { rowRefs.current[i] = el; }}
                                         comment={c}
                                         selected={i === selectedIndex}
+                                        expanded={i === selectedIndex && expanded}
                                         onUpdateState={updateState}
                                     />
                                 ))
