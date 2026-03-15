@@ -89,8 +89,6 @@ pub struct ScrapeResponse {
 
 // TODO: add handler for triggering a re-scraping of a link, based on the id
 
-// TODO: integration tests — mock the HTTP client (NOT wiremock, but mock implementation of the trait) so the real HN website is not scraped
-
 /// Triggers scraping and inserts results into the database.
 /// Trigger a scrape task for a specific Hacker News item
 #[utoipa::path(
