@@ -1,5 +1,6 @@
 ## TODO
 
+- add integration tests for the comments api. Use the postgresql_test.rs as an example. You can extract the setup of the db in a common module for all integration tests.
 - write tests for the execute function of the ScrapeTask struct (from the trait). Consider: comments returns an error, comments is empty, repo fails to store -> should return error, but it doesn't right now.
 - ideas could be grouped in clusters based on functional areas/domains
 - generalize this for the "Who is hiring" threads as well
