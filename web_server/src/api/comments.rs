@@ -76,7 +76,7 @@ pub async fn list_comments(
     State(state): State<CommentsAppState>,
     Query(filter): Query<CommentsFilter>,
 ) -> Result<Json<CommentsPage>, (StatusCode, Json<ApiError>)> {
-    info!("list_comments called with {:?}", filter);
+    debug!("list_comments called with {:?}", filter);
     let offset = filter.offset.unwrap_or(0).max(0);
     let count = filter.count.unwrap_or(10).clamp(1, 100);
 
@@ -212,7 +212,7 @@ pub async fn update_comment_state(
     axum::extract::Path(id): axum::extract::Path<i64>,
     Json(payload): Json<UpdateStateRequest>,
 ) -> Result<(), (StatusCode, Json<ApiError>)> {
-    info!(
+    debug!(
         "update_comment_state called for {} with state {:?}",
         id, payload.state
     );

@@ -30,6 +30,7 @@ pub struct DbUrlRow {
     pub date_added: chrono::DateTime<chrono::Utc>,
     pub comment_count: i32,
     pub picked_comment_count: i32,
+    pub discarded_comment_count: i32,
     pub thread_month: Option<i32>,
     pub thread_year: Option<i32>,
 }

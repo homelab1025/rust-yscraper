@@ -49,6 +49,7 @@ async fn test_list_links_returns_data() {
     assert_eq!(link.id, 1);
     assert_eq!(link.total_comment_count, 0);
     assert_eq!(link.picked_comment_count, 0);
+    assert_eq!(link.discarded_comment_count, 0);
     assert_eq!(link.thread_month, Some(3));
     assert_eq!(link.thread_year, Some(2026));
 }

@@ -38,7 +38,7 @@ pub struct LinkDto {
     pub date_added: String,
     pub total_comment_count: u32,
     pub picked_comment_count: u32,
-    // TODO: add discarded comment count (same principle as picked_comment_count)
+    pub discarded_comment_count: u32,
     pub thread_month: Option<i32>,
     pub thread_year: Option<i32>,
 }
@@ -201,6 +201,7 @@ pub async fn list_links(
             date_added: row.date_added.to_rfc3339(),
             total_comment_count: row.comment_count as u32,
             picked_comment_count: row.picked_comment_count as u32,
+            discarded_comment_count: row.discarded_comment_count as u32,
             thread_month: row.thread_month,
             thread_year: row.thread_year,
         })
@@ -397,6 +398,7 @@ mod tests {
                 date_added: time_url1,
                 comment_count: 5,
                 picked_comment_count: 2,
+                discarded_comment_count: 1,
                 thread_month: None,
                 thread_year: None,
             },
@@ -406,6 +408,7 @@ mod tests {
                 date_added: time_url2,
                 comment_count: 10,
                 picked_comment_count: 5,
+                discarded_comment_count: 3,
                 thread_month: None,
                 thread_year: None,
             },
@@ -422,6 +425,7 @@ mod tests {
             date_added: time_url1.to_rfc3339(),
             total_comment_count: 5,
             picked_comment_count: 2,
+            discarded_comment_count: 1,
             thread_month: None,
             thread_year: None,
         }));
@@ -431,6 +435,7 @@ mod tests {
             date_added: time_url2.to_rfc3339(),
             total_comment_count: 10,
             picked_comment_count: 5,
+            discarded_comment_count: 3,
             thread_month: None,
             thread_year: None,
         }));

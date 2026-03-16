@@ -19,7 +19,8 @@ const formatThreadMetadata = (month?: number | null, year?: number | null, fallb
 };
 
 const isCompleted = (link: LinkDto) =>
-  link.total_comment_count > 0 && link.picked_comment_count >= link.total_comment_count;
+  link.total_comment_count > 0 &&
+  (link.picked_comment_count + link.discarded_comment_count) >= link.total_comment_count;
 
 export default function LinkManagementPage(): React.JSX.Element {
   const { linksApi } = useServices();
@@ -58,13 +59,13 @@ export default function LinkManagementPage(): React.JSX.Element {
     fetchLinks();
   }, []);
 
-  // TODO: when server will return the discarded comments per link use that to calculate the totalreviewed = total count - picked count - discarded count
-  const totalPicked = links.reduce((sum, l) => sum + (l.picked_comment_count ?? 0), 0);
-  const totalReviewed = totalPicked;
+  const totalPicked    = links.reduce((sum, l) => sum + (l.picked_comment_count    ?? 0), 0);
+  const totalDiscarded = links.reduce((sum, l) => sum + (l.discarded_comment_count ?? 0), 0);
+  const totalReviewed  = totalPicked + totalDiscarded;
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
-      <SummaryStats reviewed={totalReviewed} picked={totalPicked} discarded={0} />
+      <SummaryStats reviewed={totalReviewed} picked={totalPicked} discarded={totalDiscarded} />
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">

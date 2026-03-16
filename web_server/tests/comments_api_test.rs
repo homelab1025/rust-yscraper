@@ -6,6 +6,7 @@ use sqlx::PgPool;
 use tower::ServiceExt;
 use web_server::CommentState;
 use web_server::api::comments::{CommentDto, CommentsPage};
+use web_server::api::links::LinkDto;
 
 async fn insert_url(pool: &PgPool, id: i64) {
     sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, NOW(), $3, $4)")
@@ -178,4 +179,35 @@ async fn test_update_comment_state_discarded() {
         .unwrap();
     let comment: CommentDto = serde_json::from_slice(&body).unwrap();
     assert_eq!(comment.state, CommentState::Discarded);
+}
+
+#[tokio::test]
+async fn test_update_comment_state_discarded_updates_url_count() {
+    let (pool, _container) = common::setup_db().await;
+    insert_url(&pool, 7).await;
+    insert_comment(&pool, 50, 7, 0).await;
+
+    let app = web_server::build_router(common::make_test_app_state(pool));
+
+    let patch_req = Request::builder()
+        .method("PATCH")
+        .uri("/comments/50/state")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"state": "DISCARDED"}"#))
+        .unwrap();
+    let resp = app.clone().oneshot(patch_req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let list_req = Request::builder()
+        .method("GET")
+        .uri("/links")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.oneshot(list_req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let links: Vec<LinkDto> = serde_json::from_slice(&body).unwrap();
+    let link = links.iter().find(|l| l.id == 7).unwrap();
+    assert_eq!(link.discarded_comment_count, 1);
 }

@@ -1,6 +1,5 @@
 ## TODO
 
-- add integration tests for the comments api. Use the postgresql_test.rs as an example. You can extract the setup of the db in a common module for all integration tests.
 - write tests for the execute function of the ScrapeTask struct (from the trait). Consider: comments returns an error, comments is empty, repo fails to store -> should return error, but it doesn't right now.
 - ideas could be grouped in clusters based on functional areas/domains
 - generalize this for the "Who is hiring" threads as well
@@ -13,6 +12,7 @@
 
 ## DONE
 
+- add integration tests for the comments api. Use the postgresql_test.rs as an example. You can extract the setup of the db in a common module for all integration tests.
 - The comment gets a new attribute named "state" which reflects whether the comment was picked or discarded. This can be encoded in a number in the application code. The user can pick or discard a comment by pressing the "p" for pick or "d" for discard key when the comment row is selected in the comments list. The list of links will show the number of picked comments out of the total number of comments for each link, in the comments count column. The picked and discarded comments will NOT be shown anymore in the comments list, but there will be a new link in the links table that will lead to a comments page where we show the picked comments. The same for discarded, but thru a different link. The distinction between these 2 views is based on the value of the "state" query parameter for the comments page.
 - refresh the comments (scrape again) over time with a limit of X days, specified as `days_limit` in ScrapeRequest
 - webapp

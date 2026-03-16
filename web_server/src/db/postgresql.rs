@@ -113,7 +113,8 @@ impl CommentsRepository for PgCommentsRepository {
                 thread_month = $2,
                 thread_year = $3,
                 comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4),
-                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4 AND state = 1)
+                picked_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4 AND state = 1),
+                discarded_comment_count = (SELECT COUNT(*) FROM comments WHERE url_id = $4 AND state = 2)
             WHERE id = $4
             "#,
         )
@@ -145,15 +146,17 @@ impl CommentsRepository for PgCommentsRepository {
                 SELECT
                     c.url_id,
                     COUNT(*)                             AS total_count,
-                    COUNT(*) FILTER (WHERE c.state = 1)  AS picked_count
+                    COUNT(*) FILTER (WHERE c.state = 1)  AS picked_count,
+                    COUNT(*) FILTER (WHERE c.state = 2)  AS discarded_count
                 FROM comments c
                 WHERE c.url_id = (SELECT url_id FROM comments WHERE id = $1)
                 GROUP BY c.url_id
             )
             UPDATE urls
             SET
-                comment_count        = comment_info.total_count,
-                picked_comment_count = comment_info.picked_count
+                comment_count           = comment_info.total_count,
+                picked_comment_count    = comment_info.picked_count,
+                discarded_comment_count = comment_info.discarded_count
             FROM comment_info
             WHERE urls.id = comment_info.url_id
             "#,
@@ -180,7 +183,7 @@ impl CommentsRepository for PgCommentsRepository {
 impl LinksRepository for PgCommentsRepository {
     async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
         sqlx::query_as::<_, DbUrlRow>(
-            "SELECT id, url, date_added, comment_count, picked_comment_count, thread_month, thread_year FROM urls ORDER BY date_added DESC",
+            "SELECT id, url, date_added, comment_count, picked_comment_count, discarded_comment_count, thread_month, thread_year FROM urls ORDER BY date_added DESC",
         )
         .fetch_all(&self.pool)
         .await
