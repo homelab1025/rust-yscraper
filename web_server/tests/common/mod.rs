@@ -1,3 +1,7 @@
+// Shared helpers used by multiple integration test binaries; not all items are
+// used in every binary, so suppress the dead-code lint for this module.
+#![allow(dead_code)]
+
 use async_trait::async_trait;
 use sqlx::PgPool;
 use std::env;

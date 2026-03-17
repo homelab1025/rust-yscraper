@@ -87,7 +87,69 @@ pub struct ScrapeResponse {
     pub state: ScrapeState,
 }
 
-// TODO: add handler for triggering a re-scraping of a link, based on the id
+/// Schedules a re-scrape for an existing link without modifying it.
+#[utoipa::path(
+    patch,
+    path = "/links/{url_id}",
+    params(
+        ("url_id" = i64, Path, description = "ID of the link to refresh")
+    ),
+    responses(
+        (status = 200, description = "Refresh scheduled or already scheduled", body = ScrapeResponse),
+        (status = 404, description = "Link not found", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError)
+    )
+)]
+#[axum::debug_handler]
+pub async fn refresh_link(
+    State(state): State<LinksAppState>,
+    Path(url_id): Path<i64>,
+) -> Result<Json<ScrapeResponse>, (StatusCode, Json<ApiError>)> {
+    let url = match state.repo.get_url_by_id(url_id).await {
+        Ok(Some(u)) => u,
+        Ok(None) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    code: ApiErrorCode::NotFound,
+                    msg: format!("Link with ID {} not found", url_id),
+                }),
+            ));
+        }
+        Err(e) => {
+            error!("Failed to fetch URL by id {}: {}", url_id, e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::DatabaseError,
+                    msg: "failed to look up link".to_string(),
+                }),
+            ));
+        }
+    };
+
+    let scrape_task = ScrapeTask::new(url, url_id, state.repo.clone(), state.scraper.clone());
+    match state.task_queue.schedule(scrape_task).await {
+        Ok(true) => {
+            info!("Refresh task scheduled for link {}", url_id);
+            Ok(Json(ScrapeResponse { state: ScrapeState::Scheduled }))
+        }
+        Ok(false) => {
+            info!("Refresh task already scheduled for link {}", url_id);
+            Ok(Json(ScrapeResponse { state: ScrapeState::AlreadyScheduled }))
+        }
+        Err(e) => {
+            error!("Failed to schedule refresh task for link {}: {}", url_id, e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    code: ApiErrorCode::SchedulingError,
+                    msg: "could not schedule refresh task".to_string(),
+                }),
+            ))
+        }
+    }
+}
 
 /// Triggers scraping and inserts results into the database.
 /// Trigger a scrape task for a specific Hacker News item
@@ -337,6 +399,12 @@ mod tests {
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
+        async fn get_url_by_id(&self, id: i64) -> Result<Option<String>, sqlx::Error> {
+            match &self.links {
+                Ok(rows) => Ok(rows.iter().find(|r| r.id == id).map(|r| r.url.clone())),
+                Err(e) => Err(sqlx::Error::Protocol(e.clone())),
+            }
+        }
     }
 
     #[derive(Clone, Copy, Debug)]
@@ -517,5 +585,51 @@ mod tests {
         let result = scrape_link(State(state), Json(payload)).await;
         let Json(resp) = result.unwrap();
         matches!(resp.state, ScrapeState::AlreadyScheduled);
+    }
+
+    fn make_url_row(id: i64, url: &str) -> DbUrlRow {
+        DbUrlRow {
+            id,
+            url: url.to_string(),
+            date_added: Utc::now(),
+            comment_count: 0,
+            picked_comment_count: 0,
+            discarded_comment_count: 0,
+            thread_month: None,
+            thread_year: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn test_refresh_link_scheduled() {
+        let state = make_state(
+            Ok(vec![make_url_row(42, "https://news.ycombinator.com/item?id=42")]),
+            Ok(0),
+            ScheduleOutcome::Scheduled,
+        );
+        let result = refresh_link(State(state), Path(42)).await;
+        let Json(resp) = result.unwrap();
+        assert!(matches!(resp.state, ScrapeState::Scheduled));
+    }
+
+    #[tokio::test]
+    async fn test_refresh_link_already_scheduled() {
+        let state = make_state(
+            Ok(vec![make_url_row(42, "https://news.ycombinator.com/item?id=42")]),
+            Ok(0),
+            ScheduleOutcome::AlreadyInQueue,
+        );
+        let result = refresh_link(State(state), Path(42)).await;
+        let Json(resp) = result.unwrap();
+        assert!(matches!(resp.state, ScrapeState::AlreadyScheduled));
+    }
+
+    #[tokio::test]
+    async fn test_refresh_link_not_found() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let result = refresh_link(State(state), Path(99)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(err.code, ApiErrorCode::NotFound);
     }
 }

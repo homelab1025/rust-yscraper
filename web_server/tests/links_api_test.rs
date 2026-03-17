@@ -144,6 +144,54 @@ async fn test_scrape_link_schedules_task() {
 }
 
 #[tokio::test]
+async fn test_refresh_link_does_not_change_comments() {
+    let (pool, _container) = common::setup_db().await;
+    insert_url(&pool, 1, None, None).await;
+
+    // Insert a comment in NEW state
+    sqlx::query("INSERT INTO comments (id, author, date, text, url_id, state, subcomment_count) VALUES ($1, $2, $3, $4, $5, $6, $7)")
+        .bind(100_i64)
+        .bind("author1")
+        .bind("2026-01-01")
+        .bind("comment text")
+        .bind(1_i64)
+        .bind(0_i32)
+        .bind(0_i32)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    let scheduled = Arc::new(Mutex::new(vec![]));
+    let scheduler = Arc::new(common::RecordingScheduler { scheduled: scheduled.clone(), outcome: true });
+    let app = web_server::build_router(common::make_test_app_state_with_scheduler(pool.clone(), scheduler));
+
+    let req = Request::builder()
+        .method("PATCH")
+        .uri("/links/1")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = ServiceExt::<Request<Body>>::oneshot(app, req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let scrape_resp: ScrapeResponse = serde_json::from_slice(&body).unwrap();
+    assert!(matches!(scrape_resp.state, ScrapeState::Scheduled));
+
+    // Scheduler recorded the task but did not execute — comments unchanged
+    let tasks = scheduled.lock().await;
+    assert_eq!(tasks.len(), 1);
+    assert_eq!(tasks[0].0, 1);
+    drop(tasks);
+
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM comments WHERE url_id = 1 AND state = 0")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 1);
+}
+
+#[tokio::test]
 async fn test_scrape_link_already_scheduled() {
     let (pool, _container) = common::setup_db().await;
     let scheduled = Arc::new(Mutex::new(vec![]));

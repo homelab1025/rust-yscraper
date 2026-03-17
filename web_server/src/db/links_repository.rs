@@ -21,6 +21,9 @@ pub trait LinksRepository: Send + Sync {
     /// Get URLs that are due for refresh based on scheduling
     async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error>;
 
+    /// Returns the URL string for a given ID, or None if not found.
+    async fn get_url_by_id(&self, id: i64) -> Result<Option<String>, sqlx::Error>;
+
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]

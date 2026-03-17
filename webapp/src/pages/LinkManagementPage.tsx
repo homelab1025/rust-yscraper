@@ -28,6 +28,7 @@ export default function LinkManagementPage(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [refreshingId, setRefreshingId] = useState<number | null>(null);
 
   const fetchLinks = async () => {
     try {
@@ -40,6 +41,17 @@ export default function LinkManagementPage(): React.JSX.Element {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async (id: number) => {
+    setRefreshingId(id);
+    try {
+      await linksApi.refreshLink(id);
+    } catch {
+      setError('Failed to refresh link');
+    } finally {
+      setRefreshingId(null);
     }
   };
 
@@ -154,6 +166,16 @@ export default function LinkManagementPage(): React.JSX.Element {
                         >
                           <span className="material-symbols-outlined !text-xl">cancel</span>
                         </Link>
+                        <button
+                          onClick={() => handleRefresh(link.id)}
+                          disabled={refreshingId === link.id}
+                          className="text-slate-400 hover:text-primary transition-colors disabled:opacity-50"
+                          title="Refresh"
+                        >
+                          <span className={`material-symbols-outlined !text-xl${refreshingId === link.id ? ' animate-spin' : ''}`}>
+                            refresh
+                          </span>
+                        </button>
                         {deleteConfirm === link.id ? (
                           <div className="flex items-center gap-1">
                             <button
