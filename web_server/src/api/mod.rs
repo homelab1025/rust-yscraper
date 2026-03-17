@@ -22,6 +22,7 @@ use utoipa::OpenApi;
         crate::api::links::scrape_link,
         crate::api::links::list_links,
         crate::api::links::delete_link,
+        crate::api::links::refresh_link,
     ),
     components(
         schemas(

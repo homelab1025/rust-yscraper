@@ -14,7 +14,7 @@ use utoipa::ToSchema;
 
 use api::app_state::AppState;
 use api::comments::{get_comment, list_comments, update_comment_state};
-use api::links::{delete_link, list_links, scrape_link};
+use api::links::{delete_link, list_links, refresh_link, scrape_link};
 use api::ping::ping;
 
 pub fn build_router(state: AppState) -> Router {
@@ -25,7 +25,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/comments/{id}", get(get_comment))
         .route("/comments/{id}/state", patch(update_comment_state))
         .route("/links", get(list_links))
-        .route("/links/{id}", delete(delete_link))
+        .route("/links/{id}", delete(delete_link).patch(refresh_link))
         .with_state(state)
 }
 

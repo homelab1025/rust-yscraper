@@ -251,6 +251,13 @@ impl LinksRepository for PgCommentsRepository {
         Ok(())
     }
 
+    async fn get_url_by_id(&self, id: i64) -> Result<Option<String>, sqlx::Error> {
+        sqlx::query_scalar::<_, String>("SELECT url FROM urls WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
+    }
+
     async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
         let now = Utc::now();
 

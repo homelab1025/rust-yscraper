@@ -3,7 +3,7 @@ use crate::api::app_state::AppState;
 use crate::db::comments_repository::CommentsRepository;
 use axum::extract::{FromRef, Json, Path, Query, State};
 use axum::http::StatusCode;
-use log::{debug, error, info};
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::{IntoParams, ToSchema};
@@ -366,6 +366,9 @@ mod tests {
         }
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
+        }
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
         }
     }
 

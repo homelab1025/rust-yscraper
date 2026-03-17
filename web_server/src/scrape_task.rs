@@ -219,6 +219,9 @@ mod tests_task_hashing {
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
         }
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
+        }
     }
 
     fn new_task(url: &str, url_id: i64) -> ScrapeTask {
@@ -402,8 +405,10 @@ mod tests_execute {
         }
     }
 
+    type UpsertArgs = (Vec<CommentRecord>, i64, Option<i32>, Option<i32>);
+
     struct MockRepo {
-        upsert_calls: Mutex<Vec<(Vec<CommentRecord>, i64, Option<i32>, Option<i32>)>>,
+        upsert_calls: Mutex<Vec<UpsertArgs>>,
         upsert_error: Option<String>,
     }
 
@@ -489,6 +494,9 @@ mod tests_execute {
 
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
+        }
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
         }
     }
 
@@ -687,6 +695,9 @@ mod tests_constructor {
 
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(vec![])
+        }
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
         }
     }
 

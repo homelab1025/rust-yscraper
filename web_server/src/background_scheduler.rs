@@ -181,7 +181,9 @@ mod tests {
         async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
             Ok(self.urls.lock().unwrap().clone())
         }
-
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
+        }
     }
 
     struct MockScheduler {
