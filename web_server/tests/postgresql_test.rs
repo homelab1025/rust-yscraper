@@ -2,7 +2,7 @@ mod common;
 
 use chrono::{Duration, Utc};
 use web_server::CommentRecord;
-use web_server::db::comments_repository::CommentsRepository;
+use web_server::db::comments_repository::{CommentsRepository, DbCommentRow};
 use web_server::db::links_repository::LinksRepository;
 use web_server::db::postgresql::PgCommentsRepository;
 
@@ -240,6 +240,84 @@ async fn test_upsert_comments_selective_update() {
     assert_eq!(row.1, "UPDATED_text", "Text should have been updated");
     assert_eq!(row.2, 1, "State should not have been updated");
     assert_eq!(row.3, 10, "subcomment_count SHOULD have been updated");
+}
+
+#[tokio::test]
+async fn test_upsert_comments_preserves_user_state_on_rescrape() {
+    let (pool, _container) = common::setup_db().await;
+    let repo = PgCommentsRepository::new(pool.clone());
+
+    let url_id = 400i64;
+    let comment_id = 600i64;
+
+    // 1. Setup a link
+    sqlx::query("INSERT INTO urls (id, url, date_added, frequency_hours, days_limit) VALUES ($1, $2, $3, $4, $5)")
+        .bind(url_id)
+        .bind("http://example.com/rescrape_test")
+        .bind(Utc::now())
+        .bind(24)
+        .bind(7)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+    // 2. Initial scrape: upsert with state=New
+    let initial_comments = vec![CommentRecord {
+        id: comment_id,
+        author: "author".to_string(),
+        date: "2026-01-01".to_string(),
+        text: "v1".to_string(),
+        tags: vec![],
+        state: web_server::CommentState::New,
+        subcomment_count: 0,
+    }];
+    repo.upsert_comments(&initial_comments, url_id, Some(1), Some(2026))
+        .await
+        .unwrap();
+
+    // 3. Simulate user picking the comment (state=1)
+    repo.update_comment_state(comment_id, 1).await.unwrap();
+
+    // 4. Re-scrape: upsert again with state=New and updated text
+    let rescrape_comments = vec![CommentRecord {
+        id: comment_id,
+        author: "author".to_string(),
+        date: "2026-01-01".to_string(),
+        text: "v2".to_string(),
+        tags: vec![],
+        state: web_server::CommentState::New,
+        subcomment_count: 0,
+    }];
+    repo.upsert_comments(&rescrape_comments, url_id, Some(1), Some(2026))
+        .await
+        .unwrap();
+
+    // 5. Assert: state still Picked (1), text updated to v2
+    let comment: DbCommentRow = repo.get_comment(comment_id).await.unwrap().unwrap();
+    assert_eq!(comment.state, 1, "Picked state should be preserved after re-scrape");
+    assert_eq!(comment.text, "v2", "Text should be updated by re-scrape");
+
+    // 6. Simulate user discarding the comment (state=2)
+    repo.update_comment_state(comment_id, 2).await.unwrap();
+
+    // 7. Re-scrape again
+    let rescrape_comments2 = vec![CommentRecord {
+        id: comment_id,
+        author: "author".to_string(),
+        date: "2026-01-01".to_string(),
+        text: "v3".to_string(),
+        tags: vec![],
+        state: web_server::CommentState::New,
+        subcomment_count: 0,
+    }];
+    repo.upsert_comments(&rescrape_comments2, url_id, Some(1), Some(2026))
+        .await
+        .unwrap();
+
+    // 8. Assert: state still Discarded (2), text updated to v3
+    let comment: DbCommentRow = repo.get_comment(comment_id).await.unwrap().unwrap();
+    assert_eq!(comment.state, 2, "Discarded state should be preserved after re-scrape");
+    assert_eq!(comment.text, "v3", "Text should be updated by re-scrape");
 }
 
 #[tokio::test]
