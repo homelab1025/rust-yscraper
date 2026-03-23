@@ -25,7 +25,7 @@ function AppLayout() {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar — hidden on mobile */}
-                <div className="hidden md:flex">
+                <div className="hidden md:flex shrink-0">
                     <Sidebar />
                 </div>
 
