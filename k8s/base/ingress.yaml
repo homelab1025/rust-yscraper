@@ -6,13 +6,23 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: scraper.lab.wicked
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: webapp
-            port:
-              number: 80
+    - host: scraper.lab.wicked
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webapp
+                port:
+                  number: 80
+    - host: scraper.homelab1025.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webapp
+                port:
+                  number: 80
