@@ -5,6 +5,7 @@ import LinkManagementPage from './pages/LinkManagementPage';
 import CommentsPage from './pages/CommentsPage';
 import AboutPage from './pages/AboutPage';
 import { ServicesProvider } from './contexts/ServicesContext';
+import AddLinkForm from './components/AddLinkForm';
 
 function AppLayout() {
     const [refreshKey, setRefreshKey] = useState(0);
@@ -19,12 +20,13 @@ function AppLayout() {
                     </div>
                     <h2 className="text-slate-900 text-lg font-bold tracking-tight">What HN is working on</h2>
                 </div>
+                <AddLinkForm onLinkAdded={() => setRefreshKey(k => k + 1)} />
             </header>
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar — hidden on mobile */}
                 <div className="hidden md:flex">
-                    <Sidebar onLinkAdded={() => setRefreshKey(k => k + 1)} />
+                    <Sidebar />
                 </div>
 
                 {/* Main content */}
