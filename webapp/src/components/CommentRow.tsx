@@ -24,7 +24,7 @@ const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
         return (
             <tr ref={ref} className={rowClass} onClick={onSelect}>
                 <td className="px-6 py-4 text-sm text-slate-900 max-w-md">
-                    <p className={expanded ? undefined : 'line-clamp-3'}>{comment.text}</p>
+                    <p className={['whitespace-pre-wrap', expanded ? undefined : 'line-clamp-3'].filter(Boolean).join(' ')}>{comment.text}</p>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{comment.user}</td>
                 <td className="px-6 py-4 text-sm text-slate-600 text-center">{comment.subcomment_count}</td>
