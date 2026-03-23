@@ -239,6 +239,7 @@ export default function CommentsPage(): React.JSX.Element {
                                         selected={i === selectedIndex}
                                         expanded={i === selectedIndex && expanded}
                                         onUpdateState={updateState}
+                                        onSelect={() => setSelectedIndex(i)}
                                     />
                                 ))
                             )}

@@ -6,12 +6,13 @@ interface CommentRowProps {
     selected?: boolean;
     expanded?: boolean;
     onUpdateState: (commentId: number, state: CommentState) => void;
+    onSelect?: () => void;
 }
 
 const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
-    ({ comment, selected, expanded, onUpdateState }, ref) => {
+    ({ comment, selected, expanded, onUpdateState, onSelect }, ref) => {
         const rowClass = [
-            'transition-colors',
+            'transition-colors cursor-pointer',
             comment.state === CommentState.Picked
                 ? 'bg-emerald-50 border-l-2 border-emerald-400'
                 : comment.state === CommentState.Discarded
@@ -21,7 +22,7 @@ const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
         ].filter(Boolean).join(' ');
 
         return (
-            <tr ref={ref} className={rowClass}>
+            <tr ref={ref} className={rowClass} onClick={onSelect}>
                 <td className="px-6 py-4 text-sm text-slate-900 max-w-md">
                     <p className={expanded ? undefined : 'line-clamp-3'}>{comment.text}</p>
                 </td>
