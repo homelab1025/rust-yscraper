@@ -57,6 +57,13 @@ fn validate_scrape_request(
     default_days_limit: u32,
     default_frequency_hours: u32,
 ) -> Result<(u32, u32), ApiError> {
+    if request.item_id <= 0 {
+        return Err(ApiError {
+            code: ApiErrorCode::BadRequest,
+            msg: "item_id must be a positive number".to_string(),
+        });
+    }
+
     let days_limit = request.days_limit.unwrap_or(default_days_limit);
     let frequency_hours = request.frequency_hours.unwrap_or(default_frequency_hours);
 
@@ -96,6 +103,7 @@ pub struct ScrapeResponse {
     ),
     responses(
         (status = 200, description = "Refresh scheduled or already scheduled", body = ScrapeResponse),
+        (status = 400, description = "Invalid ID", body = ApiError),
         (status = 404, description = "Link not found", body = ApiError),
         (status = 500, description = "Internal server error", body = ApiError)
     )
@@ -105,6 +113,16 @@ pub async fn refresh_link(
     State(state): State<LinksAppState>,
     Path(url_id): Path<i64>,
 ) -> Result<Json<ScrapeResponse>, (StatusCode, Json<ApiError>)> {
+    if url_id <= 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                code: ApiErrorCode::BadRequest,
+                msg: "url_id must be a positive number".to_string(),
+            }),
+        ));
+    }
+
     let url = match state.repo.get_url_by_id(url_id).await {
         Ok(Some(u)) => u,
         Ok(None) => {
@@ -132,11 +150,15 @@ pub async fn refresh_link(
     match state.task_queue.schedule(scrape_task).await {
         Ok(true) => {
             info!("Refresh task scheduled for link {}", url_id);
-            Ok(Json(ScrapeResponse { state: ScrapeState::Scheduled }))
+            Ok(Json(ScrapeResponse {
+                state: ScrapeState::Scheduled,
+            }))
         }
         Ok(false) => {
             info!("Refresh task already scheduled for link {}", url_id);
-            Ok(Json(ScrapeResponse { state: ScrapeState::AlreadyScheduled }))
+            Ok(Json(ScrapeResponse {
+                state: ScrapeState::AlreadyScheduled,
+            }))
         }
         Err(e) => {
             error!("Failed to schedule refresh task for link {}: {}", url_id, e);
@@ -159,6 +181,7 @@ pub async fn refresh_link(
     request_body = ScrapeRequest,
     responses(
         (status = 200, description = "Scrape task scheduled or already scheduled", body = ScrapeResponse),
+        (status = 400, description = "Invalid request parameters", body = ApiError),
         (status = 500, description = "Internal server error", body = ApiError)
     )
 )]
@@ -280,6 +303,7 @@ pub async fn list_links(
     ),
     responses(
         (status = 200, description = "Link deleted successfully"),
+        (status = 400, description = "Invalid ID", body = ApiError),
         (status = 404, description = "Link not found", body = ApiError)
     )
 )]
@@ -288,6 +312,15 @@ pub async fn delete_link(
     Path(id): Path<i64>,
 ) -> Result<(), (StatusCode, Json<ApiError>)> {
     debug!("delete_link called with {}", id);
+    if id <= 0 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                code: ApiErrorCode::BadRequest,
+                msg: "id must be a positive number".to_string(),
+            }),
+        ));
+    }
     match state.repo.delete_link(id).await {
         Ok(n) => {
             if n == 0 {
@@ -603,7 +636,10 @@ mod tests {
     #[tokio::test]
     async fn test_refresh_link_scheduled() {
         let state = make_state(
-            Ok(vec![make_url_row(42, "https://news.ycombinator.com/item?id=42")]),
+            Ok(vec![make_url_row(
+                42,
+                "https://news.ycombinator.com/item?id=42",
+            )]),
             Ok(0),
             ScheduleOutcome::Scheduled,
         );
@@ -615,7 +651,10 @@ mod tests {
     #[tokio::test]
     async fn test_refresh_link_already_scheduled() {
         let state = make_state(
-            Ok(vec![make_url_row(42, "https://news.ycombinator.com/item?id=42")]),
+            Ok(vec![make_url_row(
+                42,
+                "https://news.ycombinator.com/item?id=42",
+            )]),
             Ok(0),
             ScheduleOutcome::AlreadyInQueue,
         );
@@ -631,5 +670,69 @@ mod tests {
         let (status, Json(err)) = result.unwrap_err();
         assert_eq!(status, StatusCode::NOT_FOUND);
         assert_eq!(err.code, ApiErrorCode::NotFound);
+    }
+
+    #[tokio::test]
+    async fn test_scrape_link_invalid_item_id_zero() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let payload = ScrapeRequest {
+            item_id: 0,
+            days_limit: None,
+            frequency_hours: None,
+        };
+        let result = scrape_link(State(state), Json(payload)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
+    }
+
+    #[tokio::test]
+    async fn test_scrape_link_invalid_item_id_negative() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let payload = ScrapeRequest {
+            item_id: -1,
+            days_limit: None,
+            frequency_hours: None,
+        };
+        let result = scrape_link(State(state), Json(payload)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
+    }
+
+    #[tokio::test]
+    async fn test_refresh_link_invalid_url_id_zero() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let result = refresh_link(State(state), Path(0)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
+    }
+
+    #[tokio::test]
+    async fn test_refresh_link_invalid_url_id_negative() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let result = refresh_link(State(state), Path(-5)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_invalid_id_zero() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let result = delete_link(State(state), Path(0)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
+    }
+
+    #[tokio::test]
+    async fn test_delete_link_invalid_id_negative() {
+        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
+        let result = delete_link(State(state), Path(-1)).await;
+        let (status, Json(err)) = result.unwrap_err();
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(err.code, ApiErrorCode::BadRequest);
     }
 }

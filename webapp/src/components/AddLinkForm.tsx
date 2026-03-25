@@ -15,14 +15,24 @@ export default function AddLinkForm({ onLinkAdded }: AddLinkFormProps) {
     const handleAddLink = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!itemId) return;
+        const id = parseInt(itemId);
+        if (isNaN(id) || id <= 0) {
+            setError('HN Item ID must be a positive number');
+            return;
+        }
         try {
             setSubmitting(true);
             setError(null);
-            await linksApi.scrapeLink({ item_id: parseInt(itemId) });
+            await linksApi.scrapeLink({ item_id: id });
             setItemId('');
             onLinkAdded?.();
-        } catch {
-            setError('Failed to add link');
+        } catch (err: unknown) {
+            const apiMsg =
+                err &&
+                typeof err === 'object' &&
+                'response' in err &&
+                (err as { response?: { data?: { msg?: string } } }).response?.data?.msg;
+            setError(apiMsg || 'Failed to add link');
         } finally {
             setSubmitting(false);
         }
