@@ -382,6 +382,7 @@ mod tests {
             db_port: 5432,
             default_days_limit: 7,
             default_frequency_hours: 24,
+            totp_secret: "JBSWY3DPEHPK3PXP".to_string(),
         }
     }
 

@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import LinkManagementPage from './pages/LinkManagementPage';
 import CommentsPage from './pages/CommentsPage';
 import AboutPage from './pages/AboutPage';
+import LoginPage from './pages/LoginPage';
 import { ServicesProvider } from './contexts/ServicesContext';
 import AddLinkForm from './components/AddLinkForm';
 
@@ -44,6 +45,12 @@ function AppLayout() {
 }
 
 function App() {
+    const [authed, setAuthed] = useState(() => !!localStorage.getItem('auth_token'));
+
+    if (!authed) {
+        return <LoginPage onSuccess={() => setAuthed(true)} />;
+    }
+
     return (
         <ServicesProvider>
             <Router>

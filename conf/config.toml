@@ -10,3 +10,8 @@ db_name="yscraper"
 # Scheduling defaults
 default_days_limit=7
 default_frequency_hours=24
+
+# TOTP secret for Google Authenticator (base32-encoded)
+# Generate one with: cargo run --bin gen_secret
+# Then add to Google Authenticator via "Enter a setup key"
+totp_secret="JBSWY3DPEHPK3PXP"

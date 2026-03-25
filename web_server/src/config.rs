@@ -17,6 +17,7 @@ pub struct AppConfig {
     pub db_port: u16,
     pub default_days_limit: u32,
     pub default_frequency_hours: u32,
+    pub totp_secret: String,
 }
 
 impl AppConfig {
@@ -32,6 +33,7 @@ impl AppConfig {
         let db_port = cfg.get_int("db_port").unwrap_or(5432) as u16;
         let default_days_limit = cfg.get_int("default_days_limit").unwrap_or(7) as u32;
         let default_frequency_hours = cfg.get_int("default_frequency_hours").unwrap_or(24) as u32;
+        let totp_secret = cfg.get_string("totp_secret")?;
 
         Ok(Self {
             server_port,
@@ -42,6 +44,7 @@ impl AppConfig {
             db_port,
             default_days_limit,
             default_frequency_hours,
+            totp_secret,
         })
     }
 }

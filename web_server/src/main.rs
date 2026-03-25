@@ -4,9 +4,11 @@ use log::{error, info};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use sqlx::postgres::PgPoolOptions;
 
+use std::collections::HashSet;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -113,6 +115,7 @@ fn build_app_state(
         task_queue,
         scraper,
         config,
+        sessions: Arc::new(RwLock::new(HashSet::new())),
     }
 }
 

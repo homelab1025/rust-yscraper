@@ -1,4 +1,5 @@
 pub mod app_state;
+pub mod auth;
 pub mod comments;
 pub mod common;
 pub mod links;

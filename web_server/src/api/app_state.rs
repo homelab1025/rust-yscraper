@@ -4,7 +4,9 @@ use crate::db::CombinedRepository;
 use crate::scrape::CommentScraper;
 use crate::scrape_task::ScrapeTask;
 use crate::task_queue::TaskScheduler;
+use std::collections::HashSet;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -13,4 +15,5 @@ pub struct AppState {
     pub task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     pub scraper: Arc<dyn CommentScraper>,
     pub config: AppConfig,
+    pub sessions: Arc<RwLock<HashSet<String>>>,
 }
