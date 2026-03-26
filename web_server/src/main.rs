@@ -69,10 +69,12 @@ fn main() {
 
         let comments_repo = Arc::new(PgCommentsRepository::new(db_pool.clone()));
         let task_queue = Arc::new(TaskDedupQueue::new(4));
-        let scraper: Arc<dyn CommentScraper> = Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
+        let scraper: Arc<dyn CommentScraper> =
+            Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
 
         // Start background scheduler
-        start_background_scheduler(comments_repo.clone(), task_queue.clone(), scraper.clone()).await;
+        start_background_scheduler(comments_repo.clone(), task_queue.clone(), scraper.clone())
+            .await;
 
         let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 

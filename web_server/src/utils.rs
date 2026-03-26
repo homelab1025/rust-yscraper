@@ -19,14 +19,16 @@ pub fn extract_item_id_from_url(url: &str) -> Result<i64, ExtractIdError> {
     Err(ExtractIdError::NotFound)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_extract_id_simple() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item?id=42"), Ok(42));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item?id=42"),
+            Ok(42)
+        );
     }
 
     #[test]
@@ -39,26 +41,41 @@ mod tests {
 
     #[test]
     fn test_extract_id_no_query_string() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item"), Err(ExtractIdError::NotFound));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item"),
+            Err(ExtractIdError::NotFound)
+        );
     }
 
     #[test]
     fn test_extract_id_missing_id_param() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item?foo=bar"), Err(ExtractIdError::NotFound));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item?foo=bar"),
+            Err(ExtractIdError::NotFound)
+        );
     }
 
     #[test]
     fn test_extract_id_invalid_value() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item?id=notanumber"), Err(ExtractIdError::NotFound));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item?id=notanumber"),
+            Err(ExtractIdError::NotFound)
+        );
     }
 
     #[test]
     fn test_extract_id_negative() {
-        assert_eq!(extract_item_id_from_url("https://example.com/item?id=-7"), Err(ExtractIdError::NegativeId(-7)));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/item?id=-7"),
+            Err(ExtractIdError::NegativeId(-7))
+        );
     }
 
     #[test]
     fn test_extract_id_first_param() {
-        assert_eq!(extract_item_id_from_url("https://example.com/?id=123&other=456"), Ok(123));
+        assert_eq!(
+            extract_item_id_from_url("https://example.com/?id=123&other=456"),
+            Ok(123)
+        );
     }
 }

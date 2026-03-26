@@ -277,5 +277,4 @@ impl LinksRepository for PgCommentsRepository {
         .fetch_all(&self.pool)
         .await
     }
-
 }

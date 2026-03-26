@@ -206,7 +206,9 @@ async fn test_update_comment_state_discarded_updates_url_count() {
     let resp = app.oneshot(list_req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
     let links: Vec<LinkDto> = serde_json::from_slice(&body).unwrap();
     let link = links.iter().find(|l| l.id == 7).unwrap();
     assert_eq!(link.discarded_comment_count, 1);
