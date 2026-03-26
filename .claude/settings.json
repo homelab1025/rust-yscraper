@@ -2,5 +2,19 @@
   "enabledPlugins": {
     "rust-analyzer-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cargo fmt --all 2>/dev/null || true",
+            "statusMessage": "Running cargo fmt..."
+          }
+        ]
+      }
+    ]
   }
 }
