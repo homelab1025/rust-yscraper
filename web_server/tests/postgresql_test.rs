@@ -294,7 +294,10 @@ async fn test_upsert_comments_preserves_user_state_on_rescrape() {
 
     // 5. Assert: state still Picked (1), text updated to v2
     let comment: DbCommentRow = repo.get_comment(comment_id).await.unwrap().unwrap();
-    assert_eq!(comment.state, 1, "Picked state should be preserved after re-scrape");
+    assert_eq!(
+        comment.state, 1,
+        "Picked state should be preserved after re-scrape"
+    );
     assert_eq!(comment.text, "v2", "Text should be updated by re-scrape");
 
     // 6. Simulate user discarding the comment (state=2)
@@ -316,7 +319,10 @@ async fn test_upsert_comments_preserves_user_state_on_rescrape() {
 
     // 8. Assert: state still Discarded (2), text updated to v3
     let comment: DbCommentRow = repo.get_comment(comment_id).await.unwrap().unwrap();
-    assert_eq!(comment.state, 2, "Discarded state should be preserved after re-scrape");
+    assert_eq!(
+        comment.state, 2,
+        "Discarded state should be preserved after re-scrape"
+    );
     assert_eq!(comment.text, "v3", "Text should be updated by re-scrape");
 }
 
@@ -351,9 +357,7 @@ async fn test_upsert_comments_updates_thread_metadata() {
     assert_eq!(link.thread_year, Some(2026));
 
     // 4. Upsert with NULL metadata (e.g. if extraction fails on re-scrape)
-    repo.upsert_comments(&[], url_id, None, None)
-        .await
-        .unwrap();
+    repo.upsert_comments(&[], url_id, None, None).await.unwrap();
 
     // 5. Verify NULL
     let links = repo.list_links().await.unwrap();

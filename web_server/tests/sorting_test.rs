@@ -32,25 +32,65 @@ async fn test_page_comments_sorting() {
         .execute(&pool).await.unwrap();
 
     // 1. Sort by Date DESC (Default)
-    let rows = repo.page_comments(0, 10, url_id, None, Some(web_server::SortBy::Date), Some(web_server::SortOrder::Desc)).await.unwrap();
+    let rows = repo
+        .page_comments(
+            0,
+            10,
+            url_id,
+            None,
+            Some(web_server::SortBy::Date),
+            Some(web_server::SortOrder::Desc),
+        )
+        .await
+        .unwrap();
     assert_eq!(rows[0].id, 3);
     assert_eq!(rows[1].id, 2);
     assert_eq!(rows[2].id, 1);
 
     // 2. Sort by Date ASC
-    let rows = repo.page_comments(0, 10, url_id, None, Some(web_server::SortBy::Date), Some(web_server::SortOrder::Asc)).await.unwrap();
+    let rows = repo
+        .page_comments(
+            0,
+            10,
+            url_id,
+            None,
+            Some(web_server::SortBy::Date),
+            Some(web_server::SortOrder::Asc),
+        )
+        .await
+        .unwrap();
     assert_eq!(rows[0].id, 1);
     assert_eq!(rows[1].id, 2);
     assert_eq!(rows[2].id, 3);
 
     // 3. Sort by Subcomment Count DESC
-    let rows = repo.page_comments(0, 10, url_id, None, Some(web_server::SortBy::SubcommentCount), Some(web_server::SortOrder::Desc)).await.unwrap();
+    let rows = repo
+        .page_comments(
+            0,
+            10,
+            url_id,
+            None,
+            Some(web_server::SortBy::SubcommentCount),
+            Some(web_server::SortOrder::Desc),
+        )
+        .await
+        .unwrap();
     assert_eq!(rows[0].id, 1);
     assert_eq!(rows[1].id, 3);
     assert_eq!(rows[2].id, 2);
 
     // 4. Sort by Subcomment Count ASC
-    let rows = repo.page_comments(0, 10, url_id, None, Some(web_server::SortBy::SubcommentCount), Some(web_server::SortOrder::Asc)).await.unwrap();
+    let rows = repo
+        .page_comments(
+            0,
+            10,
+            url_id,
+            None,
+            Some(web_server::SortBy::SubcommentCount),
+            Some(web_server::SortOrder::Asc),
+        )
+        .await
+        .unwrap();
     assert_eq!(rows[0].id, 2);
     assert_eq!(rows[1].id, 3);
     assert_eq!(rows[2].id, 1);

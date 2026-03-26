@@ -62,7 +62,10 @@ pub fn make_test_app_state(pool: PgPool) -> AppState {
     make_test_app_state_with_scheduler(pool, Arc::new(StubScheduler))
 }
 
-pub fn make_test_app_state_with_scheduler(pool: PgPool, scheduler: Arc<dyn TaskScheduler<ScrapeTask>>) -> AppState {
+pub fn make_test_app_state_with_scheduler(
+    pool: PgPool,
+    scheduler: Arc<dyn TaskScheduler<ScrapeTask>>,
+) -> AppState {
     AppState {
         repo: Arc::new(PgCommentsRepository::new(pool)),
         time_provider: Arc::new(RealSystemTime {}),

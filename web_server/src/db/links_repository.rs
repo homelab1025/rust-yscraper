@@ -23,7 +23,6 @@ pub trait LinksRepository: Send + Sync {
 
     /// Returns the URL string for a given ID, or None if not found.
     async fn get_url_by_id(&self, id: i64) -> Result<Option<String>, sqlx::Error>;
-
 }
 
 #[derive(Debug, sqlx::FromRow, Clone)]

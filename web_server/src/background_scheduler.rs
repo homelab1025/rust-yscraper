@@ -64,7 +64,8 @@ impl BackgroundScheduler {
             let item_id = url_row.id;
 
             // Create scrape task
-            let scrape_task = ScrapeTask::new(target_url, item_id, self.repo.clone(), self.scraper.clone());
+            let scrape_task =
+                ScrapeTask::new(target_url, item_id, self.repo.clone(), self.scraper.clone());
 
             // Schedule the task
             match self.task_queue.schedule(scrape_task).await {
@@ -228,8 +229,12 @@ mod tests {
         let repo = Arc::new(MockRepo::new(vec![url_row]));
         let scheduler = Arc::new(MockScheduler::new());
 
-        let bg_scheduler =
-            BackgroundScheduler::new(repo.clone(), scheduler.clone(), Arc::new(NoOpScraper), Duration::from_secs(60));
+        let bg_scheduler = BackgroundScheduler::new(
+            repo.clone(),
+            scheduler.clone(),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(60),
+        );
 
         // Run one check cycle
         let scheduled = bg_scheduler.check_and_schedule_due_urls().await.unwrap();
