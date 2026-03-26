@@ -1,3 +1,4 @@
+import axios from 'axios';
 import * as React from 'react';
 import { useState } from 'react';
 import { useServices } from '../contexts/ServicesContext';
@@ -26,12 +27,8 @@ export default function AddLinkForm({ onLinkAdded }: AddLinkFormProps) {
             await linksApi.scrapeLink({ item_id: id });
             setItemId('');
             onLinkAdded?.();
-        } catch (err: unknown) {
-            const apiMsg =
-                err &&
-                typeof err === 'object' &&
-                'response' in err &&
-                (err as { response?: { data?: { msg?: string } } }).response?.data?.msg;
+        } catch (err) {
+            const apiMsg = axios.isAxiosError(err) ? err.response?.data?.msg : null;
             setError(apiMsg || 'Failed to add link');
         } finally {
             setSubmitting(false);
