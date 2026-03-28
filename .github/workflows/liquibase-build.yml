@@ -2,15 +2,15 @@ name: Liquibase Docker Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - 'db/**'
-      - '.github/workflows/liquibase-build.yml'
+      - "db/**"
+      - ".github/workflows/liquibase-build.yml"
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     paths:
-      - 'db/**'
-      - '.github/workflows/liquibase-build.yml'
+      - "db/**"
+      - ".github/workflows/liquibase-build.yml"
 
 env:
   REGISTRY: ghcr.io
@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
