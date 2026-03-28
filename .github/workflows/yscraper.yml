@@ -61,14 +61,14 @@ jobs:
           key: target-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{env.CACHED_PATHS}}
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image for python scraper
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -91,14 +91,14 @@ jobs:
           key: target-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{env.CACHED_PATHS}}
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image for web app
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: webapp/Dockerfile
@@ -106,4 +106,3 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:v${{ needs.build.outputs.release_version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:latest
-
