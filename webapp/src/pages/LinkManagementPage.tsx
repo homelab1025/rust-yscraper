@@ -71,9 +71,9 @@ export default function LinkManagementPage(): React.JSX.Element {
     fetchLinks();
   }, []);
 
-  const totalPicked    = links.reduce((sum, l) => sum + (l.picked_comment_count    ?? 0), 0);
+  const totalPicked = links.reduce((sum, l) => sum + (l.picked_comment_count ?? 0), 0);
   const totalDiscarded = links.reduce((sum, l) => sum + (l.discarded_comment_count ?? 0), 0);
-  const totalReviewed  = totalPicked + totalDiscarded;
+  const totalReviewed = totalPicked + totalDiscarded;
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-8">
@@ -101,7 +101,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">ID</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Month</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Date Added</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comments (Picked / Total)</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comments (Remaining / Total)</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Status</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-center">Actions</th>
               </tr>
@@ -137,7 +137,7 @@ export default function LinkManagementPage(): React.JSX.Element {
                       {new Date(link.date_added).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">
-                      <span className="font-bold text-slate-900">{link.picked_comment_count}</span>
+                      <span className="font-bold text-slate-900">{link.total_comment_count - link.picked_comment_count - link.discarded_comment_count}</span>
                       {' '}/ {link.total_comment_count}
                     </td>
                     <td className="px-6 py-4">
