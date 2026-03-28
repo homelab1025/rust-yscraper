@@ -183,7 +183,7 @@ impl CommentsRepository for PgCommentsRepository {
 impl LinksRepository for PgCommentsRepository {
     async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
         sqlx::query_as::<_, DbUrlRow>(
-            "SELECT id, url, date_added, comment_count, picked_comment_count, discarded_comment_count, thread_month, thread_year FROM urls ORDER BY date_added DESC",
+            "SELECT id, url, date_added, comment_count, picked_comment_count, discarded_comment_count, thread_month, thread_year FROM urls ORDER BY thread_year DESC NULLS LAST, thread_month DESC NULLS LAST",
         )
         .fetch_all(&self.pool)
         .await
