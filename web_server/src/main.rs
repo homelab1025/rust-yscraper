@@ -7,6 +7,8 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::watch;
+use tokio::task::JoinHandle;
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -68,14 +70,23 @@ fn main() {
         };
 
         let comments_repo = Arc::new(PgCommentsRepository::new(db_pool.clone()));
-        let task_queue = Arc::new(TaskDedupQueue::new(4));
+        let task_queue: Arc<dyn TaskScheduler<ScrapeTask>> =
+            Arc::new(TaskDedupQueue::<ScrapeTask>::new(4));
         let scraper: Arc<dyn CommentScraper> =
             Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
 
-        // Start background scheduler
-        start_background_scheduler(comments_repo.clone(), task_queue.clone(), scraper.clone())
-            .await;
+        let (shutdown_tx, shutdown_rx) = watch::channel(false);
 
+        // Start background scheduler
+        let bg_handle = start_background_scheduler(
+            comments_repo.clone(),
+            task_queue.clone(),
+            scraper.clone(),
+            shutdown_rx.clone(),
+        )
+        .await;
+
+        let task_queue_shutdown = task_queue.clone();
         let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 
         // Build router
@@ -93,9 +104,17 @@ fn main() {
         info!("Starting HTTP server at http://{}", addr);
         let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-        if let Err(e) = axum::serve(listener, app).await {
+        if let Err(e) = axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal())
+            .await
+        {
             error!("Server error: {}", e);
         }
+
+        let _ = shutdown_tx.send(true);
+        let _ = bg_handle.await;
+        task_queue_shutdown.shutdown().await;
+        info!("Shutdown complete");
     });
 }
 
@@ -120,7 +139,8 @@ async fn start_background_scheduler(
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     scraper: Arc<dyn CommentScraper>,
-) {
+    shutdown_rx: watch::Receiver<bool>,
+) -> JoinHandle<()> {
     let bg_scheduler = BackgroundScheduler::new(
         repo.clone(),
         task_queue.clone(),
@@ -129,6 +149,17 @@ async fn start_background_scheduler(
     );
 
     tokio::spawn(async move {
-        bg_scheduler.run().await;
-    });
+        bg_scheduler.run(shutdown_rx).await;
+    })
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = tokio::signal::ctrl_c();
+    let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        .expect("failed to install SIGTERM handler");
+
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = sigterm.recv() => {}
+    }
 }

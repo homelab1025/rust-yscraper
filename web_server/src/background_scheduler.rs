@@ -5,6 +5,7 @@ use crate::task_queue::TaskScheduler;
 use log::{error, info};
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::watch;
 
 pub struct BackgroundScheduler {
     repo: Arc<dyn CombinedRepository>,
@@ -28,25 +29,30 @@ impl BackgroundScheduler {
         }
     }
 
-    pub async fn run(&self) {
+    pub async fn run(&self, mut shutdown_rx: watch::Receiver<bool>) {
         let mut interval = tokio::time::interval(self.check_interval);
         info!(
             "Background scheduler started with interval: {:?}",
             self.check_interval
         );
 
-        // REFACTOR: Wait on the tasks to finish and then shutdown when receiving the shutdown signal.
         loop {
-            interval.tick().await;
-
-            match self.check_and_schedule_due_urls().await {
-                Ok(scheduled_count) => {
-                    if scheduled_count > 0 {
-                        info!("Scheduled {} URLs for refresh", scheduled_count);
+            tokio::select! {
+                _ = interval.tick() => {
+                    match self.check_and_schedule_due_urls().await {
+                        Ok(scheduled_count) => {
+                            if scheduled_count > 0 {
+                                info!("Scheduled {} URLs for refresh", scheduled_count);
+                            }
+                        }
+                        Err(e) => {
+                            error!("Error in background scheduler: {}", e);
+                        }
                     }
                 }
-                Err(e) => {
-                    error!("Error in background scheduler: {}", e);
+                _ = shutdown_rx.changed() => {
+                    info!("Background scheduler shutting down");
+                    break;
                 }
             }
         }
@@ -209,6 +215,41 @@ mod tests {
             self.scheduled.lock().unwrap().push(task);
             Ok(true)
         }
+
+        async fn shutdown(&self) {}
+    }
+
+    #[tokio::test]
+    async fn run_exits_on_shutdown_signal() {
+        tokio::time::pause();
+
+        let repo = Arc::new(MockRepo::new(vec![]));
+        let scheduler = Arc::new(MockScheduler::new());
+
+        let bg_scheduler = Arc::new(BackgroundScheduler::new(
+            repo.clone(),
+            scheduler.clone(),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(3600), // 1-hour interval — tick never fires during test
+        ));
+
+        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+
+        let handle = tokio::spawn({
+            let bg = bg_scheduler.clone();
+            async move { bg.run(shutdown_rx).await }
+        });
+
+        // Advance time by 1 ms so the initial interval tick fires and the scheduler
+        // completes its first check_and_schedule_due_urls() call before we shut it down
+        tokio::time::advance(std::time::Duration::from_millis(1)).await;
+
+        let _ = shutdown_tx.send(true);
+
+        tokio::time::timeout(std::time::Duration::from_secs(1), handle)
+            .await
+            .expect("run() must exit promptly after shutdown signal")
+            .expect("task must not panic");
     }
 
     #[tokio::test]

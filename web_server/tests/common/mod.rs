@@ -27,6 +27,8 @@ impl TaskScheduler<ScrapeTask> for StubScheduler {
     async fn schedule(&self, _task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
         Ok(true)
     }
+
+    async fn shutdown(&self) {}
 }
 
 pub struct RecordingScheduler {
@@ -43,6 +45,8 @@ impl TaskScheduler<ScrapeTask> for RecordingScheduler {
             .push((task.url_id(), task.url().to_string()));
         Ok(self.outcome)
     }
+
+    async fn shutdown(&self) {}
 }
 
 pub struct NoOpScraper;
