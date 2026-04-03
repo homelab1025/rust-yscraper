@@ -14,12 +14,14 @@ use utoipa::ToSchema;
 
 use api::app_state::AppState;
 use api::comments::{get_comment, list_comments, update_comment_state};
+use api::info::info;
 use api::links::{delete_link, list_links, refresh_link, scrape_link};
 use api::ping::ping;
 
 pub fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/ping", get(ping))
+        .route("/info", get(info))
         .route("/scrape", post(scrape_link))
         .route("/comments", get(list_comments))
         .route("/comments/{id}", get(get_comment))

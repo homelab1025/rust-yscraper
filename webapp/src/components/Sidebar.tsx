@@ -1,9 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Sidebar() {
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
+    const [backendInfo, setBackendInfo] = useState<{ git_hash: string; committed_at: string } | null>(null);
+
+    useEffect(() => {
+        fetch('/api/info')
+            .then(r => r.json())
+            .then((data: { git_hash: string; committed_at: string }) => setBackendInfo(data))
+            .catch(() => setBackendInfo({ git_hash: 'unknown', committed_at: 'unknown' }));
+    }, []);
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -37,6 +45,19 @@ export default function Sidebar() {
             </div>
 
             <div className="flex-1" />
+
+            {!collapsed && (
+                <div className="px-4 pb-2 flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-mono text-slate-400">fe: {__GIT_HASH__}</span>
+                        <span className="text-[10px] font-mono text-slate-300">{__GIT_COMMITTED_AT__}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-mono text-slate-400">be: {backendInfo?.git_hash ?? '…'}</span>
+                        <span className="text-[10px] font-mono text-slate-300">{backendInfo?.committed_at ?? ''}</span>
+                    </div>
+                </div>
+            )}
 
             <div className={`${collapsed ? 'p-2' : 'px-4 pb-4'}`}>
                 <button
