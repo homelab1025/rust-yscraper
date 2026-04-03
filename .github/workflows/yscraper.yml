@@ -38,6 +38,9 @@ jobs:
         run: cargo test
       - name: Build
         run: cargo build --release
+        env:
+          GIT_HASH: ${{ github.sha }}
+          GIT_COMMITTED_AT: ${{ github.event.head_commit.timestamp }}
       - name: Build API spec
         run: target/release/api_gen ${{env.OPENAPI_SPEC_PATH}}
       - name: Cache target
@@ -106,3 +109,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:v${{ needs.build.outputs.release_version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:latest
+          build-args: |
+            GIT_HASH=${{ github.sha }}
+            GIT_COMMITTED_AT=${{ github.event.head_commit.timestamp }}

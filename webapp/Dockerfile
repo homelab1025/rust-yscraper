@@ -18,6 +18,12 @@ COPY webapp/ ./
 COPY target/release/openapi.yaml ./
 RUN npm run generate-api
 
+# Inject git metadata at build time
+ARG GIT_HASH=unknown
+ARG GIT_COMMITTED_AT=unknown
+ENV GIT_HASH=$GIT_HASH
+ENV GIT_COMMITTED_AT=$GIT_COMMITTED_AT
+
 # Build the application
 RUN npm run build
 

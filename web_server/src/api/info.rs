@@ -2,8 +2,14 @@ use axum::Json;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-const GIT_HASH: &str = env!("GIT_HASH");
-const GIT_COMMITTED_AT: &str = env!("GIT_COMMITTED_AT");
+const GIT_HASH: &str = match option_env!("GIT_HASH") {
+    Some(v) => v,
+    None => "unknown",
+};
+const GIT_COMMITTED_AT: &str = match option_env!("GIT_COMMITTED_AT") {
+    Some(v) => v,
+    None => "unknown",
+};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct InfoResponse {
