@@ -9,6 +9,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::mpsc::error::TrySendError;
+use tokio::sync::watch;
+use tokio::task::JoinHandle;
 
 #[async_trait]
 pub trait ExecutableTask: Display + Hash + Clone + Eq + Send + Sync + 'static {
@@ -22,11 +24,14 @@ where
     T: ExecutableTask,
 {
     async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>>;
+    async fn shutdown(&self);
 }
 
 pub struct TaskDedupQueue<T> {
     queue: Arc<Mutex<HashSet<Arc<T>>>>,
     tx: Sender<T>,
+    shutdown_tx: watch::Sender<bool>,
+    worker_handle: std::sync::Mutex<Option<JoinHandle<()>>>,
 }
 
 impl<T> TaskDedupQueue<T>
@@ -36,26 +41,37 @@ where
     pub fn new(buffer_size: usize) -> Self {
         let task_set = Arc::new(Mutex::new(HashSet::new()));
 
-        // start channel
+        let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
         let (tx, mut rx) = tokio::sync::mpsc::channel::<T>(buffer_size);
         let tasks = task_set.clone();
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             info!("Spawned task processor worker.");
-            while let Some(task) = rx.recv().await {
-                info!("Scrape task received: {}", task);
-
-                let res = task.execute().await;
-                if let Err(e) = res {
-                    error!("Scrape task failed: {}", e);
+            loop {
+                tokio::select! {
+                    biased;
+                    _ = shutdown_rx.changed() => break,
+                    maybe_task = rx.recv() => {
+                        match maybe_task {
+                            Some(task) => {
+                                info!("Scrape task received: {}", task);
+                                let res = task.execute().await;
+                                if let Err(e) = res {
+                                    error!("Scrape task failed: {}", e);
+                                }
+                                tasks.lock().await.remove(&task);
+                            }
+                            None => break,
+                        }
+                    }
                 }
-
-                tasks.lock().await.remove(&task);
             }
         });
 
         TaskDedupQueue {
-            queue: task_set.clone(),
+            queue: task_set,
             tx,
+            shutdown_tx,
+            worker_handle: std::sync::Mutex::new(Some(handle)),
         }
     }
 }
@@ -76,7 +92,6 @@ where
             return Ok(false);
         } else {
             task_set.insert(task_ref.clone());
-            // self.tx.send(task).await?;
             if let Err(e) = self.tx.try_send(task) {
                 task_set.remove(&task_ref);
                 return Err(e);
@@ -86,6 +101,14 @@ where
         info!("Scrape task set size: {}", task_set.len());
 
         Ok(true)
+    }
+
+    async fn shutdown(&self) {
+        let _ = self.shutdown_tx.send(true);
+        let handle = self.worker_handle.lock().unwrap().take();
+        if let Some(h) = handle {
+            let _ = h.await;
+        }
     }
 }
 
@@ -262,9 +285,6 @@ mod tests {
         time::advance(Duration::from_millis(10)).await;
         let _ = t1_done.notified().await;
 
-        // an internal worker waits extra 1 s before removal; advance exactly that
-        // time::advance(Duration::from_secs(1)).await;
-
         // now schedule an identical task again; should be accepted and executed
         let t2_executed = Arc::new(AtomicUsize::new(0));
         let (t2, t2_start, _t2_done) = make_task(7, Duration::from_millis(5), &t2_executed, false);
@@ -377,6 +397,68 @@ mod tests {
             t2_executed.load(Ordering::SeqCst),
             1,
             "t2 executed despite t1's prior failure"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn shutdown_waits_for_inflight_task() {
+        time::pause();
+
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
+        let executed = Arc::new(AtomicUsize::new(0));
+
+        let (task, start_notify, done_notify) =
+            make_task(1, Duration::from_millis(100), &executed, false);
+        processor.schedule(task).await.expect("send ok");
+
+        // Let the worker pick up the task
+        time::advance(Duration::from_millis(1)).await;
+        start_notify.notified().await; // task is now executing inside the arm body
+
+        // Advance past the task's delay so it can complete after shutdown() signals the worker
+        time::advance(Duration::from_millis(200)).await;
+        done_notify.notified().await;
+
+        processor.shutdown().await;
+
+        assert_eq!(executed.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn shutdown_does_not_execute_queued_tasks() {
+        time::pause();
+
+        // buffer=2: worker can be busy with task 1 while task 2 sits in the channel
+        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(2);
+        let t1_executed = Arc::new(AtomicUsize::new(0));
+        let t2_executed = Arc::new(AtomicUsize::new(0));
+
+        let (t1, t1_start, _t1_done) =
+            make_task(1, Duration::from_millis(100), &t1_executed, false);
+        let (t2, _t2_start, _t2_done) =
+            make_task(2, Duration::from_millis(10), &t2_executed, false);
+
+        processor.schedule(t1).await.expect("send ok");
+        // Advance time so the worker picks up t1 and starts executing it
+        time::advance(Duration::from_millis(1)).await;
+        t1_start.notified().await; // t1 is executing
+
+        // Enqueue t2 while worker is busy — it sits in the channel buffer
+        processor.schedule(t2).await.expect("send ok");
+
+        // Send shutdown signal — when t1 finishes and the worker loops back to select!,
+        // biased; ensures the shutdown branch wins over the buffered t2
+        let _ = processor.shutdown_tx.send(true);
+
+        // Advance time past t1's delay so it completes
+        time::advance(Duration::from_millis(200)).await;
+        processor.shutdown().await;
+
+        assert_eq!(t1_executed.load(Ordering::SeqCst), 1, "t1 must complete");
+        assert_eq!(
+            t2_executed.load(Ordering::SeqCst),
+            0,
+            "t2 must not run after shutdown"
         );
     }
 }
