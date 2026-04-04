@@ -458,8 +458,6 @@ mod tests {
                 ScheduleOutcome::AlreadyInQueue => Ok(false),
             }
         }
-
-        async fn shutdown(&self) {}
     }
 
     fn make_state(

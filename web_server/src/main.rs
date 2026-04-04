@@ -70,12 +70,12 @@ fn main() {
         };
 
         let comments_repo = Arc::new(PgCommentsRepository::new(db_pool.clone()));
-        let task_queue: Arc<dyn TaskScheduler<ScrapeTask>> =
-            Arc::new(TaskDedupQueue::<ScrapeTask>::new(4));
+        let cancellation_token = CancellationToken::new();
+        let (task_queue_impl, task_queue_handle) =
+            TaskDedupQueue::<ScrapeTask>::new(4, cancellation_token.clone());
+        let task_queue: Arc<dyn TaskScheduler<ScrapeTask>> = Arc::new(task_queue_impl);
         let scraper: Arc<dyn CommentScraper> =
             Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
-
-        let cancellation_token = CancellationToken::new();
 
         // Start background scheduler
         let bg_handle = start_background_scheduler(
@@ -86,7 +86,6 @@ fn main() {
         )
         .await;
 
-        let task_queue_shutdown = task_queue.clone() as Arc<dyn TaskScheduler<ScrapeTask>>;
         let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 
         // Build router
@@ -113,7 +112,7 @@ fn main() {
 
         cancellation_token.cancel();
         let _ = bg_handle.await;
-        task_queue_shutdown.shutdown().await;
+        let _ = task_queue_handle.await;
         info!("Shutdown complete");
     });
 }
