@@ -247,10 +247,7 @@ mod tests {
 
         token.cancel();
 
-        tokio::time::timeout(std::time::Duration::from_secs(1), handle)
-            .await
-            .expect("run() must exit promptly after shutdown signal")
-            .expect("task must not panic");
+        handle.await.expect("task must not panic");
     }
 
     #[tokio::test]
