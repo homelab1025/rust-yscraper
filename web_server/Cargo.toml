@@ -8,6 +8,7 @@ reqwest = { workspace = true }
 scraper = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 axum = { workspace = true }
 log = { workspace = true }
 simplelog = { workspace = true }
