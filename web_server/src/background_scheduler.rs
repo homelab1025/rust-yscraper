@@ -218,8 +218,6 @@ mod tests {
             self.scheduled.lock().unwrap().push(task);
             Ok(true)
         }
-
-        async fn shutdown(&self) {}
     }
 
     #[tokio::test]

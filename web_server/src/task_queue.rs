@@ -9,8 +9,8 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::mpsc::error::TrySendError;
-use tokio::sync::watch;
 use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 
 #[async_trait]
 pub trait ExecutableTask: Display + Hash + Clone + Eq + Send + Sync + 'static {
@@ -24,24 +24,20 @@ where
     T: ExecutableTask,
 {
     async fn schedule(&self, task: T) -> Result<bool, TrySendError<T>>;
-    async fn shutdown(&self);
 }
 
 pub struct TaskDedupQueue<T> {
     queue: Arc<Mutex<HashSet<Arc<T>>>>,
     tx: Sender<T>,
-    shutdown_tx: watch::Sender<bool>,
-    worker_handle: std::sync::Mutex<Option<JoinHandle<()>>>,
 }
 
 impl<T> TaskDedupQueue<T>
 where
     T: ExecutableTask,
 {
-    pub fn new(buffer_size: usize) -> Self {
+    pub fn new(buffer_size: usize, token: CancellationToken) -> (Self, JoinHandle<()>) {
         let task_set = Arc::new(Mutex::new(HashSet::new()));
 
-        let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
         let (tx, mut rx) = tokio::sync::mpsc::channel::<T>(buffer_size);
         let tasks = task_set.clone();
         let handle = tokio::spawn(async move {
@@ -49,7 +45,7 @@ where
             loop {
                 tokio::select! {
                     biased;
-                    _ = shutdown_rx.changed() => break,
+                    _ = token.cancelled() => break,
                     maybe_task = rx.recv() => {
                         match maybe_task {
                             Some(task) => {
@@ -65,14 +61,16 @@ where
                     }
                 }
             }
+            info!("Task processor worker stopped.");
         });
 
-        TaskDedupQueue {
-            queue: task_set,
-            tx,
-            shutdown_tx,
-            worker_handle: std::sync::Mutex::new(Some(handle)),
-        }
+        (
+            TaskDedupQueue {
+                queue: task_set,
+                tx,
+            },
+            handle,
+        )
     }
 }
 
@@ -102,14 +100,6 @@ where
 
         Ok(true)
     }
-
-    async fn shutdown(&self) {
-        let _ = self.shutdown_tx.send(true);
-        let handle = self.worker_handle.lock().unwrap().take();
-        if let Some(h) = handle {
-            let _ = h.await;
-        }
-    }
 }
 
 #[cfg(test)]
@@ -122,6 +112,7 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tokio::sync::Notify;
     use tokio::time::{self, Duration};
+    use tokio_util::sync::CancellationToken;
 
     struct TestTask {
         id: u64,
@@ -220,7 +211,7 @@ mod tests {
     async fn different_tasks_are_enqueued_and_both_execute() {
         time::pause();
 
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
+        let (processor, _handle) = TaskDedupQueue::new(8, CancellationToken::new());
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
 
@@ -246,7 +237,7 @@ mod tests {
     async fn duplicate_while_first_running_second_is_rejected_and_not_executed() {
         time::pause();
 
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
+        let (processor, _handle) = TaskDedupQueue::new(8, CancellationToken::new());
 
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let (t1, t1_start, _t1_done) = make_task(42, Duration::from_secs(10), &t1_executed, false);
@@ -274,7 +265,7 @@ mod tests {
     async fn identical_task_runs_again_after_first_finished_and_removed() {
         time::pause();
 
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
+        let (processor, _handle) = TaskDedupQueue::new(8, CancellationToken::new());
         let t1_executed = Arc::new(AtomicUsize::new(0));
 
         let (t1, _t1_start, t1_done) = make_task(7, Duration::from_millis(5), &t1_executed, false);
@@ -306,7 +297,7 @@ mod tests {
         time::pause();
 
         // In this test we do not pause time; we use real short delays to observe backpressure.
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(1);
+        let (processor, _handle) = TaskDedupQueue::new(1, CancellationToken::new());
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
         let t3_executed = Arc::new(AtomicUsize::new(0));
@@ -338,7 +329,7 @@ mod tests {
         time::pause();
 
         // buffer=1: exactly one task can sit in the channel while the worker is busy
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(1);
+        let (processor, _handle) = TaskDedupQueue::new(1, CancellationToken::new());
         let occupier_executed = Arc::new(AtomicUsize::new(0));
         let filler_executed = Arc::new(AtomicUsize::new(0));
         let t1_executed = Arc::new(AtomicUsize::new(0));
@@ -404,7 +395,8 @@ mod tests {
     async fn shutdown_waits_for_inflight_task() {
         time::pause();
 
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(8);
+        let token = CancellationToken::new();
+        let (processor, handle) = TaskDedupQueue::new(8, token.clone());
         let executed = Arc::new(AtomicUsize::new(0));
 
         let (task, start_notify, done_notify) =
@@ -415,11 +407,12 @@ mod tests {
         time::advance(Duration::from_millis(1)).await;
         start_notify.notified().await; // task is now executing inside the arm body
 
-        // Advance past the task's delay so it can complete after shutdown() signals the worker
+        // Advance past the task's delay so it can complete after the token is cancelled
         time::advance(Duration::from_millis(200)).await;
         done_notify.notified().await;
 
-        processor.shutdown().await;
+        token.cancel();
+        let _ = handle.await;
 
         assert_eq!(executed.load(Ordering::SeqCst), 1);
     }
@@ -429,7 +422,8 @@ mod tests {
         time::pause();
 
         // buffer=2: worker can be busy with task 1 while task 2 sits in the channel
-        let processor: TaskDedupQueue<TestTask> = TaskDedupQueue::new(2);
+        let token = CancellationToken::new();
+        let (processor, handle) = TaskDedupQueue::new(2, token.clone());
         let t1_executed = Arc::new(AtomicUsize::new(0));
         let t2_executed = Arc::new(AtomicUsize::new(0));
 
@@ -446,13 +440,13 @@ mod tests {
         // Enqueue t2 while worker is busy — it sits in the channel buffer
         processor.schedule(t2).await.expect("send ok");
 
-        // Send shutdown signal — when t1 finishes and the worker loops back to select!,
+        // Cancel the token — when t1 finishes and the worker loops back to select!,
         // biased; ensures the shutdown branch wins over the buffered t2
-        let _ = processor.shutdown_tx.send(true);
+        token.cancel();
 
         // Advance time past t1's delay so it completes
         time::advance(Duration::from_millis(200)).await;
-        processor.shutdown().await;
+        let _ = handle.await;
 
         assert_eq!(t1_executed.load(Ordering::SeqCst), 1, "t1 must complete");
         assert_eq!(
