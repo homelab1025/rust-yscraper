@@ -224,8 +224,6 @@ mod tests {
 
     #[tokio::test]
     async fn run_exits_on_shutdown_signal() {
-        tokio::time::pause();
-
         let repo = Arc::new(MockRepo::new(vec![]));
         let scheduler = Arc::new(MockScheduler::new());
 
@@ -241,9 +239,11 @@ mod tests {
 
         let handle = tokio::spawn(async move { bg_scheduler.run().await });
 
-        // Advance time by 1 ms so the initial interval tick fires and the scheduler
-        // completes its first check_and_schedule_due_urls() call before we shut it down
-        tokio::time::advance(std::time::Duration::from_millis(1)).await;
+        // Yield so the spawned task gets a full poll: it processes the initial tick
+        // (MockRepo is synchronous, no Pending points) and loops back to select!
+        // returning Pending. Only then do we cancel, ensuring cancelled() is the
+        // only ready branch in select! — no pseudorandom branch selection.
+        tokio::task::yield_now().await;
 
         token.cancel();
 
