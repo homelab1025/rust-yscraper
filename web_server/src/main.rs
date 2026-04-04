@@ -7,8 +7,8 @@ use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::watch;
 use tokio::task::JoinHandle;
+use tokio_util::sync::CancellationToken;
 use tower_http::cors::{Any, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -75,18 +75,18 @@ fn main() {
         let scraper: Arc<dyn CommentScraper> =
             Arc::new(DefaultScraper::new(Arc::new(ReqwestHttpClient::new())));
 
-        let (shutdown_tx, shutdown_rx) = watch::channel(false);
+        let cancellation_token = CancellationToken::new();
 
         // Start background scheduler
         let bg_handle = start_background_scheduler(
             comments_repo.clone(),
             task_queue.clone(),
             scraper.clone(),
-            shutdown_rx.clone(),
+            cancellation_token.clone(),
         )
         .await;
 
-        let task_queue_shutdown = task_queue.clone();
+        let task_queue_shutdown = task_queue.clone() as Arc<dyn TaskScheduler<ScrapeTask>>;
         let app_state = build_app_state(comments_repo, task_queue, scraper, cfg.clone());
 
         // Build router
@@ -111,7 +111,7 @@ fn main() {
             error!("Server error: {}", e);
         }
 
-        let _ = shutdown_tx.send(true);
+        cancellation_token.cancel();
         let _ = bg_handle.await;
         task_queue_shutdown.shutdown().await;
         info!("Shutdown complete");
@@ -139,17 +139,18 @@ async fn start_background_scheduler(
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     scraper: Arc<dyn CommentScraper>,
-    shutdown_rx: watch::Receiver<bool>,
+    cancellation_token: CancellationToken,
 ) -> JoinHandle<()> {
     let bg_scheduler = BackgroundScheduler::new(
         repo.clone(),
         task_queue.clone(),
         scraper,
         Duration::from_secs(60), // Check every minute
+        cancellation_token,
     );
 
     tokio::spawn(async move {
-        bg_scheduler.run(shutdown_rx).await;
+        bg_scheduler.run().await;
     })
 }
 

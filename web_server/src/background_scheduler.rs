@@ -5,13 +5,14 @@ use crate::task_queue::TaskScheduler;
 use log::{error, info};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::watch;
+use tokio_util::sync::CancellationToken;
 
 pub struct BackgroundScheduler {
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     scraper: Arc<dyn CommentScraper>,
     check_interval: Duration,
+    cancellation_token: CancellationToken,
 }
 
 impl BackgroundScheduler {
@@ -20,16 +21,18 @@ impl BackgroundScheduler {
         task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
         scraper: Arc<dyn CommentScraper>,
         check_interval: Duration,
+        cancellation_token: CancellationToken,
     ) -> Self {
         Self {
             repo,
             task_queue,
             scraper,
             check_interval,
+            cancellation_token,
         }
     }
 
-    pub async fn run(&self, mut shutdown_rx: watch::Receiver<bool>) {
+    pub async fn run(&self) {
         let mut interval = tokio::time::interval(self.check_interval);
         info!(
             "Background scheduler started with interval: {:?}",
@@ -50,7 +53,7 @@ impl BackgroundScheduler {
                         }
                     }
                 }
-                _ = shutdown_rx.changed() => {
+                _ = self.cancellation_token.cancelled() => {
                     info!("Background scheduler shutting down");
                     break;
                 }
@@ -226,25 +229,23 @@ mod tests {
         let repo = Arc::new(MockRepo::new(vec![]));
         let scheduler = Arc::new(MockScheduler::new());
 
-        let bg_scheduler = Arc::new(BackgroundScheduler::new(
+        let token = CancellationToken::new();
+
+        let bg_scheduler = BackgroundScheduler::new(
             repo.clone(),
             scheduler.clone(),
             Arc::new(NoOpScraper),
             Duration::from_secs(3600), // 1-hour interval — tick never fires during test
-        ));
+            token.clone(),
+        );
 
-        let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
-
-        let handle = tokio::spawn({
-            let bg = bg_scheduler.clone();
-            async move { bg.run(shutdown_rx).await }
-        });
+        let handle = tokio::spawn(async move { bg_scheduler.run().await });
 
         // Advance time by 1 ms so the initial interval tick fires and the scheduler
         // completes its first check_and_schedule_due_urls() call before we shut it down
         tokio::time::advance(std::time::Duration::from_millis(1)).await;
 
-        let _ = shutdown_tx.send(true);
+        token.cancel();
 
         tokio::time::timeout(std::time::Duration::from_secs(1), handle)
             .await
@@ -275,6 +276,7 @@ mod tests {
             scheduler.clone(),
             Arc::new(NoOpScraper),
             Duration::from_secs(60),
+            CancellationToken::new(),
         );
 
         // Run one check cycle
