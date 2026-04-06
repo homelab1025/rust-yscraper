@@ -140,7 +140,7 @@ async fn start_background_scheduler(
     scraper: Arc<dyn CommentScraper>,
     cancellation_token: CancellationToken,
 ) -> JoinHandle<()> {
-    let bg_scheduler = BackgroundScheduler::new(
+    let mut bg_scheduler = BackgroundScheduler::new(
         repo.clone(),
         task_queue.clone(),
         scraper,
