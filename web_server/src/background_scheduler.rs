@@ -11,7 +11,7 @@ pub struct BackgroundScheduler {
     repo: Arc<dyn CombinedRepository>,
     task_queue: Arc<dyn TaskScheduler<ScrapeTask>>,
     scraper: Arc<dyn CommentScraper>,
-    check_interval: Duration,
+    interval: tokio::time::Interval,
     cancellation_token: CancellationToken,
 }
 
@@ -27,21 +27,17 @@ impl BackgroundScheduler {
             repo,
             task_queue,
             scraper,
-            check_interval,
+            interval: tokio::time::interval(check_interval),
             cancellation_token,
         }
     }
 
-    pub async fn run(&self) {
-        let mut interval = tokio::time::interval(self.check_interval);
-        info!(
-            "Background scheduler started with interval: {:?}",
-            self.check_interval
-        );
+    pub async fn run(&mut self) {
+        info!("Background scheduler started.");
 
         loop {
             tokio::select! {
-                _ = interval.tick() => {
+                _ = self.interval.tick() => {
                     match self.check_and_schedule_due_urls().await {
                         Ok(scheduled_count) => {
                             if scheduled_count > 0 {
@@ -104,6 +100,8 @@ mod tests {
     use async_trait::async_trait;
     use chrono::Utc;
     use std::sync::{Arc, Mutex};
+    use std::time::Duration;
+    use tokio::sync::Notify;
     use tokio::sync::mpsc::error::TrySendError;
 
     struct NoOpScraper;
@@ -198,12 +196,14 @@ mod tests {
 
     struct MockScheduler {
         scheduled: Mutex<Vec<ScrapeTask>>,
+        notify: Arc<Notify>,
     }
 
     impl MockScheduler {
         fn new() -> Self {
             Self {
                 scheduled: Mutex::new(vec![]),
+                notify: Arc::new(Notify::new()),
             }
         }
 
@@ -216,6 +216,7 @@ mod tests {
     impl TaskScheduler<ScrapeTask> for MockScheduler {
         async fn schedule(&self, task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
             self.scheduled.lock().unwrap().push(task);
+            self.notify.notify_one();
             Ok(true)
         }
     }
@@ -224,32 +225,77 @@ mod tests {
     async fn run_exits_on_shutdown_signal() {
         let repo = Arc::new(MockRepo::new(vec![]));
         let scheduler = Arc::new(MockScheduler::new());
-
         let token = CancellationToken::new();
 
-        let bg_scheduler = BackgroundScheduler::new(
+        let mut bg_scheduler = BackgroundScheduler::new(
             repo.clone(),
             scheduler.clone(),
             Arc::new(NoOpScraper),
-            Duration::from_secs(3600), // 1-hour interval — tick never fires during test
+            Duration::from_secs(3600),
             token.clone(),
         );
 
         let handle = tokio::spawn(async move { bg_scheduler.run().await });
 
-        // Yield so the spawned task gets a full poll: it processes the initial tick
-        // (MockRepo is synchronous, no Pending points) and loops back to select!
-        // returning Pending. Only then do we cancel, ensuring cancelled() is the
-        // only ready branch in select! — no pseudorandom branch selection.
+        // Yield so the spawned task processes the initial tick and parks in select!.
+        // Only then cancel, ensuring cancelled() is the only ready branch.
         tokio::task::yield_now().await;
 
         token.cancel();
-
         handle.await.expect("task must not panic");
     }
 
     #[tokio::test]
-    async fn test_schedules_due_urls() {
+    async fn run_uses_check_interval_between_ticks() {
+        tokio::time::pause();
+
+        let url_row = ScheduledUrl {
+            id: 1,
+            url: "https://example.com".to_string(),
+            last_scraped: Some(Utc::now() - chrono::Duration::hours(25)),
+            frequency_hours: 24,
+            days_limit: 7,
+            comment_count: 0,
+            picked_comment_count: 0,
+            thread_month: None,
+            thread_year: None,
+        };
+
+        let repo = Arc::new(MockRepo::new(vec![url_row]));
+        let scheduler = Arc::new(MockScheduler::new());
+        let notify = scheduler.notify.clone();
+        let token = CancellationToken::new();
+
+        let mut bg_scheduler = BackgroundScheduler::new(
+            repo.clone(),
+            scheduler.clone(),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(60),
+            token.clone(),
+        );
+
+        tokio::spawn(async move { bg_scheduler.run().await });
+
+        // Initial tick fires immediately; one task is scheduled.
+        notify.notified().await;
+        assert_eq!(scheduler.get_scheduled().len(), 1);
+
+        // Advancing by less than the interval must not schedule another task.
+        tokio::time::advance(Duration::from_secs(59)).await;
+        assert_eq!(scheduler.get_scheduled().len(), 1);
+
+        // Crossing the interval boundary schedules the next task.
+        tokio::time::advance(Duration::from_secs(2)).await;
+        notify.notified().await;
+        assert_eq!(scheduler.get_scheduled().len(), 2);
+
+        token.cancel();
+    }
+
+    #[tokio::test]
+    async fn run_schedules_due_urls_on_tick() {
+        tokio::time::pause();
+
         let past_time = Utc::now() - chrono::Duration::hours(25);
         let url_row = ScheduledUrl {
             id: 123,
@@ -265,18 +311,25 @@ mod tests {
 
         let repo = Arc::new(MockRepo::new(vec![url_row]));
         let scheduler = Arc::new(MockScheduler::new());
+        let notify = scheduler.notify.clone();
+        let token = CancellationToken::new();
 
-        let bg_scheduler = BackgroundScheduler::new(
+        let mut bg_scheduler = BackgroundScheduler::new(
             repo.clone(),
             scheduler.clone(),
             Arc::new(NoOpScraper),
-            Duration::from_secs(60),
-            CancellationToken::new(),
+            Duration::from_secs(3600),
+            token.clone(),
         );
 
-        // Run one check cycle
-        let scheduled = bg_scheduler.check_and_schedule_due_urls().await.unwrap();
-        assert_eq!(scheduled, 1);
+        let handle = tokio::spawn(async move { bg_scheduler.run().await });
+
+        // With time paused the initial tick fires immediately; notify signals that
+        // schedule() was called and the task is ready to assert.
+        notify.notified().await;
+
+        token.cancel();
+        handle.await.expect("task must not panic");
 
         let scheduled_tasks = scheduler.get_scheduled();
         assert_eq!(scheduled_tasks.len(), 1);
