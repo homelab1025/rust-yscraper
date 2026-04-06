@@ -221,6 +221,50 @@ mod tests {
         }
     }
 
+    struct DuplicateScheduler;
+
+    #[async_trait]
+    impl TaskScheduler<ScrapeTask> for DuplicateScheduler {
+        async fn schedule(&self, _task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
+            Ok(false)
+        }
+    }
+
+    struct FailFirstScheduler {
+        call_count: Mutex<usize>,
+        scheduled: Mutex<Vec<ScrapeTask>>,
+        notify: Arc<Notify>,
+    }
+
+    impl FailFirstScheduler {
+        fn new() -> Self {
+            Self {
+                call_count: Mutex::new(0),
+                scheduled: Mutex::new(vec![]),
+                notify: Arc::new(Notify::new()),
+            }
+        }
+
+        fn get_scheduled(&self) -> Vec<ScrapeTask> {
+            self.scheduled.lock().unwrap().clone()
+        }
+    }
+
+    #[async_trait]
+    impl TaskScheduler<ScrapeTask> for FailFirstScheduler {
+        async fn schedule(&self, task: ScrapeTask) -> Result<bool, TrySendError<ScrapeTask>> {
+            let mut count = self.call_count.lock().unwrap();
+            *count += 1;
+            if *count == 1 {
+                return Err(TrySendError::Full(task));
+            }
+            drop(count);
+            self.scheduled.lock().unwrap().push(task);
+            self.notify.notify_one();
+            Ok(true)
+        }
+    }
+
     #[tokio::test]
     async fn run_exits_on_shutdown_signal() {
         let repo = Arc::new(MockRepo::new(vec![]));
@@ -334,5 +378,93 @@ mod tests {
         let scheduled_tasks = scheduler.get_scheduled();
         assert_eq!(scheduled_tasks.len(), 1);
         assert_eq!(scheduled_tasks[0].url_id(), 123);
+    }
+
+    #[tokio::test]
+    async fn duplicate_task_is_not_scheduled() {
+        let repo = Arc::new(MockRepo::new(vec![ScheduledUrl {
+            id: 1,
+            url: "https://example.com".to_string(),
+            last_scraped: Some(Utc::now() - chrono::Duration::hours(25)),
+            frequency_hours: 24,
+            days_limit: 7,
+            comment_count: 0,
+            picked_comment_count: 0,
+            thread_month: None,
+            thread_year: None,
+        }]));
+        let token = CancellationToken::new();
+
+        let mut bg_scheduler = BackgroundScheduler::new(
+            repo,
+            Arc::new(DuplicateScheduler),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(3600),
+            token.clone(),
+        );
+
+        let handle = tokio::spawn(async move { bg_scheduler.run().await });
+
+        tokio::task::yield_now().await;
+
+        token.cancel();
+        handle.await.expect("task must not panic");
+    }
+
+    #[tokio::test]
+    async fn schedule_failure_does_not_crash_loop() {
+        tokio::time::pause();
+
+        let url_rows = vec![
+            ScheduledUrl {
+                id: 1,
+                url: "https://example.com/first".to_string(),
+                last_scraped: Some(Utc::now() - chrono::Duration::hours(25)),
+                frequency_hours: 24,
+                days_limit: 7,
+                comment_count: 0,
+                picked_comment_count: 0,
+                thread_month: None,
+                thread_year: None,
+            },
+            ScheduledUrl {
+                id: 2,
+                url: "https://example.com/second".to_string(),
+                last_scraped: Some(Utc::now() - chrono::Duration::hours(25)),
+                frequency_hours: 24,
+                days_limit: 7,
+                comment_count: 0,
+                picked_comment_count: 0,
+                thread_month: None,
+                thread_year: None,
+            },
+        ];
+
+        let repo = Arc::new(MockRepo::new(url_rows));
+        let scheduler = Arc::new(FailFirstScheduler::new());
+        let notify = scheduler.notify.clone();
+        let token = CancellationToken::new();
+
+        let mut bg_scheduler = BackgroundScheduler::new(
+            repo.clone(),
+            scheduler.clone(),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(3600),
+            token.clone(),
+        );
+
+        let handle = tokio::spawn(async move { bg_scheduler.run().await });
+
+        // The initial tick processes both URLs: first fails, second is scheduled
+        notify.notified().await;
+
+        token.cancel();
+        handle
+            .await
+            .expect("scheduler must not panic after a schedule error");
+
+        let scheduled = scheduler.get_scheduled();
+        assert_eq!(scheduled.len(), 1);
+        assert_eq!(scheduled[0].url_id(), 2);
     }
 }
