@@ -58,6 +58,7 @@ impl BackgroundScheduler {
     }
 
     // REFACTOR: Return a specific error type.
+    // TODO: This method should only get the pending tasks from DB and create the ScrapeTask structs
     async fn check_and_schedule_due_urls(
         &self,
     ) -> Result<usize, Box<dyn std::error::Error + Send + Sync>> {
@@ -79,7 +80,7 @@ impl BackgroundScheduler {
                     scheduled_count += 1;
                 }
                 Ok(false) => {
-                    info!("Refresh for URL ID {} already scheduled", item_id);
+                    info!("Refresh for URL ID {} refused scheduling", item_id);
                 }
                 Err(e) => {
                     error!("Failed to schedule refresh for URL ID {}: {}", item_id, e);
