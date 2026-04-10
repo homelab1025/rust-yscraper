@@ -255,8 +255,11 @@ mod tests {
         // Records the last sorting params passed to page
         last_sort_by: AsyncMutex<Option<crate::SortBy>>,
         last_sort_order: AsyncMutex<Option<crate::SortOrder>>,
+        last_offset: AsyncMutex<Option<i64>>,
         // Records the last state passed to update
         last_update_state: AsyncMutex<Option<i32>>,
+        // None -> return Ok(None); Some(row) -> return Ok(Some(row))
+        get_comment_row: AsyncMutex<Option<DbCommentRow>>,
     }
 
     impl MockedRepo {
@@ -267,7 +270,9 @@ mod tests {
                 last_filter_state: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
+                last_offset: AsyncMutex::new(None),
                 last_update_state: AsyncMutex::new(None),
+                get_comment_row: AsyncMutex::new(None),
             }
         }
 
@@ -278,7 +283,9 @@ mod tests {
                 last_filter_state: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
+                last_offset: AsyncMutex::new(None),
                 last_update_state: AsyncMutex::new(None),
+                get_comment_row: AsyncMutex::new(None),
             }
         }
 
@@ -289,7 +296,22 @@ mod tests {
                 last_filter_state: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
+                last_offset: AsyncMutex::new(None),
                 last_update_state: AsyncMutex::new(None),
+                get_comment_row: AsyncMutex::new(None),
+            }
+        }
+
+        fn with_comment(row: DbCommentRow) -> Self {
+            Self {
+                count_ok: AsyncMutex::new(Some(0)),
+                page_ok: AsyncMutex::new(Some(vec![])),
+                last_filter_state: AsyncMutex::new(None),
+                last_sort_by: AsyncMutex::new(None),
+                last_sort_order: AsyncMutex::new(None),
+                last_offset: AsyncMutex::new(None),
+                last_update_state: AsyncMutex::new(None),
+                get_comment_row: AsyncMutex::new(Some(row)),
             }
         }
     }
@@ -310,13 +332,14 @@ mod tests {
 
         async fn page_comments(
             &self,
-            _offset: i64,
+            offset: i64,
             _count: i64,
             _url_id: i64,
             state: Option<i32>,
             sort_by: Option<crate::SortBy>,
             sort_order: Option<crate::SortOrder>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            *self.last_offset.lock().await = Some(offset);
             *self.last_filter_state.lock().await = state;
             *self.last_sort_by.lock().await = sort_by;
             *self.last_sort_order.lock().await = sort_order;
@@ -343,7 +366,7 @@ mod tests {
         }
 
         async fn get_comment(&self, _id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
-            Ok(None)
+            Ok(self.get_comment_row.lock().await.clone())
         }
     }
 
@@ -694,5 +717,59 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comment_returns_200_with_correct_dto() {
+        let row = make_comment_row(99, "alice", "2024-06-01", "hello there", 42);
+        let repo = Arc::new(MockedRepo::with_comment(row));
+        let state = State(CommentsAppState {
+            repo,
+            config: make_test_config(),
+        });
+
+        let resp = get_comment(state, axum::extract::Path(99)).await;
+        assert!(resp.is_ok());
+        let Json(dto) = resp.unwrap();
+        assert_eq!(dto.id, 99);
+        assert_eq!(dto.user, "alice");
+        assert_eq!(dto.date, "2024-06-01");
+        assert_eq!(dto.text, "hello there");
+        assert_eq!(dto.url_id, 42);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comment_returns_404_when_not_found() {
+        let repo = Arc::new(MockedRepo::default());
+        let state = State(CommentsAppState {
+            repo,
+            config: make_test_config(),
+        });
+
+        let resp = get_comment(state, axum::extract::Path(404)).await;
+        let (status, Json(err)) = resp.unwrap_err();
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(err.code, ApiErrorCode::NotFound);
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn list_comments_forwards_offset_to_repository() {
+        let repo = Arc::new(MockedRepo::with_ok(10, vec![]));
+        let state = State(CommentsAppState {
+            repo: repo.clone(),
+            config: make_test_config(),
+        });
+        let query = Query(CommentsFilter {
+            offset: Some(5),
+            count: Some(3),
+            url_id: 1,
+            state: None,
+            sort_by: None,
+            sort_order: None,
+        });
+
+        let resp = list_comments(state, query).await;
+        assert!(resp.is_ok());
+        assert_eq!(*repo.last_offset.lock().await, Some(5));
     }
 }
