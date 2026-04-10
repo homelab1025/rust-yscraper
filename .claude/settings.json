@@ -4,6 +4,18 @@
     "typescript-lsp@claude-plugins-official": true
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // \"\"'); if [[ \"$f\" == *db/changelog/*.sql ]]; then if git log --oneline -- \"$f\" 2>/dev/null | grep -q .; then echo '{\"continue\":false,\"stopReason\":\"Migration script is already committed. Add a new Liquibase changelog entry instead.\"}'; fi; fi",
+            "statusMessage": "Checking migration script protection..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
