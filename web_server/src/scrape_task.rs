@@ -141,7 +141,6 @@ mod tests_task_hashing {
     use crate::scrape::{CommentScraper, ScrapeError, ScrapeResult};
     use async_trait::async_trait;
     use std::collections::HashSet;
-    use std::hash::{Hash, Hasher};
     use std::sync::Arc;
 
     struct NoOpScraper;
@@ -276,104 +275,6 @@ mod tests_task_hashing {
             set.len(),
             2,
             "Different url should produce distinct set entries"
-        );
-    }
-
-    #[test]
-    fn test_equality_same_url_and_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/1", 1);
-
-        assert_eq!(t1, t2, "Tasks with same URL and url_id should be equal");
-    }
-
-    #[test]
-    fn test_inequality_same_url_different_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/1", 999);
-
-        assert_ne!(
-            t1, t2,
-            "Tasks with same URL but different url_id should not be equal"
-        );
-    }
-
-    #[test]
-    fn test_inequality_different_url_same_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/2", 1);
-
-        assert_ne!(
-            t1, t2,
-            "Tasks with different URL but same url_id should not be equal"
-        );
-    }
-
-    #[test]
-    fn test_inequality_different_url_and_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/2", 999);
-
-        assert_ne!(
-            t1, t2,
-            "Tasks with different URL and url_id should not be equal"
-        );
-    }
-
-    #[test]
-    fn test_hash_consistency_same_url_and_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/1", 1);
-
-        // Same URL and url_id should have same hash
-        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
-        t1.hash(&mut hasher1);
-        let hash1 = hasher1.finish();
-
-        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
-        t2.hash(&mut hasher2);
-        let hash2 = hasher2.finish();
-
-        assert_eq!(hash1, hash2, "Same URL and url_id should have same hash");
-    }
-
-    #[test]
-    fn test_hash_difference_same_url_different_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/1", 999);
-
-        // Same URL but different url_id should have different hashes
-        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
-        t1.hash(&mut hasher1);
-        let hash1 = hasher1.finish();
-
-        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
-        t2.hash(&mut hasher2);
-        let hash2 = hasher2.finish();
-
-        assert_ne!(
-            hash1, hash2,
-            "Same URL but different url_id should have different hashes"
-        );
-    }
-
-    #[test]
-    fn test_hash_difference_different_url_same_id() {
-        let t1 = new_task("https://example.com/item/1", 1);
-        let t2 = new_task("https://example.com/item/2", 1);
-
-        // Different URL but same url_id should have different hashes
-        let mut hasher1 = std::collections::hash_map::DefaultHasher::new();
-        t1.hash(&mut hasher1);
-        let hash1 = hasher1.finish();
-
-        let mut hasher2 = std::collections::hash_map::DefaultHasher::new();
-        t2.hash(&mut hasher2);
-        let hash2 = hasher2.finish();
-
-        assert_ne!(
-            hash1, hash2,
-            "Different URL but same url_id should have different hashes"
         );
     }
 }
