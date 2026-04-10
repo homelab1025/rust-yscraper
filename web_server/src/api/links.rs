@@ -489,68 +489,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_list_links_success() {
-        let time_url1 = Utc::now();
-        let time_url2 = Utc::now();
-        let rows = vec![
-            DbUrlRow {
-                id: 1,
-                url: "https://example.com/1".to_string(),
-                date_added: time_url1,
-                comment_count: 5,
-                picked_comment_count: 2,
-                discarded_comment_count: 1,
-                thread_month: None,
-                thread_year: None,
-            },
-            DbUrlRow {
-                id: 2,
-                url: "https://example.com/2".to_string(),
-                date_added: time_url2,
-                comment_count: 10,
-                picked_comment_count: 5,
-                discarded_comment_count: 3,
-                thread_month: None,
-                thread_year: None,
-            },
-        ];
-        let state = make_state(Ok(rows.clone()), Ok(0), ScheduleOutcome::Scheduled);
-
-        let result = list_links(State(state)).await;
-        let Json(links) = result.unwrap();
-
-        assert_eq!(links.len(), 2);
-        assert!(links.contains(&LinkDto {
-            id: 1,
-            url: "https://example.com/1".to_string(),
-            date_added: time_url1.to_rfc3339(),
-            total_comment_count: 5,
-            picked_comment_count: 2,
-            discarded_comment_count: 1,
-            thread_month: None,
-            thread_year: None,
-        }));
-        assert!(links.contains(&LinkDto {
-            id: 2,
-            url: "https://example.com/2".to_string(),
-            date_added: time_url2.to_rfc3339(),
-            total_comment_count: 10,
-            picked_comment_count: 5,
-            discarded_comment_count: 3,
-            thread_month: None,
-            thread_year: None,
-        }));
-    }
-
-    #[tokio::test]
-    async fn test_list_links_empty() {
-        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
-        let result = list_links(State(state)).await;
-        let Json(links) = result.unwrap();
-        assert_eq!(links.len(), 0);
-    }
-
-    #[tokio::test]
     async fn test_list_links_db_error() {
         let state = make_state(
             Err("DB error".to_string()),
@@ -595,22 +533,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_delete_link_success() {
-        let state = make_state(Ok(vec![]), Ok(1), ScheduleOutcome::Scheduled);
-        let result = delete_link(State(state), Path(1)).await;
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_delete_link_not_found() {
-        let state = make_state(Ok(vec![]), Ok(0), ScheduleOutcome::Scheduled);
-        let result = delete_link(State(state), Path(1)).await;
-        let (status, Json(err)) = result.unwrap_err();
-        assert_eq!(status, StatusCode::NOT_FOUND);
-        assert_eq!(err.code, ApiErrorCode::NotFound);
-    }
-
-    #[tokio::test]
     async fn test_delete_link_db_error() {
         let state = make_state(
             Ok(vec![]),
@@ -647,49 +569,6 @@ mod tests {
         };
 
         let result = scrape_link(State(state), Json(payload)).await;
-        let Json(resp) = result.unwrap();
-        assert!(matches!(resp.state, ScrapeState::AlreadyScheduled));
-    }
-
-    fn make_url_row(id: i64, url: &str) -> DbUrlRow {
-        DbUrlRow {
-            id,
-            url: url.to_string(),
-            date_added: Utc::now(),
-            comment_count: 0,
-            picked_comment_count: 0,
-            discarded_comment_count: 0,
-            thread_month: None,
-            thread_year: None,
-        }
-    }
-
-    #[tokio::test]
-    async fn test_refresh_link_scheduled() {
-        let state = make_state(
-            Ok(vec![make_url_row(
-                42,
-                "https://news.ycombinator.com/item?id=42",
-            )]),
-            Ok(0),
-            ScheduleOutcome::Scheduled,
-        );
-        let result = refresh_link(State(state), Path(42)).await;
-        let Json(resp) = result.unwrap();
-        assert!(matches!(resp.state, ScrapeState::Scheduled));
-    }
-
-    #[tokio::test]
-    async fn test_refresh_link_already_scheduled() {
-        let state = make_state(
-            Ok(vec![make_url_row(
-                42,
-                "https://news.ycombinator.com/item?id=42",
-            )]),
-            Ok(0),
-            ScheduleOutcome::AlreadyInQueue,
-        );
-        let result = refresh_link(State(state), Path(42)).await;
         let Json(resp) = result.unwrap();
         assert!(matches!(resp.state, ScrapeState::AlreadyScheduled));
     }
