@@ -425,4 +425,72 @@ mod tests {
             "expected empty comments vec"
         );
     }
+
+    #[test]
+    fn extract_month_year_returns_correct_month_for_all_months() {
+        let s = scraper("");
+        let cases = [
+            ("Ask HN: What Are You Working On January 2024", (1, 2024)),
+            ("Ask HN: What Are You Working On February 2024", (2, 2024)),
+            ("Ask HN: What Are You Working On March 2024", (3, 2024)),
+            ("Ask HN: What Are You Working On April 2024", (4, 2024)),
+            ("Ask HN: What Are You Working On May 2024", (5, 2024)),
+            ("Ask HN: What Are You Working On June 2024", (6, 2024)),
+            ("Ask HN: What Are You Working On July 2024", (7, 2024)),
+            ("Ask HN: What Are You Working On August 2024", (8, 2024)),
+            ("Ask HN: What Are You Working On September 2024", (9, 2024)),
+            ("Ask HN: What Are You Working On November 2024", (11, 2024)),
+            ("Ask HN: What Are You Working On December 2024", (12, 2024)),
+        ];
+        for (title, expected) in cases {
+            assert_eq!(
+                s.extract_month_year(title),
+                Ok(expected),
+                "failed for title: {}",
+                title
+            );
+        }
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_returns_err_when_title_prefix_does_not_match() {
+        let html = r#"<html><body>
+            <td class="title"><span class="titleline">Show HN: My Cool Project January 2025</span></td>
+        </body></html>"#;
+        let result = scraper(html).get_comments("http://unused").await;
+        assert_eq!(result, Err(ScrapeError::InvalidThreadTitle()));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn get_comments_skips_comment_with_negative_id_keeps_valid_one() {
+        let html = r#"<html><body>
+            <table><tbody><tr>
+              <td class="title"><span class="titleline">Ask HN: What Are You Working On October 2025</span></td>
+            </tr></tbody></table>
+            <table><tbody>
+            <tr class="athing comtr">
+              <td class="ind"><img src="s.gif" width="0" height="1"/></td>
+              <td class="default">
+                <a class="hnuser">bad</a>
+                <span class="age" title="2025-01-01T11:00:00"><a href="item?id=-99">2 hours ago</a></span>
+                <div class="comment">should be skipped</div>
+              </td>
+            </tr>
+            <tr class="athing comtr">
+              <td class="ind"><img src="s.gif" width="0" height="1"/></td>
+              <td class="default">
+                <a class="hnuser">good</a>
+                <span class="age" title="2025-01-01T12:00:00"><a href="item?id=777">1 hour ago</a></span>
+                <div class="comment">kept</div>
+              </td>
+            </tr>
+            </tbody></table>
+        </body></html>"#;
+        let result = scraper(html).get_comments("http://unused").await;
+
+        assert!(result.is_ok(), "expected Ok, got {:?}", result);
+        let comments = result.unwrap().comments;
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].id, 777);
+    }
 }

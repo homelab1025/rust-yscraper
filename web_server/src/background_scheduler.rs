@@ -222,6 +222,70 @@ mod tests {
         }
     }
 
+    struct FailingRepo;
+
+    #[async_trait]
+    impl CommentsRepository for FailingRepo {
+        async fn count_comments(
+            &self,
+            _url_id: i64,
+            _state: Option<i32>,
+        ) -> Result<u32, sqlx::Error> {
+            Ok(0)
+        }
+        async fn page_comments(
+            &self,
+            _offset: i64,
+            _count: i64,
+            _url_id: i64,
+            _state: Option<i32>,
+            _sort_by: Option<crate::SortBy>,
+            _sort_order: Option<crate::SortOrder>,
+        ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+        async fn upsert_comments(
+            &self,
+            _comments: &[crate::CommentRecord],
+            _url_id: i64,
+            _thread_month: Option<i32>,
+            _thread_year: Option<i32>,
+        ) -> Result<usize, sqlx::Error> {
+            Ok(0)
+        }
+        async fn update_comment_state(&self, _id: i64, _state: i32) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+        async fn get_comment(&self, _id: i64) -> Result<Option<DbCommentRow>, sqlx::Error> {
+            Ok(None)
+        }
+    }
+
+    #[async_trait]
+    impl LinksRepository for FailingRepo {
+        async fn list_links(&self) -> Result<Vec<DbUrlRow>, sqlx::Error> {
+            Ok(vec![])
+        }
+        async fn delete_link(&self, _id: i64) -> Result<u64, sqlx::Error> {
+            Ok(0)
+        }
+        async fn upsert_url_with_scheduling(
+            &self,
+            _id: i64,
+            _url: &str,
+            _frequency_hours: u32,
+            _days_limit: u32,
+        ) -> Result<(), sqlx::Error> {
+            Ok(())
+        }
+        async fn get_urls_due_for_refresh(&self) -> Result<Vec<ScheduledUrl>, sqlx::Error> {
+            Err(sqlx::Error::RowNotFound)
+        }
+        async fn get_url_by_id(&self, _id: i64) -> Result<Option<String>, sqlx::Error> {
+            Ok(None)
+        }
+    }
+
     struct DuplicateScheduler;
 
     #[async_trait]
@@ -379,6 +443,7 @@ mod tests {
         let scheduled_tasks = scheduler.get_scheduled();
         assert_eq!(scheduled_tasks.len(), 1);
         assert_eq!(scheduled_tasks[0].url_id(), 123);
+        assert_eq!(scheduled_tasks[0].url(), "https://example.com");
     }
 
     #[tokio::test]
@@ -467,5 +532,24 @@ mod tests {
         let scheduled = scheduler.get_scheduled();
         assert_eq!(scheduled.len(), 1);
         assert_eq!(scheduled[0].url_id(), 2);
+    }
+
+    #[tokio::test]
+    async fn db_error_does_not_crash_loop() {
+        let token = CancellationToken::new();
+        let mut bg_scheduler = BackgroundScheduler::new(
+            Arc::new(FailingRepo),
+            Arc::new(MockScheduler::new()),
+            Arc::new(NoOpScraper),
+            Duration::from_secs(3600),
+            token.clone(),
+        );
+
+        let handle = tokio::spawn(async move { bg_scheduler.run().await });
+
+        tokio::task::yield_now().await;
+
+        token.cancel();
+        handle.await.expect("task must not panic after a DB error");
     }
 }

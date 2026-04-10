@@ -392,6 +392,42 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
+    async fn failed_task_is_removed_and_can_be_rescheduled() {
+        time::pause();
+
+        let (processor, _handle) = TaskDedupQueue::new(8, CancellationToken::new());
+        let executed = Arc::new(AtomicUsize::new(0));
+
+        let (t1, t1_start, _t1_done) = make_task(99, Duration::from_millis(5), &executed, true);
+        let r1 = processor.schedule(t1).await.expect("send ok");
+        assert!(r1, "first schedule should be accepted");
+
+        time::advance(Duration::from_millis(1)).await;
+        t1_start.notified().await;
+
+        // Advance past the delay so execute() returns Err; then yield to let the worker
+        // complete the remove() call before we attempt to re-schedule.
+        time::advance(Duration::from_millis(10)).await;
+        tokio::task::yield_now().await;
+
+        let (t2, t2_start, _t2_done) = make_task(99, Duration::from_millis(5), &executed, false);
+        let r2 = processor.schedule(t2).await.expect("send ok");
+        assert!(
+            r2,
+            "identical task must be accepted after a failed execution"
+        );
+
+        time::advance(Duration::from_millis(1)).await;
+        t2_start.notified().await;
+
+        assert_eq!(
+            executed.load(Ordering::SeqCst),
+            2,
+            "task must have executed twice"
+        );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
     async fn shutdown_waits_for_inflight_task() {
         time::pause();
 
@@ -454,5 +490,14 @@ mod tests {
             0,
             "t2 must not run after shutdown"
         );
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn worker_exits_when_queue_is_dropped() {
+        let (processor, handle) = TaskDedupQueue::<TestTask>::new(8, CancellationToken::new());
+        drop(processor); // drops the Sender; worker receives None on next recv()
+        handle
+            .await
+            .expect("worker must exit cleanly when sender is dropped");
     }
 }

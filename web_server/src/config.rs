@@ -48,12 +48,73 @@ impl AppConfig {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use config::Config;
+
+    fn base_builder() -> config::builder::ConfigBuilder<config::builder::DefaultState> {
+        Config::builder()
+            .set_override("db_username", "user")
+            .unwrap()
+            .set_override("db_password", "pass")
+            .unwrap()
+            .set_override("db_name", "yscraper")
+            .unwrap()
+            .set_override("db_host", "localhost")
+            .unwrap()
+    }
 
     #[test]
-    fn fail_when_no_dbport() {
-        // let cfg = AppConfig::from_config()
-        // // Only check that defaults exist, not their concrete values
-        // assert_ne!(cfg.server_port, 0, "default server_port should be non-zero");
-        // assert!(!cfg.db_url.is_empty(), "default db_url should be non-empty");
+    fn happy_path_fields_map_correctly() {
+        let cfg = base_builder()
+            .set_override("port", 8080)
+            .unwrap()
+            .set_override("db_port", 5433)
+            .unwrap()
+            .set_override("default_days_limit", 14)
+            .unwrap()
+            .set_override("default_frequency_hours", 12)
+            .unwrap()
+            .build()
+            .unwrap();
+
+        let result = AppConfig::from_config(&cfg).unwrap();
+
+        assert_eq!(result.server_port, 8080);
+        assert_eq!(result.db_username, "user");
+        assert_eq!(result.db_password, "pass");
+        assert_eq!(result.db_name, "yscraper");
+        assert_eq!(result.db_host, "localhost");
+        assert_eq!(result.db_port, 5433);
+        assert_eq!(result.default_days_limit, 14);
+        assert_eq!(result.default_frequency_hours, 12);
+    }
+
+    #[test]
+    fn defaults_applied_when_optional_fields_omitted() {
+        let cfg = base_builder().build().unwrap();
+
+        let result = AppConfig::from_config(&cfg).unwrap();
+
+        assert_eq!(result.server_port, 3000);
+        assert_eq!(result.db_port, 5432);
+        assert_eq!(result.default_days_limit, 7);
+        assert_eq!(result.default_frequency_hours, 24);
+    }
+
+    #[test]
+    fn missing_required_field_returns_err() {
+        let cfg = Config::builder()
+            .set_override("db_password", "pass")
+            .unwrap()
+            .set_override("db_name", "yscraper")
+            .unwrap()
+            .set_override("db_host", "localhost")
+            .unwrap()
+            .build()
+            .unwrap();
+
+        let result = AppConfig::from_config(&cfg);
+
+        assert!(matches!(result, Err(config::ConfigError::NotFound(_))));
     }
 }

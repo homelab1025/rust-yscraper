@@ -564,6 +564,37 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_list_links_with_thread_metadata() {
+        let time = Utc::now();
+        let rows = vec![DbUrlRow {
+            id: 1,
+            url: "https://example.com/1".to_string(),
+            date_added: time,
+            comment_count: 3,
+            picked_comment_count: 1,
+            discarded_comment_count: 0,
+            thread_month: Some(3),
+            thread_year: Some(2026),
+        }];
+        let state = make_state(Ok(rows), Ok(0), ScheduleOutcome::Scheduled);
+
+        let result = list_links(State(state)).await;
+        let Json(links) = result.unwrap();
+
+        assert_eq!(links.len(), 1);
+        assert!(links.contains(&LinkDto {
+            id: 1,
+            url: "https://example.com/1".to_string(),
+            date_added: time.to_rfc3339(),
+            total_comment_count: 3,
+            picked_comment_count: 1,
+            discarded_comment_count: 0,
+            thread_month: Some(3),
+            thread_year: Some(2026),
+        }));
+    }
+
+    #[tokio::test]
     async fn test_delete_link_success() {
         let state = make_state(Ok(vec![]), Ok(1), ScheduleOutcome::Scheduled);
         let result = delete_link(State(state), Path(1)).await;
@@ -603,7 +634,7 @@ mod tests {
 
         let result = scrape_link(State(state), Json(payload)).await;
         let Json(resp) = result.unwrap();
-        matches!(resp.state, ScrapeState::Scheduled);
+        assert!(matches!(resp.state, ScrapeState::Scheduled));
     }
 
     #[tokio::test]
@@ -617,7 +648,7 @@ mod tests {
 
         let result = scrape_link(State(state), Json(payload)).await;
         let Json(resp) = result.unwrap();
-        matches!(resp.state, ScrapeState::AlreadyScheduled);
+        assert!(matches!(resp.state, ScrapeState::AlreadyScheduled));
     }
 
     fn make_url_row(id: i64, url: &str) -> DbUrlRow {
