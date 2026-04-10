@@ -58,11 +58,11 @@ cargo test -p web_server
 # For Colima users: export DOCKER_HOST=unix://${HOME}/.colima/default/docker.sock
 cargo test -p web_server --test postgresql_test
 
-# Coverage report (requires cargo-llvm-cov)
-cargo llvm-cov --html
+# Coverage report (requires cargo-tarpaulin)
+cargo tarpaulin --out Html
 
 # Coverage report in text format.
-cargo llvm-cov --text > target/llvm-cov/coverage.txt
+cargo tarpaulin --out Stdout
 
 # Generate OpenAPI YAML
 cargo run -p api_gen -- openapi.yaml
