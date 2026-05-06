@@ -24,6 +24,11 @@
             "type": "command",
             "command": "cargo fmt --all 2>/dev/null || true",
             "statusMessage": "Running cargo fmt..."
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-edit-test.sh",
+            "statusMessage": "Running tests for modified file..."
           }
         ]
       }
