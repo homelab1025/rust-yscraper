@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import SummaryStats from '../components/SummaryStats';
-import StatusBadge from '../components/StatusBadge';
+import { SummaryStats } from '../components/SummaryStats';
+import { StatusBadge } from '../components/StatusBadge';
 import { type LinkDto, CommentState } from '../api-client';
 import { useServices } from '../contexts/ServicesContext';
 
@@ -22,7 +22,7 @@ const isCompleted = (link: LinkDto) =>
   link.total_comment_count > 0 &&
   (link.picked_comment_count + link.discarded_comment_count) >= link.total_comment_count;
 
-export default function LinkManagementPage(): React.JSX.Element {
+export function LinkManagementPage(): React.JSX.Element {
   const { linksApi } = useServices();
   const [links, setLinks] = useState<LinkDto[]>([]);
   const [loading, setLoading] = useState(true);

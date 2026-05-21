@@ -7,7 +7,7 @@ interface AddLinkFormProps {
     onLinkAdded?: () => void;
 }
 
-export default function AddLinkForm({ onLinkAdded }: AddLinkFormProps) {
+export function AddLinkForm({ onLinkAdded }: AddLinkFormProps) {
     const { linksApi } = useServices();
     const [itemId, setItemId] = useState('');
     const [submitting, setSubmitting] = useState(false);

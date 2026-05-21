@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export default function AboutPage(): React.JSX.Element {
+export function AboutPage(): React.JSX.Element {
     return (
         <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">

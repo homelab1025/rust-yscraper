@@ -4,7 +4,7 @@ interface SummaryStatsProps {
     discarded: number;
 }
 
-export default function SummaryStats({ reviewed, picked, discarded }: SummaryStatsProps) {
+export function SummaryStats({ reviewed, picked, discarded }: SummaryStatsProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-1">

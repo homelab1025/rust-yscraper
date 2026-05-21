@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { type CommentDto, type LinkDto, CommentState, SortBy, SortOrder } from '../api-client';
 import { useServices } from '../contexts/ServicesContext';
 
-import CommentRow from '../components/CommentRow';
+import { CommentRow } from '../components/CommentRow';
 
 const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -25,7 +25,7 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
     return <span className="material-symbols-outlined !text-base text-primary">expand_more</span>;
 }
 
-export default function CommentsPage(): React.JSX.Element {
+export function CommentsPage(): React.JSX.Element {
     const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;

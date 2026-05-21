@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import LinkManagementPage from './pages/LinkManagementPage';
-import CommentsPage from './pages/CommentsPage';
-import AboutPage from './pages/AboutPage';
+import { Sidebar } from './components/Sidebar';
+import { LinkManagementPage } from './pages/LinkManagementPage';
+import { CommentsPage } from './pages/CommentsPage';
+import { AboutPage } from './pages/AboutPage';
 import { ServicesProvider } from './contexts/ServicesContext';
-import AddLinkForm from './components/AddLinkForm';
+import { AddLinkForm } from './components/AddLinkForm';
 
 function AppLayout() {
     const [refreshKey, setRefreshKey] = useState(0);
@@ -43,7 +43,7 @@ function AppLayout() {
     );
 }
 
-function App() {
+export function App() {
     return (
         <ServicesProvider>
             <Router>
@@ -52,5 +52,3 @@ function App() {
         </ServicesProvider>
     );
 }
-
-export default App;

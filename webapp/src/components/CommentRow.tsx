@@ -9,7 +9,7 @@ interface CommentRowProps {
     onSelect?: () => void;
 }
 
-const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
+export const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
     ({ comment, selected, expanded, onUpdateState, onSelect }, ref) => {
         const rowClass = [
             'transition-colors cursor-pointer',
@@ -55,5 +55,3 @@ const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
 );
 
 CommentRow.displayName = 'CommentRow';
-
-export default CommentRow;

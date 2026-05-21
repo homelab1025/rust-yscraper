@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Sidebar() {
+export function Sidebar() {
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
     const [backendInfo, setBackendInfo] = useState<{ git_hash: string; committed_at: string } | null>(null);
