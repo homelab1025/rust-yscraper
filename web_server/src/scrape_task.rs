@@ -158,7 +158,7 @@ mod tests_task_hashing {
     impl CommentsRepository for MockRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
             Ok(0)
@@ -168,7 +168,7 @@ mod tests_task_hashing {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
             _sort_by: Option<crate::SortBy>,
             _sort_order: Option<crate::SortOrder>,
@@ -326,7 +326,7 @@ mod tests_execute {
     impl CommentsRepository for MockRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
             Ok(0)
@@ -336,7 +336,7 @@ mod tests_execute {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
             _sort_by: Option<crate::SortBy>,
             _sort_order: Option<crate::SortOrder>,
@@ -537,7 +537,7 @@ mod tests_constructor {
     impl CommentsRepository for MockRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
             Ok(0)
@@ -547,7 +547,7 @@ mod tests_constructor {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
             _sort_by: Option<crate::SortBy>,
             _sort_order: Option<crate::SortOrder>,

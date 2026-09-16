@@ -31,6 +31,18 @@ export function Sidebar() {
                     {!collapsed && <span>LINKS</span>}
                 </Link>
                 <Link
+                    to="/picked-ideas"
+                    title="Picked Ideas"
+                    className={`text-sm font-semibold transition-colors flex items-center py-1.5 rounded-lg hover:bg-slate-50 ${collapsed ? 'justify-center px-2' : 'gap-3 px-2'} ${
+                        isActive('/picked-ideas')
+                            ? 'text-primary bg-slate-50'
+                            : 'text-slate-600 hover:text-primary'
+                    }`}
+                >
+                    <span className="material-symbols-outlined !text-lg shrink-0">check_circle</span>
+                    {!collapsed && <span>PICKED IDEAS</span>}
+                </Link>
+                <Link
                     to="/about"
                     title="About"
                     className={`text-sm font-semibold transition-colors flex items-center py-1.5 rounded-lg hover:bg-slate-50 ${collapsed ? 'justify-center px-2' : 'gap-3 px-2'} ${

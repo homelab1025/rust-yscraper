@@ -18,12 +18,24 @@ impl PgCommentsRepository {
 
 #[async_trait]
 impl CommentsRepository for PgCommentsRepository {
-    async fn count_comments(&self, url_id: i64, state: Option<i32>) -> Result<u32, sqlx::Error> {
-        let mut qb: QueryBuilder<Postgres> =
-            QueryBuilder::new("SELECT COUNT(*) FROM comments WHERE url_id = ");
-        qb.push_bind(url_id);
+    async fn count_comments(
+        &self,
+        url_id: Option<i64>,
+        state: Option<i32>,
+    ) -> Result<u32, sqlx::Error> {
+        let mut qb: QueryBuilder<Postgres> = QueryBuilder::new("SELECT COUNT(*) FROM comments");
+        let mut has_condition = false;
+        if let Some(id) = url_id {
+            qb.push(" WHERE url_id = ");
+            qb.push_bind(id);
+            has_condition = true;
+        }
         if let Some(s) = state {
-            qb.push(" AND state = ");
+            qb.push(if has_condition {
+                " AND state = "
+            } else {
+                " WHERE state = "
+            });
             qb.push_bind(s);
         }
 
@@ -37,18 +49,27 @@ impl CommentsRepository for PgCommentsRepository {
         &self,
         offset: i64,
         count: i64,
-        url_id: i64,
+        url_id: Option<i64>,
         state: Option<i32>,
         sort_by: Option<crate::SortBy>,
         sort_order: Option<SortOrder>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
         let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments WHERE url_id = ",
+            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments",
         );
-        qb.push_bind(url_id);
+        let mut has_condition = false;
+        if let Some(id) = url_id {
+            qb.push(" WHERE url_id = ");
+            qb.push_bind(id);
+            has_condition = true;
+        }
 
         if let Some(s) = state {
-            qb.push(" AND state = ");
+            qb.push(if has_condition {
+                " AND state = "
+            } else {
+                " WHERE state = "
+            });
             qb.push_bind(s);
         }
 

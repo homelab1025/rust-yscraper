@@ -28,7 +28,8 @@ impl FromRef<AppState> for CommentsAppState {
 pub struct CommentsFilter {
     pub offset: Option<i64>,
     pub count: Option<i64>,
-    pub url_id: i64,
+    /// When omitted, comments are listed across all links.
+    pub url_id: Option<i64>,
     pub state: Option<crate::CommentState>,
     pub sort_by: Option<crate::SortBy>,
     pub sort_order: Option<crate::SortOrder>,
@@ -252,6 +253,8 @@ mod tests {
         page_ok: AsyncMutex<Option<Vec<DbCommentRow>>>,
         // Records the last state passed to count/page
         last_filter_state: AsyncMutex<Option<i32>>,
+        // Records the last url_id passed to count/page
+        last_url_id: AsyncMutex<Option<Option<i64>>>,
         // Records the last sorting params passed to page
         last_sort_by: AsyncMutex<Option<crate::SortBy>>,
         last_sort_order: AsyncMutex<Option<crate::SortOrder>>,
@@ -268,6 +271,7 @@ mod tests {
                 count_ok: AsyncMutex::new(Some(count)),
                 page_ok: AsyncMutex::new(Some(rows)),
                 last_filter_state: AsyncMutex::new(None),
+                last_url_id: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
                 last_offset: AsyncMutex::new(None),
@@ -281,6 +285,7 @@ mod tests {
                 count_ok: AsyncMutex::new(None),
                 page_ok: AsyncMutex::new(Some(vec![])),
                 last_filter_state: AsyncMutex::new(None),
+                last_url_id: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
                 last_offset: AsyncMutex::new(None),
@@ -294,6 +299,7 @@ mod tests {
                 count_ok: AsyncMutex::new(Some(total)),
                 page_ok: AsyncMutex::new(None),
                 last_filter_state: AsyncMutex::new(None),
+                last_url_id: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
                 last_offset: AsyncMutex::new(None),
@@ -307,6 +313,7 @@ mod tests {
                 count_ok: AsyncMutex::new(Some(0)),
                 page_ok: AsyncMutex::new(Some(vec![])),
                 last_filter_state: AsyncMutex::new(None),
+                last_url_id: AsyncMutex::new(None),
                 last_sort_by: AsyncMutex::new(None),
                 last_sort_order: AsyncMutex::new(None),
                 last_offset: AsyncMutex::new(None),
@@ -320,9 +327,10 @@ mod tests {
     impl CommentsRepository for MockedRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            url_id: Option<i64>,
             state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
+            *self.last_url_id.lock().await = Some(url_id);
             *self.last_filter_state.lock().await = state;
             match *self.count_ok.lock().await {
                 Some(v) => Ok(v as u32),
@@ -334,12 +342,13 @@ mod tests {
             &self,
             offset: i64,
             _count: i64,
-            _url_id: i64,
+            url_id: Option<i64>,
             state: Option<i32>,
             sort_by: Option<crate::SortBy>,
             sort_order: Option<crate::SortOrder>,
         ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
             *self.last_offset.lock().await = Some(offset);
+            *self.last_url_id.lock().await = Some(url_id);
             *self.last_filter_state.lock().await = state;
             *self.last_sort_by.lock().await = sort_by;
             *self.last_sort_order.lock().await = sort_order;
@@ -437,7 +446,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(0),
-            url_id: 9,
+            url_id: Some(9),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -462,7 +471,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(1000),
-            url_id: 2,
+            url_id: Some(2),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -484,7 +493,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -512,7 +521,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -535,7 +544,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 77,
+            url_id: Some(77),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -562,7 +571,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -585,7 +594,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: Some(0),
             count: Some(10),
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: None,
             sort_order: None,
@@ -610,7 +619,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: Some(crate::CommentState::Picked),
             sort_by: None,
             sort_order: None,
@@ -624,7 +633,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: Some(crate::CommentState::Discarded),
             sort_by: None,
             sort_order: None,
@@ -633,6 +642,29 @@ mod tests {
         let resp = list_comments(state, query).await;
         assert!(resp.is_ok());
         assert_eq!(*repo.last_filter_state.lock().await, Some(2));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn list_comments_omits_url_id_to_list_across_all_links() {
+        let rows = vec![make_comment_row(1, "a", "2024-01-01", "t", 9)];
+        let repo = Arc::new(MockedRepo::with_ok(1, rows));
+        let state = State(CommentsAppState {
+            repo: repo.clone(),
+            config: make_test_config(),
+        });
+
+        let query = Query(CommentsFilter {
+            offset: None,
+            count: None,
+            url_id: None,
+            state: Some(crate::CommentState::Picked),
+            sort_by: None,
+            sort_order: None,
+        });
+
+        let resp = list_comments(state, query).await;
+        assert!(resp.is_ok());
+        assert_eq!(*repo.last_url_id.lock().await, Some(None));
     }
 
     #[tokio::test(flavor = "current_thread")]
@@ -646,7 +678,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: None,
             count: None,
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: Some(crate::SortBy::SubcommentCount),
             sort_order: Some(crate::SortOrder::Asc),
@@ -762,7 +794,7 @@ mod tests {
         let query = Query(CommentsFilter {
             offset: Some(5),
             count: Some(3),
-            url_id: 1,
+            url_id: Some(1),
             state: None,
             sort_by: None,
             sort_order: None,
