@@ -25,11 +25,20 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
     return <span className="material-symbols-outlined !text-base text-primary">expand_more</span>;
 }
 
-export function CommentsPage(): React.JSX.Element {
+interface CommentsPageProps {
+    /** Forces the state filter, ignoring the `state` query param. Used for pages scoped to one state, e.g. Picked Ideas. */
+    forcedState?: CommentState;
+    /** Hides the Pick action and its keyboard shortcut — used on pages that only ever list already-picked comments. */
+    hidePick?: boolean;
+    /** Static page title, overriding the one derived from the linked month/year. */
+    title?: string;
+}
+
+export function CommentsPage({ forcedState, hidePick = false, title }: CommentsPageProps = {}): React.JSX.Element {
     const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
     const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
-    const filterState = (searchParams.get('state') as CommentState | null) || undefined;
+    const filterState = forcedState ?? ((searchParams.get('state') as CommentState | null) || undefined);
 
     const [link, setLink] = useState<LinkDto | null>(null);
     const [comments, setComments] = useState<CommentDto[]>([]);
@@ -85,7 +94,7 @@ export function CommentsPage(): React.JSX.Element {
         const fetchComments = async () => {
             try {
                 setLoading(true);
-                const response = await commentsApi.listComments(urlId!, page * PAGE_SIZE, PAGE_SIZE, filterState, sortBy, sortOrder);
+                const response = await commentsApi.listComments(page * PAGE_SIZE, PAGE_SIZE, urlId, filterState, sortBy, sortOrder);
                 setComments(response.data.items);
                 setTotal(response.data.total);
                 setError(null);
@@ -149,7 +158,7 @@ export function CommentsPage(): React.JSX.Element {
                     setPage(p => p - 1);
                 }
             } else if (e.key === KEY_PICK) {
-                updateState(comments[selectedIndex].id, CommentState.Picked);
+                if (!hidePick) updateState(comments[selectedIndex].id, CommentState.Picked);
             } else if (e.key === KEY_DISCARD) {
                 updateState(comments[selectedIndex].id, CommentState.Discarded);
             } else if (e.key === KEY_EXPAND) {
@@ -161,7 +170,7 @@ export function CommentsPage(): React.JSX.Element {
 
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [loading, comments, selectedIndex, page, total, updateState]);
+    }, [loading, comments, selectedIndex, page, total, updateState, hidePick]);
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
     const showFrom = total === 0 ? 0 : page * PAGE_SIZE + 1;
@@ -184,9 +193,9 @@ export function CommentsPage(): React.JSX.Element {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-200">
                     <h2 className="text-slate-900 text-xl font-bold tracking-tight">
-                        Comments{link?.thread_month && link?.thread_year
+                        {title ?? `Comments${link?.thread_month && link?.thread_year
                             ? ` — ${monthNames[link.thread_month - 1]} ${link.thread_year}`
-                            : ''}
+                            : ''}`}
                     </h2>
                 </div>
 
@@ -240,6 +249,7 @@ export function CommentsPage(): React.JSX.Element {
                                         expanded={i === selectedIndex && expanded}
                                         onUpdateState={updateState}
                                         onSelect={() => setSelectedIndex(i)}
+                                        hidePick={hidePick}
                                     />
                                 ))
                             )}
@@ -274,8 +284,12 @@ export function CommentsPage(): React.JSX.Element {
             {/* Keyboard hint bar */}
             <div className="text-center text-xs text-slate-400 pb-4">
                 <kbd className="font-mono">j</kbd>/<kbd className="font-mono">k</kbd> navigate
-                {' · '}
-                <kbd className="font-mono">p</kbd> pick
+                {!hidePick && (
+                    <>
+                        {' · '}
+                        <kbd className="font-mono">p</kbd> pick
+                    </>
+                )}
                 {' · '}
                 <kbd className="font-mono">d</kbd> discard
             </div>

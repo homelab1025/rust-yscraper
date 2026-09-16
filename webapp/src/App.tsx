@@ -6,6 +6,7 @@ import { CommentsPage } from './pages/CommentsPage';
 import { AboutPage } from './pages/AboutPage';
 import { ServicesProvider } from './contexts/ServicesContext';
 import { AddLinkForm } from './components/AddLinkForm';
+import { CommentState } from './api-client';
 
 function AppLayout() {
     const [refreshKey, setRefreshKey] = useState(0);
@@ -34,6 +35,10 @@ function AppLayout() {
                     <Routes>
                         <Route path="/links" element={<LinkManagementPage key={refreshKey} />} />
                         <Route path="/comments" element={<CommentsPage />} />
+                        <Route
+                            path="/picked-ideas"
+                            element={<CommentsPage forcedState={CommentState.Picked} hidePick title="Picked Ideas" />}
+                        />
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/" element={<Navigate to="/links" replace />} />
                     </Routes>

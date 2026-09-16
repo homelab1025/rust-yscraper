@@ -3,15 +3,19 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait CommentsRepository: Send + Sync {
-    /// Total number of comments for a specific url_id, optionally filtered by state.
-    async fn count_comments(&self, url_id: i64, state: Option<i32>) -> Result<u32, sqlx::Error>;
+    /// Total number of comments, optionally filtered by url_id and/or state.
+    async fn count_comments(
+        &self,
+        url_id: Option<i64>,
+        state: Option<i32>,
+    ) -> Result<u32, sqlx::Error>;
 
-    /// Returns a page of comments filtered by url_id and optionally state, with configurable sorting.
+    /// Returns a page of comments, optionally filtered by url_id and/or state, with configurable sorting.
     async fn page_comments(
         &self,
         offset: i64,
         count: i64,
-        url_id: i64,
+        url_id: Option<i64>,
         state: Option<i32>,
         sort_by: Option<crate::SortBy>,
         sort_order: Option<crate::SortOrder>,

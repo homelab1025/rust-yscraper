@@ -7,10 +7,11 @@ interface CommentRowProps {
     expanded?: boolean;
     onUpdateState: (commentId: number, state: CommentState) => void;
     onSelect?: () => void;
+    hidePick?: boolean;
 }
 
 export const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
-    ({ comment, selected, expanded, onUpdateState, onSelect }, ref) => {
+    ({ comment, selected, expanded, onUpdateState, onSelect, hidePick }, ref) => {
         const rowClass = [
             'transition-colors cursor-pointer',
             comment.state === CommentState.Picked
@@ -31,14 +32,16 @@ export const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>
                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{comment.date}</td>
                 <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
-                        <button
-                            onClick={() => onUpdateState(comment.id, CommentState.Picked)}
-                            disabled={comment.state === CommentState.Picked}
-                            title="Pick"
-                            className="text-slate-400 hover:text-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <span className="material-symbols-outlined !text-xl">check_circle</span>
-                        </button>
+                        {!hidePick && (
+                            <button
+                                onClick={() => onUpdateState(comment.id, CommentState.Picked)}
+                                disabled={comment.state === CommentState.Picked}
+                                title="Pick"
+                                className="text-slate-400 hover:text-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <span className="material-symbols-outlined !text-xl">check_circle</span>
+                            </button>
+                        )}
                         <button
                             onClick={() => onUpdateState(comment.id, CommentState.Discarded)}
                             disabled={comment.state === CommentState.Discarded}
