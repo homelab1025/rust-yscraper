@@ -92,6 +92,38 @@ async fn test_list_comments_state_filter() {
 }
 
 #[tokio::test]
+async fn test_list_comments_across_all_links_omits_url_id() {
+    let (pool, _container) = common::setup_db().await;
+    insert_url(&pool, 100).await;
+    insert_url(&pool, 101).await;
+    insert_comment(&pool, 200, 100, 0).await; // New, link 100
+    insert_comment(&pool, 201, 100, 1).await; // Picked, link 100
+    insert_comment(&pool, 202, 101, 0).await; // New, link 101
+    insert_comment(&pool, 203, 101, 1).await; // Picked, link 101
+
+    let app = web_server::build_router(common::make_test_app_state(pool));
+    let req = Request::builder()
+        .method("GET")
+        .uri("/comments?state=PICKED")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = ServiceExt::<Request<Body>>::oneshot(app, req)
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let page: CommentsPage = serde_json::from_slice(&body).unwrap();
+    assert_eq!(page.total, 2);
+    let mut ids: Vec<i64> = page.items.iter().map(|c| c.id).collect();
+    ids.sort();
+    assert_eq!(ids, vec![201, 203]);
+}
+
+#[tokio::test]
 async fn test_list_comments_pagination() {
     let (pool, _container) = common::setup_db().await;
     insert_url(&pool, 4).await;

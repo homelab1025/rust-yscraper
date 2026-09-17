@@ -645,7 +645,10 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn list_comments_omits_url_id_to_list_across_all_links() {
+    async fn list_comments_passes_none_url_id_to_repository() {
+        // Handler-level only: verifies `url_id: None` reaches the repository call
+        // unchanged. The actual cross-link SQL behavior is covered by the
+        // integration test in `tests/comments_api_test.rs`.
         let rows = vec![make_comment_row(1, "a", "2024-01-01", "t", 9)];
         let repo = Arc::new(MockedRepo::with_ok(1, rows));
         let state = State(CommentsAppState {

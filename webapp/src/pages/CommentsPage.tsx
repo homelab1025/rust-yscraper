@@ -32,15 +32,20 @@ interface CommentsPageProps {
     hidePick?: boolean;
     /** Static page title, overriding the one derived from the linked month/year. */
     title?: string;
+    /** Lists comments across all links, ignoring the `url_id` query param, and shows each row's source link. */
+    crossLink?: boolean;
 }
 
-export function CommentsPage({ forcedState, hidePick = false, title }: CommentsPageProps = {}): React.JSX.Element {
+export function CommentsPage({ forcedState, hidePick = false, title, crossLink = false }: CommentsPageProps = {}): React.JSX.Element {
     const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
-    const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
+    const urlId = crossLink
+        ? undefined
+        : (searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined);
     const filterState = forcedState ?? ((searchParams.get('state') as CommentState | null) || undefined);
 
     const [link, setLink] = useState<LinkDto | null>(null);
+    const [linksById, setLinksById] = useState<Record<number, LinkDto>>({});
     const [comments, setComments] = useState<CommentDto[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(0);
@@ -83,12 +88,18 @@ export function CommentsPage({ forcedState, hidePick = false, title }: CommentsP
     }, [filterState, selectedIndex, comments.length]);
 
     useEffect(() => {
-        if (!urlId) return;
+        if (!urlId && !crossLink) return;
         linksApi.listLinks().then(r => {
-            const found = r.data.find(l => l.id === urlId) ?? null;
-            setLink(found);
+            if (urlId) {
+                setLink(r.data.find(l => l.id === urlId) ?? null);
+            }
+            if (crossLink) {
+                const map: Record<number, LinkDto> = {};
+                r.data.forEach(l => { map[l.id] = l; });
+                setLinksById(map);
+            }
         }).catch(() => {});
-    }, [urlId]);
+    }, [urlId, crossLink]);
 
     useEffect(() => {
         const fetchComments = async () => {
@@ -205,6 +216,9 @@ export function CommentsPage({ forcedState, hidePick = false, title }: CommentsP
                             <tr className="bg-slate-50">
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comment</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Author</th>
+                                {crossLink && (
+                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Source</th>
+                                )}
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                                     <button
                                         onClick={() => handleRequestSort(SortBy.SubcommentCount)}
@@ -229,13 +243,13 @@ export function CommentsPage({ forcedState, hidePick = false, title }: CommentsP
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={crossLink ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
                                         <span className="material-symbols-outlined animate-spin !text-3xl">refresh</span>
                                     </td>
                                 </tr>
                             ) : comments.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-sm">
+                                    <td colSpan={crossLink ? 6 : 5} className="px-6 py-12 text-center text-slate-500 text-sm">
                                         No comments found.
                                     </td>
                                 </tr>
@@ -250,6 +264,7 @@ export function CommentsPage({ forcedState, hidePick = false, title }: CommentsP
                                         onUpdateState={updateState}
                                         onSelect={() => setSelectedIndex(i)}
                                         hidePick={hidePick}
+                                        sourceLink={crossLink ? (linksById[c.url_id] ?? null) : undefined}
                                     />
                                 ))
                             )}
