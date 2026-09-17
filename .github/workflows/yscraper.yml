@@ -37,9 +37,9 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         shell: bash
       - name: Run tests
-        run: cargo test
+        run: cargo test --locked
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --locked
         env:
           GIT_HASH: ${{ github.sha }}
           GIT_COMMITTED_AT: ${{ github.event.head_commit.timestamp }}
