@@ -10,17 +10,21 @@
 #
 # App connection string (matches defaults in src/config.rs):
 #   postgres://postgres:postgres@localhost:5432/yscraper
+#
+# DB_PORT / ADMINER_PORT and the project name (-p, or $COMPOSE_PROJECT_NAME) can be
+# overridden to run an isolated stack per git worktree — see ./dev.sh, which does
+# this automatically. Container names are intentionally left unset so Compose
+# namespaces containers (and the pgdata volume) by project.
 
 services:
   postgres:
     image: postgres:16
-    container_name: yscraper-postgres
     environment:
       POSTGRES_DB: yscraper
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +36,6 @@ services:
 
   liquibase:
     image: liquibase/liquibase:4.23
-    container_name: yscraper-liquibase
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,11 +59,10 @@ services:
 
   adminer:
     image: adminer:latest
-    container_name: yscraper-adminer
     depends_on:
       - postgres
     ports:
-      - "8080:8080"
+      - "${ADMINER_PORT:-8080}:8080"
 
 volumes:
   pgdata:
