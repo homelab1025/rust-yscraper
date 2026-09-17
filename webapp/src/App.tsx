@@ -37,7 +37,7 @@ function AppLayout() {
                         <Route path="/comments" element={<CommentsPage />} />
                         <Route
                             path="/picked-ideas"
-                            element={<CommentsPage forcedState={CommentState.Picked} hidePick title="Picked Ideas" />}
+                            element={<CommentsPage forcedState={CommentState.Picked} hidePick crossLink title="Picked Ideas" />}
                         />
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/" element={<Navigate to="/links" replace />} />
