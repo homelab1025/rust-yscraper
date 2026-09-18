@@ -70,24 +70,36 @@ cargo run -p api_gen -- openapi.yaml
 # Spin up the dependencies
 docker-compose up
 
-# Start the full development stack in tmux (detached)
-tmux new-session -d -s dev && \
-tmux rename-window -t dev:0 'dev-stack' && \
-tmux send-keys -t dev:0.0 'docker-compose up' C-m && \
-tmux split-window -h -t dev:0 && \
-tmux send-keys -t dev:0.1 'sleep 5 && cargo run -p web_server' C-m && \
-tmux split-window -v -t dev:0.1 && \
-tmux send-keys -t dev:0.2 'cd webapp && npm run dev' C-m
-
 # Frontend dev server
 cd webapp && npm install && npm run dev   # http://localhost:5173
+
+# Start the full local dev stack (Postgres + migrations + web_server + webapp)
+# for the current worktree — see "Running locally" below.
+./dev.sh start
+./dev.sh status
+./dev.sh stop
 ```
+
+## Running locally
+
+`./dev.sh start` brings up Postgres, runs the Liquibase migrations, and starts `web_server` and the webapp dev
+server in the background (logs under `.dev/`, gitignored). `./dev.sh status` shows what's running and on which
+ports; `./dev.sh stop` tears it down (the Postgres data volume is preserved).
+
+Ports are derived deterministically from the worktree's absolute path, so **each git worktree gets its own set of
+ports and its own Postgres data volume automatically** — you can run `./dev.sh start` in several worktrees at the
+same time without them colliding. Run `./dev.sh status` in a given worktree to see the ports it's using.
+
+This requires Docker/Colima to be running (see the `DOCKER_HOST` note above). It's for local iteration only —
+it does not replace the manual commands above (e.g. `cargo run -p web_server` directly) which are still useful
+for one-off runs or debugging.
 
 ## Configuration
 
 The server reads `config.toml` from the **current working directory** at startup. A dev copy lives at
-`conf/config.toml`. Copy it to the repo root before running locally. All keys can be overridden with environment
-variables prefixed `YSCR_` (e.g. `YSCR_DB_PASSWORD`).
+`conf/config.toml`; `./dev.sh start` copies it to the repo root automatically if it's missing (otherwise copy it
+yourself before running `cargo run -p web_server` directly). All keys can be overridden with environment variables
+prefixed `YSCR_` (e.g. `YSCR_DB_PASSWORD`).
 
 ## Architecture
 
