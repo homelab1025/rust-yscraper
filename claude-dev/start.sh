@@ -63,13 +63,16 @@ echo "$NODE_PID" >> "$PIDFILE"
 echo "   PID: $NODE_PID"
 
 # ── Summary ─────────────────────────────────────────────────────────
+# HOST_*_PORT are set by run.sh to the actual host-published ports (which
+# may differ from these container-internal ones when several worktrees'
+# containers are running at once - see run.sh's per-worktree offset).
 echo ""
 echo "═══════════════════════════════════════════"
 echo "  🌍  rust-yscraper is running!"
 echo "═══════════════════════════════════════════"
-echo "  Frontend:  http://localhost:5173"
-echo "  Backend:   http://localhost:3000"
-echo "  Database:  localhost:5432  (db: yscraper, user: postgres, started at container boot)"
+echo "  Frontend:  http://localhost:${HOST_WEB_PORT:-5173}"
+echo "  Backend:   http://localhost:${HOST_SERVER_PORT:-3000}"
+echo "  Database:  localhost:${HOST_DB_PORT:-5432}  (db: yscraper, user: postgres, started at container boot)"
 echo "═══════════════════════════════════════════"
 echo ""
 echo "  Stop:  ./stop.sh"
