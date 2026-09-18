@@ -20,6 +20,12 @@ you need to keep working on something else in parallel. `dev.sh` derives its por
 the worktree's absolute path, so multiple worktrees can each run their own local stack at the same time without
 colliding — no manual port bookkeeping needed.
 
+## dev.sh
+
+[`docs/dev-sh.md`](docs/dev-sh.md) documents the flow of the `dev.sh` script. Whenever you change `dev.sh`
+(new commands, changed ports/offsets, new state files, changed startup/stop behavior), update that document in
+the same PR so the two stay in sync.
+
 ## Testing
 
 - **Unit tests** live alongside the code (`#[cfg(test)]` modules) and use mocked repository traits — no database
