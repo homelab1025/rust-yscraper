@@ -36,7 +36,7 @@ async fn test_page_comments_sorting() {
         .page_comments(
             0,
             10,
-            url_id,
+            Some(url_id),
             None,
             Some(web_server::SortBy::Date),
             Some(web_server::SortOrder::Desc),
@@ -52,7 +52,7 @@ async fn test_page_comments_sorting() {
         .page_comments(
             0,
             10,
-            url_id,
+            Some(url_id),
             None,
             Some(web_server::SortBy::Date),
             Some(web_server::SortOrder::Asc),
@@ -68,7 +68,7 @@ async fn test_page_comments_sorting() {
         .page_comments(
             0,
             10,
-            url_id,
+            Some(url_id),
             None,
             Some(web_server::SortBy::SubcommentCount),
             Some(web_server::SortOrder::Desc),
@@ -84,7 +84,7 @@ async fn test_page_comments_sorting() {
         .page_comments(
             0,
             10,
-            url_id,
+            Some(url_id),
             None,
             Some(web_server::SortBy::SubcommentCount),
             Some(web_server::SortOrder::Asc),

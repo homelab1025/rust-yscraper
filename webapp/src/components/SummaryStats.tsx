@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 interface SummaryStatsProps {
     reviewed: number;
     picked: number;
@@ -14,13 +16,16 @@ export function SummaryStats({ reviewed, picked, discarded }: SummaryStatsProps)
                 </div>
                 <p className="text-4xl font-black text-slate-900">{reviewed}</p>
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-1">
+            <Link
+                to="/picked-ideas"
+                className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-1 hover:border-emerald-300 transition-colors"
+            >
                 <div className="flex items-center gap-2 text-emerald-600 mb-2">
                     <span className="material-symbols-outlined !text-lg">check_circle</span>
                     <span className="text-xs font-semibold uppercase tracking-wide">Picked Ideas</span>
                 </div>
                 <p className="text-4xl font-black text-slate-900">{picked}</p>
-            </div>
+            </Link>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-1">
                 <div className="flex items-center gap-2 text-rose-600 mb-2">
                     <span className="material-symbols-outlined !text-lg">cancel</span>

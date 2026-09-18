@@ -16,16 +16,35 @@ impl PgCommentsRepository {
     }
 }
 
+/// Appends `WHERE url_id = $1 [AND state = $2]` (or just the `state` clause,
+/// or nothing) to `qb`, using `WHERE` for the first condition and `AND` for
+/// the second.
+fn push_comments_filter(qb: &mut QueryBuilder<Postgres>, url_id: Option<i64>, state: Option<i32>) {
+    let mut has_condition = false;
+    if let Some(id) = url_id {
+        qb.push(" WHERE url_id = ");
+        qb.push_bind(id);
+        has_condition = true;
+    }
+    if let Some(s) = state {
+        qb.push(if has_condition {
+            " AND state = "
+        } else {
+            " WHERE state = "
+        });
+        qb.push_bind(s);
+    }
+}
+
 #[async_trait]
 impl CommentsRepository for PgCommentsRepository {
-    async fn count_comments(&self, url_id: i64, state: Option<i32>) -> Result<u32, sqlx::Error> {
-        let mut qb: QueryBuilder<Postgres> =
-            QueryBuilder::new("SELECT COUNT(*) FROM comments WHERE url_id = ");
-        qb.push_bind(url_id);
-        if let Some(s) = state {
-            qb.push(" AND state = ");
-            qb.push_bind(s);
-        }
+    async fn count_comments(
+        &self,
+        url_id: Option<i64>,
+        state: Option<i32>,
+    ) -> Result<u32, sqlx::Error> {
+        let mut qb: QueryBuilder<Postgres> = QueryBuilder::new("SELECT COUNT(*) FROM comments");
+        push_comments_filter(&mut qb, url_id, state);
 
         qb.build_query_scalar::<i64>()
             .fetch_one(&self.pool)
@@ -37,20 +56,15 @@ impl CommentsRepository for PgCommentsRepository {
         &self,
         offset: i64,
         count: i64,
-        url_id: i64,
+        url_id: Option<i64>,
         state: Option<i32>,
         sort_by: Option<crate::SortBy>,
         sort_order: Option<SortOrder>,
     ) -> Result<Vec<DbCommentRow>, sqlx::Error> {
         let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments WHERE url_id = ",
+            "SELECT id, author, date, text, url_id, state, subcomment_count FROM comments",
         );
-        qb.push_bind(url_id);
-
-        if let Some(s) = state {
-            qb.push(" AND state = ");
-            qb.push_bind(s);
-        }
+        push_comments_filter(&mut qb, url_id, state);
 
         let sort_col = match sort_by.unwrap_or_default() {
             SortBy::Date => "date",
