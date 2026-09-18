@@ -3,6 +3,8 @@
 .idea/
 comments.db
 .output.txt
+/config.toml
+/.dev/
 mutants.out/
 mutants.out.old/
 /mutants.out.old/
