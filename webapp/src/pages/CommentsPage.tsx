@@ -39,9 +39,9 @@ interface CommentsPageProps {
 export function CommentsPage({ forcedState, hidePick = false, title, crossLink = false }: CommentsPageProps = {}): React.JSX.Element {
     const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
-    const urlId = crossLink
-        ? undefined
-        : (searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined);
+    const rawUrlId = searchParams.get('url_id');
+    const parsedUrlId = rawUrlId ? Number(rawUrlId) : undefined;
+    const urlId = crossLink ? undefined : parsedUrlId;
     const filterState = forcedState ?? ((searchParams.get('state') as CommentState | null) || undefined);
 
     const [link, setLink] = useState<LinkDto | null>(null);
