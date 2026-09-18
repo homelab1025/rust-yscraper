@@ -55,6 +55,23 @@ The TypeScript API client under `webapp/src/lib/server/` is generated from the O
 Follow the existing convention: `type(scope): short description` (e.g. `fix(webapp): ...`, `feat(dev): ...`,
 `ci(yscraper): ...`, `chore(hooks): ...`). Keep the body focused on *why*, not a restatement of the diff.
 
+## Decision records
+
+For every PR, check whether it introduces a significant change worth recording, and if so write it down rather
+than leaving the reasoning only in the PR description:
+
+- **Architectural changes** (new component, a changed data flow, one structural pattern swapped for another, a
+  cross-cutting decision like the `comment_count` denormalization in `docs/adrs/0001-...md`) → add an ADR to
+  [`docs/adrs/`](docs/adrs/), following the format of the existing entries (`NNNN-title.md`: Status, Context,
+  Decision, Consequences).
+- **Functional/product changes** (new user-facing behavior, a changed workflow, a scope decision about what the
+  product does rather than how it's built) → add an FDR (Functional Decision Record) to
+  [`docs/fdrs/`](docs/fdrs/), using the same lightweight format — see that folder's `README.md` for the template.
+
+Not every PR needs one — routine bug fixes, small additions, and refactors that don't change behavior don't. Use
+judgment: if a future contributor would benefit from knowing *why* a non-obvious structural or product decision
+was made, write it down.
+
 ## Pull requests
 
 - Keep the PR's **test plan checklist honest**: if something wasn't run locally (e.g. no Docker socket in your
