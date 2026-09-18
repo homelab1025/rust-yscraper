@@ -8,7 +8,24 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 IMAGE=claude-dev
+# Shared across worktrees on purpose: this is the container's /home/dev/.claude,
+# and sharing it keeps the OAuth login and memory in sync across concurrent
+# sessions - the same way multiple `claude` terminals on one host normally
+# share ~/.claude. Only the ports below need to be per-worktree.
 VOLUME=claude-dev-home
+
+# Derive a stable per-worktree port offset from this worktree's absolute path
+# (same formula as dev.sh), so several worktrees can each run their own
+# claude-dev container at the same time without their published host ports
+# colliding. The container's internal ports (3000/5173/5432) stay fixed -
+# only the host side of the `-p` mapping below changes.
+REPO_DIR="$(pwd)"
+CHECKSUM="$(printf '%s' "$REPO_DIR" | cksum | cut -d' ' -f1)"
+OFFSET=$((10#$CHECKSUM % 900))
+HOST_SERVER_PORT=$((3000 + OFFSET))
+HOST_WEB_PORT=$((5173 + OFFSET))
+HOST_DB_PORT=$((5432 + OFFSET))
+CONTAINER_NAME="claude-dev-$OFFSET"
 
 docker build \
   --build-arg UID="$(id -u)" \
@@ -39,15 +56,23 @@ if [[ -n "${CLAUDE_DEV_SSH_KEY:-}" ]]; then
   SSH_MOUNT_ARGS=(-v "$CLAUDE_DEV_SSH_KEY":/home/dev/.ssh/id_ed25519:ro)
 fi
 
+echo "Worktree: $REPO_DIR"
+echo "Host ports — backend: $HOST_SERVER_PORT  frontend: $HOST_WEB_PORT  db: $HOST_DB_PORT  (container: $CONTAINER_NAME)"
+echo
+
 docker run -it --rm \
+  --name "$CONTAINER_NAME" \
   -v "$(pwd)":/workspace \
   -v "$VOLUME":/home/dev/.claude \
   "${SSH_MOUNT_ARGS[@]}" \
   -e GIT_USER_NAME="${GIT_USER_NAME:-claude}" \
   -e GIT_USER_EMAIL="${GIT_USER_EMAIL:-florin.diaconeasa@gmail.com}" \
-  -p 5173:5173 \
-  -p 3000:3000 \
-  -p 5432:5432 \
+  -e HOST_SERVER_PORT="$HOST_SERVER_PORT" \
+  -e HOST_WEB_PORT="$HOST_WEB_PORT" \
+  -e HOST_DB_PORT="$HOST_DB_PORT" \
+  -p "$HOST_WEB_PORT":5173 \
+  -p "$HOST_SERVER_PORT":3000 \
+  -p "$HOST_DB_PORT":5432 \
   --cap-drop=ALL \
   --cap-add=SETUID \
   --cap-add=SETGID \
