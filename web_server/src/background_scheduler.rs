@@ -130,7 +130,7 @@ mod tests {
     impl CommentsRepository for MockRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
             Ok(0)
@@ -140,7 +140,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
             _sort_by: Option<crate::SortBy>,
             _sort_order: Option<crate::SortOrder>,
@@ -228,7 +228,7 @@ mod tests {
     impl CommentsRepository for FailingRepo {
         async fn count_comments(
             &self,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
         ) -> Result<u32, sqlx::Error> {
             Ok(0)
@@ -237,7 +237,7 @@ mod tests {
             &self,
             _offset: i64,
             _count: i64,
-            _url_id: i64,
+            _url_id: Option<i64>,
             _state: Option<i32>,
             _sort_by: Option<crate::SortBy>,
             _sort_order: Option<crate::SortOrder>,

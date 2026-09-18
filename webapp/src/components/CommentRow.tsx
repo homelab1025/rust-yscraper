@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { type CommentDto, CommentState } from '../api-client';
+import { Link } from 'react-router-dom';
+import { type CommentDto, type LinkDto, CommentState } from '../api-client';
 
 interface CommentRowProps {
     comment: CommentDto;
@@ -7,10 +8,13 @@ interface CommentRowProps {
     expanded?: boolean;
     onUpdateState: (commentId: number, state: CommentState) => void;
     onSelect?: () => void;
+    hidePick?: boolean;
+    /** Link this comment came from — rendered as a "Source" column when provided (including `null` for "not loaded yet"). Omit to hide the column entirely. */
+    sourceLink?: LinkDto | null;
 }
 
 export const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>(
-    ({ comment, selected, expanded, onUpdateState, onSelect }, ref) => {
+    ({ comment, selected, expanded, onUpdateState, onSelect, hidePick, sourceLink }, ref) => {
         const rowClass = [
             'transition-colors cursor-pointer',
             comment.state === CommentState.Picked
@@ -27,18 +31,36 @@ export const CommentRow = React.forwardRef<HTMLTableRowElement, CommentRowProps>
                     <p className={['whitespace-pre-wrap', expanded ? undefined : 'line-clamp-3'].filter(Boolean).join(' ')}>{comment.text}</p>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{comment.user}</td>
+                {sourceLink !== undefined && (
+                    <td className="px-6 py-4 text-sm text-slate-600 max-w-[10rem]">
+                        {sourceLink ? (
+                            <Link
+                                to={`/comments?url_id=${sourceLink.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="block truncate text-primary hover:underline"
+                                title={sourceLink.url}
+                            >
+                                {sourceLink.url}
+                            </Link>
+                        ) : (
+                            '—'
+                        )}
+                    </td>
+                )}
                 <td className="px-6 py-4 text-sm text-slate-600 text-center">{comment.subcomment_count}</td>
                 <td className="px-6 py-4 text-sm text-slate-600 whitespace-nowrap">{comment.date}</td>
                 <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
-                        <button
-                            onClick={() => onUpdateState(comment.id, CommentState.Picked)}
-                            disabled={comment.state === CommentState.Picked}
-                            title="Pick"
-                            className="text-slate-400 hover:text-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <span className="material-symbols-outlined !text-xl">check_circle</span>
-                        </button>
+                        {!hidePick && (
+                            <button
+                                onClick={() => onUpdateState(comment.id, CommentState.Picked)}
+                                disabled={comment.state === CommentState.Picked}
+                                title="Pick"
+                                className="text-slate-400 hover:text-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <span className="material-symbols-outlined !text-xl">check_circle</span>
+                            </button>
+                        )}
                         <button
                             onClick={() => onUpdateState(comment.id, CommentState.Discarded)}
                             disabled={comment.state === CommentState.Discarded}

@@ -25,13 +25,27 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
     return <span className="material-symbols-outlined !text-base text-primary">expand_more</span>;
 }
 
-export function CommentsPage(): React.JSX.Element {
+interface CommentsPageProps {
+    /** Forces the state filter, ignoring the `state` query param. Used for pages scoped to one state, e.g. Picked Ideas. */
+    forcedState?: CommentState;
+    /** Hides the Pick action and its keyboard shortcut — used on pages that only ever list already-picked comments. */
+    hidePick?: boolean;
+    /** Static page title, overriding the one derived from the linked month/year. */
+    title?: string;
+    /** Lists comments across all links, ignoring the `url_id` query param, and shows each row's source link. */
+    crossLink?: boolean;
+}
+
+export function CommentsPage({ forcedState, hidePick = false, title, crossLink = false }: CommentsPageProps = {}): React.JSX.Element {
     const { commentsApi, linksApi } = useServices();
     const [searchParams] = useSearchParams();
-    const urlId = searchParams.get('url_id') ? Number(searchParams.get('url_id')) : undefined;
-    const filterState = (searchParams.get('state') as CommentState | null) || undefined;
+    const rawUrlId = searchParams.get('url_id');
+    const parsedUrlId = rawUrlId ? Number(rawUrlId) : undefined;
+    const urlId = crossLink ? undefined : parsedUrlId;
+    const filterState = forcedState ?? ((searchParams.get('state') as CommentState | null) || undefined);
 
     const [link, setLink] = useState<LinkDto | null>(null);
+    const [linksById, setLinksById] = useState<Record<number, LinkDto>>({});
     const [comments, setComments] = useState<CommentDto[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(0);
@@ -74,18 +88,24 @@ export function CommentsPage(): React.JSX.Element {
     }, [filterState, selectedIndex, comments.length]);
 
     useEffect(() => {
-        if (!urlId) return;
+        if (!urlId && !crossLink) return;
         linksApi.listLinks().then(r => {
-            const found = r.data.find(l => l.id === urlId) ?? null;
-            setLink(found);
+            if (urlId) {
+                setLink(r.data.find(l => l.id === urlId) ?? null);
+            }
+            if (crossLink) {
+                const map: Record<number, LinkDto> = {};
+                r.data.forEach(l => { map[l.id] = l; });
+                setLinksById(map);
+            }
         }).catch(() => {});
-    }, [urlId]);
+    }, [urlId, crossLink]);
 
     useEffect(() => {
         const fetchComments = async () => {
             try {
                 setLoading(true);
-                const response = await commentsApi.listComments(urlId!, page * PAGE_SIZE, PAGE_SIZE, filterState, sortBy, sortOrder);
+                const response = await commentsApi.listComments(page * PAGE_SIZE, PAGE_SIZE, urlId, filterState, sortBy, sortOrder);
                 setComments(response.data.items);
                 setTotal(response.data.total);
                 setError(null);
@@ -149,7 +169,7 @@ export function CommentsPage(): React.JSX.Element {
                     setPage(p => p - 1);
                 }
             } else if (e.key === KEY_PICK) {
-                updateState(comments[selectedIndex].id, CommentState.Picked);
+                if (!hidePick) updateState(comments[selectedIndex].id, CommentState.Picked);
             } else if (e.key === KEY_DISCARD) {
                 updateState(comments[selectedIndex].id, CommentState.Discarded);
             } else if (e.key === KEY_EXPAND) {
@@ -161,7 +181,7 @@ export function CommentsPage(): React.JSX.Element {
 
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [loading, comments, selectedIndex, page, total, updateState]);
+    }, [loading, comments, selectedIndex, page, total, updateState, hidePick]);
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
     const showFrom = total === 0 ? 0 : page * PAGE_SIZE + 1;
@@ -184,9 +204,9 @@ export function CommentsPage(): React.JSX.Element {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-5 border-b border-slate-200">
                     <h2 className="text-slate-900 text-xl font-bold tracking-tight">
-                        Comments{link?.thread_month && link?.thread_year
+                        {title ?? `Comments${link?.thread_month && link?.thread_year
                             ? ` — ${monthNames[link.thread_month - 1]} ${link.thread_year}`
-                            : ''}
+                            : ''}`}
                     </h2>
                 </div>
 
@@ -196,6 +216,9 @@ export function CommentsPage(): React.JSX.Element {
                             <tr className="bg-slate-50">
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Comment</th>
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Author</th>
+                                {crossLink && (
+                                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Source</th>
+                                )}
                                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
                                     <button
                                         onClick={() => handleRequestSort(SortBy.SubcommentCount)}
@@ -220,13 +243,13 @@ export function CommentsPage(): React.JSX.Element {
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={crossLink ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
                                         <span className="material-symbols-outlined animate-spin !text-3xl">refresh</span>
                                     </td>
                                 </tr>
                             ) : comments.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-sm">
+                                    <td colSpan={crossLink ? 6 : 5} className="px-6 py-12 text-center text-slate-500 text-sm">
                                         No comments found.
                                     </td>
                                 </tr>
@@ -240,6 +263,8 @@ export function CommentsPage(): React.JSX.Element {
                                         expanded={i === selectedIndex && expanded}
                                         onUpdateState={updateState}
                                         onSelect={() => setSelectedIndex(i)}
+                                        hidePick={hidePick}
+                                        sourceLink={crossLink ? (linksById[c.url_id] ?? null) : undefined}
                                     />
                                 ))
                             )}
@@ -274,8 +299,12 @@ export function CommentsPage(): React.JSX.Element {
             {/* Keyboard hint bar */}
             <div className="text-center text-xs text-slate-400 pb-4">
                 <kbd className="font-mono">j</kbd>/<kbd className="font-mono">k</kbd> navigate
-                {' · '}
-                <kbd className="font-mono">p</kbd> pick
+                {!hidePick && (
+                    <>
+                        {' · '}
+                        <kbd className="font-mono">p</kbd> pick
+                    </>
+                )}
                 {' · '}
                 <kbd className="font-mono">d</kbd> discard
             </div>
